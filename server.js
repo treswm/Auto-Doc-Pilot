@@ -20,6 +20,7 @@ import approversRoutes from "./api/approvers.js";
 import feedbackRoutes from "./api/feedback.js";
 import articlesRoutes from "./api/articles.js";
 import oauthRoutes from "./api/oauth.js";
+import scannersRoutes from "./api/scanners.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,6 +63,7 @@ app.use("/api/approvers", approversRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/articles", articlesRoutes);
 app.use("/api/oauth", oauthRoutes);
+app.use("/api/scanners", scannersRoutes);
 
 // ── Static / React ──────────────────────────────────────────────────────────
 const publicPath = path.join(__dirname, "public");
