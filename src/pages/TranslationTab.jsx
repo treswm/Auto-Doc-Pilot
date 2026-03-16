@@ -114,6 +114,8 @@ function TranslationTab({ user }) {
   const [scanLoading, setScanLoading] = useState(false)
   const [scanError, setScanError] = useState(null)
   const [translationRunning, setTranslationRunning] = useState(false)
+  const [currentRunId, setCurrentRunId] = useState(null)
+  const [translationProgress, setTranslationProgress] = useState(null)
 
   // ── Data fetching ─────────────────────────────────────────────────────────
 
@@ -205,27 +207,53 @@ function TranslationTab({ user }) {
     setTriggering(true)
     setMessage(null)
     setTranslationRunning(true)
+    setTranslationProgress(null)
     try {
       const res = await fetch('/api/approvals/trigger', {
         method: 'POST',
         credentials: 'include',
       })
       const data = await res.json()
-      setMessage({ type: 'info', text: data.message || 'Translation starting...' })
+      const runId = data.runId
+      setCurrentRunId(runId)
+      setMessage({ type: 'info', text: 'Translation starting...' })
 
-      // Poll for completion - check every 5 seconds for up to 5 minutes
+      // Poll for completion - check every 2 seconds for up to 5 minutes
       let attempts = 0
-      const maxAttempts = 60 // 5 minutes
+      const maxAttempts = 150 // 5 minutes with 2s interval
       const pollInterval = setInterval(async () => {
         attempts++
         try {
-          const historyRes = await fetch('/api/approvals/history', { credentials: 'include' })
-          const historyData = await historyRes.json()
-          // If we have history, translation has completed
-          if (historyData.history && historyData.history.length > 0) {
+          const statusRes = await fetch(`/api/approvals/status/${runId}`, { credentials: 'include' })
+          const statusData = await statusRes.json()
+
+          // Update progress in UI
+          if (statusData.totalArticles > 0) {
+            setTranslationProgress({
+              translated: statusData.articlesTranslated,
+              total: statusData.totalArticles,
+              failed: statusData.articlesFailed,
+            })
+          }
+
+          // Check if translation is completed
+          if (statusData.status === 'completed') {
             clearInterval(pollInterval)
             setTranslationRunning(false)
-            setMessage({ type: 'success', text: '✅ Translation completed! Check the History tab for the audit log.' })
+            setTranslationProgress(null)
+            const csvName = `translation-${runId}.csv`
+            setMessage({
+              type: 'success',
+              text: `✅ Translation completed! ${statusData.articlesTranslated} articles translated, ${statusData.articlesFailed} failed. 📄 ${csvName}`
+            })
+          } else if (statusData.status === 'failed') {
+            clearInterval(pollInterval)
+            setTranslationRunning(false)
+            setTranslationProgress(null)
+            const errorMsg = statusData.errors && statusData.errors.length > 0
+              ? statusData.errors[0]
+              : 'Translation failed'
+            setMessage({ type: 'error', text: `❌ Translation failed: ${errorMsg}` })
           }
         } catch (err) {
           console.error('Failed to check translation status:', err)
@@ -235,12 +263,14 @@ function TranslationTab({ user }) {
         if (attempts >= maxAttempts) {
           clearInterval(pollInterval)
           setTranslationRunning(false)
+          setTranslationProgress(null)
           setMessage({ type: 'warning', text: '⏱️ Translation may still be running. Check the History tab for the audit log.' })
         }
-      }, 5000)
+      }, 2000)
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed to trigger workflow.' })
       setTranslationRunning(false)
+      setTranslationProgress(null)
     } finally {
       setTriggering(false)
     }
@@ -328,7 +358,11 @@ function TranslationTab({ user }) {
             <div className="translation-loading">
               <div className="spinner"></div>
               <h3>Translation in Progress</h3>
-              <p>Articles are being translated and uploaded to the Help Center...</p>
+              {translationProgress ? (
+                <p>Translating articles... ({translationProgress.translated}/{translationProgress.total} completed)</p>
+              ) : (
+                <p>Articles are being translated and uploaded to the Help Center...</p>
+              )}
               <p className="help-text">This typically takes 2-3 minutes.</p>
             </div>
           )}

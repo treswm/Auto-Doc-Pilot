@@ -43,6 +43,51 @@ const MAX_ARTICLE_BODY_LENGTH = 25000;
 const MANUAL_REVIEW_PATH = path.join("output", "manual_review_needed.csv");
 const MANUAL_REVIEW_MASTER_PATH = path.join("output", "manual_review_master_list.csv");
 
+// Status tracking directories
+const STATUS_DIR = path.join(process.env.HOME || process.env.USERPROFILE, ".focus-desk");
+
+// Parse runId from command line arguments
+let runId = null;
+const runIdArg = process.argv.find(arg => arg.startsWith("--runId="));
+if (runIdArg) {
+  runId = runIdArg.split("=")[1];
+  console.log(`📋 Translation run ID: ${runId}`);
+}
+
+/**
+ * Ensure status directory exists
+ */
+function ensureStatusDir() {
+  if (!fs.existsSync(STATUS_DIR)) {
+    fs.mkdirSync(STATUS_DIR, { recursive: true });
+  }
+}
+
+/**
+ * Write translation status to file
+ */
+function writeTranslationStatus(status, data = {}) {
+  if (!runId) return; // Skip if no runId provided
+
+  try {
+    ensureStatusDir();
+    const statusFile = path.join(STATUS_DIR, `translation-status-${runId}.json`);
+    const statusData = {
+      runId,
+      status,
+      articlesTranslated: data.articlesTranslated || 0,
+      articlesFailed: data.articlesFailed || 0,
+      totalArticles: data.totalArticles || 0,
+      lastUpdate: new Date().toISOString(),
+      errors: data.errors || [],
+      ...data,
+    };
+    fs.writeFileSync(statusFile, JSON.stringify(statusData, null, 2));
+  } catch (err) {
+    console.error(`Failed to write status file: ${err.message}`);
+  }
+}
+
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -594,6 +639,11 @@ async function main() {
   console.log(`Throttle: ${THROTTLE_MS}ms between requests`);
   console.log(`Glossary terms loaded: ${glossaryTerms.length}\n`);
 
+  // Write initial status if runId is provided
+  if (runId) {
+    writeTranslationStatus("running", { totalArticles: 0, articlesTranslated: 0 });
+  }
+
   const plan = JSON.parse(fs.readFileSync("sections_plan.json", "utf-8"));
   const sections = plan.sections || [];
   const sectionsFullPath = "sections_full.json";
@@ -899,6 +949,15 @@ async function main() {
     }
   }
 
+  // Update status with final article counts
+  if (runId) {
+    writeTranslationStatus("running", {
+      totalArticles: translatedCount + skippedExistingCount + skippedLargeArticleCount + skippedParseErrorCount + skippedTimeoutCount,
+      articlesTranslated: translatedCount,
+      articlesFailed: skippedParseErrorCount + skippedTimeoutCount,
+    });
+  }
+
   // Persist state
   fs.writeFileSync(statePath, JSON.stringify({ next_index: idx }, null, 2));
 
@@ -972,6 +1031,16 @@ async function main() {
     );
   }
   console.log(`Next section index: ${idx} / ${sections.length}`);
+
+  // Final status update - mark as completed
+  if (runId) {
+    writeTranslationStatus("completed", {
+      totalArticles: translatedCount + skippedExistingCount + skippedLargeArticleCount + skippedParseErrorCount + skippedTimeoutCount,
+      articlesTranslated: translatedCount,
+      articlesFailed: skippedParseErrorCount + skippedTimeoutCount,
+    });
+    console.log(`✅ Status updated: workflow completed (runId: ${runId})`);
+  }
 }
 
 main().catch((err) => {
@@ -983,5 +1052,14 @@ main().catch((err) => {
   if (err.stack) {
     console.error("Stack:", err.stack);
   }
+
+  // Update status to failed
+  if (runId) {
+    writeTranslationStatus("failed", {
+      errors: [err.message || String(err)],
+    });
+    console.log(`📝 Status updated: workflow failed (runId: ${runId})`);
+  }
+
   process.exit(1);
 });

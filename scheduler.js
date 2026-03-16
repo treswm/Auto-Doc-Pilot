@@ -33,6 +33,14 @@ if (sectionArg) {
   sectionId = sectionArg.split("=")[1];
 }
 
+// Extract optional runId (e.g., --runId=phase1_1234567890)
+// Used to track translation progress across backend and frontend
+let runId = null;
+const runIdArg = args.find(arg => arg.startsWith("--runId="));
+if (runIdArg) {
+  runId = runIdArg.split("=")[1];
+}
+
 // Placeholder for actual Zendesk and Slack clients
 // These will be initialized when credentials are available
 let zendeskClient = null;
@@ -110,6 +118,7 @@ async function executeWorkflow(slackApp) {
       approversList: approvers,
       daysBack: 7,
       sectionId: sectionId, // Pass optional section ID
+      runId: runId, // Pass optional run ID for progress tracking
     });
 
     console.log(`\n📊 Workflow result:`, result.status);

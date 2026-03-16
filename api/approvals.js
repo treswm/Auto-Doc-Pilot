@@ -152,9 +152,13 @@ router.post("/trigger", (req, res) => {
     return res.status(500).json({ error: "scheduler.js not found" });
   }
 
+  // Generate a unique runId for this workflow execution
+  const runId = `phase1_${Date.now()}`;
+
   // Build args: always pass sectionId (defaults to Best Practices for demo)
   const args = [schedulerPath, "--now"];
   args.push(`--section=${sectionId || DEMO_SECTION_ID}`);
+  args.push(`--runId=${runId}`);
 
   // Run scheduler --now as a background child process
   const child = execFile(
@@ -175,9 +179,49 @@ router.post("/trigger", (req, res) => {
 
   res.json({
     message: "Workflow triggered",
+    runId: runId,
     note: "Running in background. Check the Translation tab in ~30 seconds for pending approvals.",
     scanning: sectionLabel,
   });
+});
+
+// GET /api/approvals/status/:runId
+// Returns the current translation status for a specific run
+// Status file location: ~/.focus-desk/translation-status-{runId}.json
+router.get("/status/:runId", requireAuth, (req, res) => {
+  try {
+    const { runId } = req.params;
+
+    const STATUS_DIR = path.join(
+      process.env.HOME || process.env.USERPROFILE,
+      ".focus-desk"
+    );
+    const statusFile = path.join(STATUS_DIR, `translation-status-${runId}.json`);
+
+    // If status file doesn't exist, return pending status
+    if (!fs.existsSync(statusFile)) {
+      return res.json({
+        runId,
+        status: "pending",
+        message: "Workflow starting...",
+        articlesTranslated: 0,
+        articlesFailed: 0,
+        totalArticles: 0,
+      });
+    }
+
+    // Read and return status file
+    const statusContent = fs.readFileSync(statusFile, "utf-8");
+    const statusData = JSON.parse(statusContent);
+
+    res.json(statusData);
+  } catch (err) {
+    console.error("Error reading translation status:", err.message);
+    res.status(500).json({
+      error: "Failed to read translation status",
+      message: err.message,
+    });
+  }
 });
 
 export default router;
