@@ -113,6 +113,7 @@ function TranslationTab({ user }) {
   const [scannedArticles, setScannedArticles] = useState(null)
   const [scanLoading, setScanLoading] = useState(false)
   const [scanError, setScanError] = useState(null)
+  const [translationRunning, setTranslationRunning] = useState(false)
 
   // ── Data fetching ─────────────────────────────────────────────────────────
 
@@ -203,16 +204,43 @@ function TranslationTab({ user }) {
   const handleTriggerWorkflow = async () => {
     setTriggering(true)
     setMessage(null)
+    setTranslationRunning(true)
     try {
       const res = await fetch('/api/approvals/trigger', {
         method: 'POST',
         credentials: 'include',
       })
       const data = await res.json()
-      setMessage({ type: 'info', text: data.message || 'Workflow triggered. Check back in ~30 seconds.' })
-      setTimeout(fetchPending, 5000)
+      setMessage({ type: 'info', text: data.message || 'Translation starting...' })
+
+      // Poll for completion - check every 5 seconds for up to 5 minutes
+      let attempts = 0
+      const maxAttempts = 60 // 5 minutes
+      const pollInterval = setInterval(async () => {
+        attempts++
+        try {
+          const historyRes = await fetch('/api/approvals/history', { credentials: 'include' })
+          const historyData = await historyRes.json()
+          // If we have history, translation has completed
+          if (historyData.history && historyData.history.length > 0) {
+            clearInterval(pollInterval)
+            setTranslationRunning(false)
+            setMessage({ type: 'success', text: '✅ Translation completed! Check the History tab for the audit log.' })
+          }
+        } catch (err) {
+          console.error('Failed to check translation status:', err)
+        }
+
+        // Timeout after 5 minutes
+        if (attempts >= maxAttempts) {
+          clearInterval(pollInterval)
+          setTranslationRunning(false)
+          setMessage({ type: 'warning', text: '⏱️ Translation may still be running. Check the History tab for the audit log.' })
+        }
+      }, 5000)
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed to trigger workflow.' })
+      setTranslationRunning(false)
     } finally {
       setTriggering(false)
     }
@@ -296,7 +324,15 @@ function TranslationTab({ user }) {
       {/* ── Pending view ── */}
       {view === 'pending' && (
         <>
-          {!pending ? (
+          {translationRunning && (
+            <div className="translation-loading">
+              <div className="spinner"></div>
+              <h3>Translation in Progress</h3>
+              <p>Articles are being translated and uploaded to the Help Center...</p>
+              <p className="help-text">This typically takes 2-3 minutes.</p>
+            </div>
+          )}
+          {!pending && !translationRunning ? (
             <div className="content-placeholder">
               <p>No pending approvals</p>
               <p className="help-text">
@@ -304,7 +340,7 @@ function TranslationTab({ user }) {
                 or the workflow will run automatically on Monday at 9am.
               </p>
             </div>
-          ) : (
+          ) : pending && !translationRunning ? (
             <div className="approval-round">
               <div className="round-meta">
                 <span className="badge badge-warning">Pending Approval</span>
