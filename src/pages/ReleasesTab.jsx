@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import FeedbackForm from '../components/FeedbackForm'
+import ReleaseNotesInputSection from '../components/ReleaseNotesInputSection'
 import '../styles/Tabs.css'
 
 function ReleasesTab({ user }) {
