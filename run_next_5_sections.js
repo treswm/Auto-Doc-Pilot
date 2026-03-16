@@ -900,15 +900,6 @@ async function main() {
 
         const action = result.status === "created" ? "created" : "skipped_exists";
         if (action === "created") translatedCount += 1;
-        
-        // Update status with real-time progress
-        if (runId && translatedCount % 3 === 0) {  // Update every 3 articles
-          writeTranslationStatus("running", {
-            totalArticles: translatedCount + skippedExistingCount + skippedLargeArticleCount + skippedParseErrorCount + skippedTimeoutCount,
-            articlesTranslated: translatedCount,
-            articlesFailed: skippedParseErrorCount + skippedTimeoutCount,
-          });
-        }
         else skippedExistingCount += 1;
 
         csvRows.push({
@@ -921,6 +912,16 @@ async function main() {
           en_url,
           fr_url,
         });
+
+        // Update real-time progress after processing each article
+        if (runId) {
+          const totalProcessed = translatedCount + skippedExistingCount + skippedLargeArticleCount + skippedParseErrorCount + skippedTimeoutCount;
+          writeTranslationStatus("running", {
+            totalArticles: totalProcessed,
+            articlesTranslated: translatedCount,
+            articlesFailed: skippedParseErrorCount + skippedTimeoutCount,
+          });
+        }
       } catch (articleErr) {
         const failureReason = articleErr.message || String(articleErr);
         const action = classifyManualReviewAction(articleErr);
