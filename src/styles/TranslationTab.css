@@ -476,3 +476,58 @@
     transform: rotate(360deg);
   }
 }
+
+/* ── Translation Results View ── */
+.result-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-8);
+  padding: var(--spacing-6);
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #86efac;
+  border-radius: var(--border-radius-lg);
+}
+
+.result-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.result-label {
+  font-size: 0.875rem;
+  color: var(--color-gray-600);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.result-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #16a34a;
+}
+
+.result-csv {
+  background: white;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-4);
+  margin-bottom: var(--spacing-6);
+}
+
+.result-csv p {
+  margin: 0;
+}
+
+.result-csv strong {
+  color: var(--color-primary);
+  font-family: monospace;
+}
+
+.result-actions {
+  display: flex;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+}

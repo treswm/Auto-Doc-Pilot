@@ -102,7 +102,7 @@ function TranslationTab({ user }) {
   const [pending, setPending] = useState(null)
   const [history, setHistory] = useState([])
   const [approvers, setApprovers] = useState([])
-  const [view, setView] = useState('pending') // 'pending | scanner' | 'history' | 'approvers' | 'visual-media'
+  const [view, setView] = useState('pending') // 'pending' | 'scanner' | 'history' | 'approvers' | 'visual-media' | 'translation-results'
   const [screenshotSection, setScreenshotSection] = useState('pendingApproval') // 'pendingApproval' | 'invalidDate' | 'articles'
   const [screenshots, setVisualMedia] = useState(null)
   const [voting, setVoting] = useState(false)
@@ -116,6 +116,7 @@ function TranslationTab({ user }) {
   const [translationRunning, setTranslationRunning] = useState(false)
   const [currentRunId, setCurrentRunId] = useState(null)
   const [translationProgress, setTranslationProgress] = useState(null)
+  const [translationResults, setTranslationResults] = useState(null)
 
   // ── Data fetching ─────────────────────────────────────────────────────────
 
@@ -242,10 +243,19 @@ function TranslationTab({ user }) {
             setTranslationRunning(false)
             setTranslationProgress(null)
             const csvName = `translation-${runId}.csv`
+            setTranslationResults({
+              runId,
+              articlesTranslated: statusData.articlesTranslated,
+              articlesFailed: statusData.articlesFailed,
+              totalArticles: statusData.totalArticles,
+              csvName,
+              completedAt: new Date().toISOString(),
+            })
             setMessage({
               type: 'success',
               text: `✅ Translation completed! ${statusData.articlesTranslated} articles translated, ${statusData.articlesFailed} failed. 📄 ${csvName}`
             })
+            setView('translation-results')
           } else if (statusData.status === 'failed') {
             clearInterval(pollInterval)
             setTranslationRunning(false)
@@ -322,6 +332,12 @@ function TranslationTab({ user }) {
             className={`btn btn-ghost ${view === 'history' ? 'active' : ''}`}
             onClick={() => { setView('history'); fetchHistory() }}
           >History</button>
+          {translationResults && (
+            <button
+              className={`btn btn-ghost ${view === 'translation-results' ? 'active' : ''}`}
+              onClick={() => setView('translation-results')}
+            >✅ Results</button>
+          )}
           <button
             className={`btn btn-ghost ${view === 'approvers' ? 'active' : ''}`}
             onClick={() => { setView('approvers'); fetchApprovers() }}
@@ -571,7 +587,50 @@ function TranslationTab({ user }) {
         </div>
       )}
 
-      
+      {/* ── Translation Results view ── */}
+      {view === 'translation-results' && translationResults && (
+        <div>
+          <h3 className="section-title">✅ Translation Results</h3>
+          <div className="result-summary">
+            <div className="result-stat">
+              <span className="result-label">Articles Translated</span>
+              <span className="result-value">{translationResults.articlesTranslated}</span>
+            </div>
+            <div className="result-stat">
+              <span className="result-label">Articles Failed</span>
+              <span className="result-value">{translationResults.articlesFailed}</span>
+            </div>
+            <div className="result-stat">
+              <span className="result-label">Total Scanned</span>
+              <span className="result-value">{translationResults.totalArticles}</span>
+            </div>
+            <div className="result-stat">
+              <span className="result-label">Completed</span>
+              <span className="result-value">{new Date(translationResults.completedAt).toLocaleTimeString()}</span>
+            </div>
+          </div>
+          <div className="result-csv">
+            <p className="help-text">📄 Audit Log: <strong>{translationResults.csvName}</strong></p>
+            <p className="help-text" style={{ fontSize: '0.85em', marginTop: '0.5rem' }}>
+              Check the History tab to download the full CSV with article details.
+            </p>
+          </div>
+          <div className="result-actions">
+            <button
+              className="btn btn-secondary"
+              onClick={() => { setView('history'); fetchHistory() }}
+            >
+              📥 Download CSV from History
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => setView('pending')}
+            >
+              ← Back to Pending
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Scanner view ── */}
       {view === 'scanner' && (
