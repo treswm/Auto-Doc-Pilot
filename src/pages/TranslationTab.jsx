@@ -101,13 +101,16 @@ function TranslationTab({ user }) {
   const [pending, setPending] = useState(null)
   const [history, setHistory] = useState([])
   const [approvers, setApprovers] = useState([])
-  const [view, setView] = useState('pending') // 'pending' | 'history' | 'approvers' | 'visual-media'
+  const [view, setView] = useState('pending') // 'pending | scanner' | 'history' | 'approvers' | 'visual-media'
   const [screenshotSection, setScreenshotSection] = useState('pendingApproval') // 'pendingApproval' | 'invalidDate' | 'articles'
   const [screenshots, setVisualMedia] = useState(null)
   const [voting, setVoting] = useState(false)
   const [triggering, setTriggering] = useState(false)
   const [message, setMessage] = useState(null)
   const [selectedArticle, setSelectedArticle] = useState(null)
+  const [scannedArticles, setScannedArticles] = useState(null)
+  const [scanLoading, setScanLoading] = useState(false)
+  const [scanError, setScanError] = useState(null)
 
   // ── Data fetching ─────────────────────────────────────────────────────────
 
@@ -138,6 +141,24 @@ function TranslationTab({ user }) {
       setApprovers(data.approvers || [])
     } catch (err) {
       console.error('Failed to fetch approvers:', err)
+    }
+  }, [])
+
+  const scanRecentArticles = useCallback(async () => {
+    setScanLoading(true)
+    setScanError(null)
+    try {
+      const res = await fetch('/api/scanners/recent?daysBack=7&limit=50', { 
+        credentials: 'include' 
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Failed to scan articles')
+      setScannedArticles(data.articles)
+      setView('scanner')
+    } catch (err) {
+      setScanError(err.message)
+    } finally {
+      setScanLoading(false)
     }
   }, [])
 
@@ -249,6 +270,13 @@ function TranslationTab({ user }) {
             className={`btn btn-ghost ${view === 'visual-media' ? 'active' : ''}`}
             onClick={() => { setView('visual-media'); fetchVisualMedia() }}
           >Visual Media</button>
+          <button
+            className="btn btn-accent"
+            onClick={scanRecentArticles}
+            disabled={scanLoading}
+          >
+            {scanLoading ? 'Scanning...' : '🔍 Scan Recent'}
+          </button>
           <button
             className="btn btn-primary"
             onClick={handleTriggerWorkflow}
@@ -467,6 +495,67 @@ function TranslationTab({ user }) {
               items={screenshots[screenshotSection] ?? []}
               onAction={handleScreenshotAction}
             />
+          )}
+        </div>
+      )}
+
+      
+
+      {/* ── Scanner view ── */}
+      {view === 'scanner' && (
+        <div>
+          <h3 className="section-title">📋 Scanned Articles (Recent)</h3>
+          {scanLoading && (
+            <div className="content-placeholder">
+              <p>🔍 Scanning for recently edited articles...</p>
+            </div>
+          )}
+          {scanError && (
+            <div className="error-message">
+              <p>❌ Error: {scanError}</p>
+              <button className="btn btn-primary btn-sm" onClick={scanRecentArticles}>
+                Retry Scan
+              </button>
+            </div>
+          )}
+          {scannedArticles && scannedArticles.length > 0 ? (
+            <div className="articles-grid">
+              {scannedArticles.map(article => (
+                <div key={article.id} className="article-card">
+                  <div className="article-header">
+                    <h4>{article.title}</h4>
+                    <span className="article-id">ID: {article.id}</span>
+                  </div>
+                  <div className="article-meta">
+                    <p>📅 Updated: {new Date(article.updated_at).toLocaleString()}</p>
+                  </div>
+                  <div className="article-actions">
+                    <a
+                      href={article.helpCenterUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-primary btn-sm"
+                    >
+                      View Article ↗
+                    </a>
+                    <a
+                      href={article.helpCenterUrlFr}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-ghost btn-sm"
+                    >
+                      French ↗
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            scannedArticles && (
+              <div className="content-placeholder">
+                <p>No articles found matching the scan criteria</p>
+              </div>
+            )
           )}
         </div>
       )}
