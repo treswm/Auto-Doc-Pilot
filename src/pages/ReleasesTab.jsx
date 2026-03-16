@@ -48,6 +48,10 @@ function ReleasesTab({ user }) {
     if (scanError) setScanError(null)
   }
 
+  const handleKeywordsExtracted = (keywordsForSearch) => {
+    setKeywordsInput(keywordsForSearch)
+  }
+
   return (
     <div className="tab-container">
       <div className="tab-header">
@@ -56,11 +60,12 @@ function ReleasesTab({ user }) {
 
       <div className="info-box">
         <p>
-          🚀 <strong>Phase 3:</strong> Enter release keywords to identify which Help Center articles
-          need updating. The system will find articles matching those keywords so your team can review
-          and update them quickly.
+          🚀 <strong>Phase 3:</strong> Paste your release notes to extract keywords automatically, then the system will find which Help Center articles
+          need updating. Or manually enter keywords to identify articles matching those terms.
         </p>
       </div>
+
+      <ReleaseNotesInputSection onKeywordsExtracted={handleKeywordsExtracted} />
 
       <div className="release-input-section">
         <label htmlFor="keywords-input" className="input-label">
