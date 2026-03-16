@@ -140,18 +140,26 @@ router.post("/:runId/vote", requireAuth, (req, res) => {
 
 // POST /api/workflow/trigger
 // Manually trigger the Phase 1 workflow (runs scheduler --now in background)
+// For demo: scans Best Practices section (49206877282195) by default
+// Supports optional ?sectionId=ID to scan a different section
 // Note: No auth required — safe for automated/cron execution
 router.post("/trigger", (req, res) => {
   const schedulerPath = path.resolve("scheduler.js");
+  const DEMO_SECTION_ID = "49206877282195"; // Best Practices section
+  const { sectionId } = req.query;
 
   if (!fs.existsSync(schedulerPath)) {
     return res.status(500).json({ error: "scheduler.js not found" });
   }
 
+  // Build args: always pass sectionId (defaults to Best Practices for demo)
+  const args = [schedulerPath, "--now"];
+  args.push(`--section=${sectionId || DEMO_SECTION_ID}`);
+
   // Run scheduler --now as a background child process
   const child = execFile(
     process.execPath,
-    [schedulerPath, "--now"],
+    args,
     { detached: true, stdio: "ignore" },
     (err) => {
       if (err) {
@@ -162,9 +170,13 @@ router.post("/trigger", (req, res) => {
 
   child.unref(); // Let it run independently
 
+  const finalSectionId = sectionId || DEMO_SECTION_ID;
+  const sectionLabel = finalSectionId === "49206877282195" ? "Best Practices (demo)" : `Section ${finalSectionId}`;
+
   res.json({
     message: "Workflow triggered",
     note: "Running in background. Check the Translation tab in ~30 seconds for pending approvals.",
+    scanning: sectionLabel,
   });
 });
 

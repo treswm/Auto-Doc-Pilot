@@ -25,6 +25,14 @@ const args = process.argv.slice(2);
 const testMode = args.includes("--test");
 const runNow = args.includes("--now");
 
+// Extract optional section ID (e.g., --section=49206877282195)
+// Default to Best Practices section (49206877282195) for demo purposes
+let sectionId = "49206877282195"; // Best Practices section - demo default
+const sectionArg = args.find(arg => arg.startsWith("--section="));
+if (sectionArg) {
+  sectionId = sectionArg.split("=")[1];
+}
+
 // Placeholder for actual Zendesk and Slack clients
 // These will be initialized when credentials are available
 let zendeskClient = null;
@@ -79,6 +87,11 @@ async function executeWorkflow(slackApp) {
 
   console.log("\n" + "=".repeat(70));
   console.log(`⏰ Phase 1 Workflow Triggered - ${new Date().toISOString()}`);
+  if (sectionId) {
+    console.log(`📋 Mode: Scanning specific section (ID: ${sectionId})`);
+  } else {
+    console.log(`📋 Mode: Scanning recently edited articles`);
+  }
   console.log("=".repeat(70));
 
   try {
@@ -96,6 +109,7 @@ async function executeWorkflow(slackApp) {
       slackChannelId: SLACK_CHANNEL_ID || "#scaling-helpcenter-updates",
       approversList: approvers,
       daysBack: 7,
+      sectionId: sectionId, // Pass optional section ID
     });
 
     console.log(`\n📊 Workflow result:`, result.status);
