@@ -900,6 +900,15 @@ async function main() {
 
         const action = result.status === "created" ? "created" : "skipped_exists";
         if (action === "created") translatedCount += 1;
+        
+        // Update status with real-time progress
+        if (runId && translatedCount % 3 === 0) {  // Update every 3 articles
+          writeTranslationStatus("running", {
+            totalArticles: translatedCount + skippedExistingCount + skippedLargeArticleCount + skippedParseErrorCount + skippedTimeoutCount,
+            articlesTranslated: translatedCount,
+            articlesFailed: skippedParseErrorCount + skippedTimeoutCount,
+          });
+        }
         else skippedExistingCount += 1;
 
         csvRows.push({
