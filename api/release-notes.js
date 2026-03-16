@@ -10,16 +10,18 @@ const router = express.Router();
 
 /**
  * GET /api/release-notes/input
- * Retrieve the current release notes
+ * Retrieve the current release notes and version
  */
 router.get("/input", requireAuth, (req, res) => {
   try {
     const releaseNotes = req.session?.releaseNotes || "";
+    const version = req.session?.releaseVersion || "";
     const extractedKeywords = req.session?.extractedKeywords || [];
 
     res.json({
       success: true,
       releaseNotes,
+      version,
       extractedKeywords,
     });
   } catch (err) {
@@ -30,12 +32,12 @@ router.get("/input", requireAuth, (req, res) => {
 
 /**
  * POST /api/release-notes/input
- * Save the release notes
- * Body: { releaseNotes: string }
+ * Save the release notes and version
+ * Body: { releaseNotes: string, version: string }
  */
 router.post("/input", requireAuth, (req, res) => {
   try {
-    const { releaseNotes } = req.body;
+    const { releaseNotes, version } = req.body;
 
     if (typeof releaseNotes !== "string") {
       return res.status(400).json({
@@ -44,17 +46,28 @@ router.post("/input", requireAuth, (req, res) => {
       });
     }
 
-    // Save to session (in production, save to database)
+    if (!version || typeof version !== "string") {
+      return res.status(400).json({
+        success: false,
+        error: "version is required and must be a string",
+      });
+    }
+
+    // Save to session (in production, save to database with timestamp)
     req.session.releaseNotes = releaseNotes;
+    req.session.releaseVersion = version;
+    req.session.releaseVersionTimestamp = new Date().toISOString();
 
     console.log(
-      `✅ Release notes saved (${releaseNotes.length} characters)`
+      `✅ Release notes saved (v${version}, ${releaseNotes.length} characters)`
     );
 
     res.json({
       success: true,
       message: "Release notes saved successfully",
+      version,
       length: releaseNotes.length,
+      timestamp: req.session.releaseVersionTimestamp,
     });
   } catch (err) {
     console.error("Error saving release notes:", err.message);

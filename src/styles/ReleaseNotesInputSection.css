@@ -26,6 +26,21 @@
   color: var(--color-gray-600);
 }
 
+/* ── Version Badge (View Mode) ── */
+.version-badge {
+  background: #fef9e7;
+  border: 1px solid #fde68a;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: 0.9375rem;
+  color: #92400e;
+  font-weight: 500;
+}
+
+.version-badge strong {
+  color: #78350f;
+}
+
 /* ── View Mode ── */
 .release-notes-view {
   display: flex;
@@ -95,6 +110,67 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-4);
+}
+
+/* ── Version Field ── */
+.version-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  background: white;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-4);
+}
+
+.version-field label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: 0.9375rem;
+  color: var(--color-gray-900);
+}
+
+.version-field label strong {
+  margin: 0;
+}
+
+.version-field .required {
+  color: #dc2626;
+  font-weight: bold;
+}
+
+.version-input {
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: 2px solid #fbbf24;
+  border-radius: var(--border-radius);
+  font-size: 0.9375rem;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+}
+
+.version-input:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.version-input::placeholder {
+  color: var(--color-gray-400);
+}
+
+.version-field small {
+  font-size: 0.8125rem;
+  color: var(--color-gray-500);
+  font-style: italic;
+}
+
+.release-notes-edit label {
+  font-size: 0.9375rem;
+  color: var(--color-gray-900);
+  font-weight: 500;
+  margin-top: var(--spacing-2);
 }
 
 .notes-textarea {

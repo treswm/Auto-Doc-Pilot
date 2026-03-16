@@ -8,6 +8,7 @@ import '../styles/ReleaseNotesInputSection.css'
 function ReleaseNotesInputSection({ onKeywordsExtracted }) {
   const [isEditing, setIsEditing] = useState(false)
   const [releaseNotes, setReleaseNotes] = useState('')
+  const [version, setVersion] = useState('')
   const [extractedKeywords, setExtractedKeywords] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -27,9 +28,10 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
         credentials: 'include'
       })
       const data = await res.json()
-      
+
       if (data.success) {
         setReleaseNotes(data.releaseNotes || '')
+        setVersion(data.version || '')
         setExtractedKeywords(data.extractedKeywords || [])
       }
     } catch (err) {
@@ -43,7 +45,13 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
     setIsSaving(true)
     setError(null)
     setSuccessMessage(null)
-    
+
+    if (!version.trim()) {
+      setError('Please enter a version number or label')
+      setIsSaving(false)
+      return
+    }
+
     try {
       const res = await fetch('/api/release-notes/input', {
         method: 'POST',
@@ -51,11 +59,11 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify({ releaseNotes })
+        body: JSON.stringify({ releaseNotes, version })
       })
 
       const data = await res.json()
-      
+
       if (data.success) {
         setIsEditing(false)
         setSuccessMessage('Release notes saved successfully!')
@@ -154,6 +162,12 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
 
       {!isEditing ? (
         <div className="release-notes-view">
+          {version && (
+            <div className="version-badge">
+              <strong>Version:</strong> {version}
+            </div>
+          )}
+
           <div className="notes-display">
             <pre className="notes-content">
               {releaseNotes || '[No release notes entered yet]'}
@@ -182,12 +196,32 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
         </div>
       ) : (
         <div className="release-notes-edit">
+          <div className="version-field">
+            <label htmlFor="version-input">
+              <strong>Version / Release Label</strong>
+              <span className="required">*</span>
+            </label>
+            <input
+              id="version-input"
+              type="text"
+              className="version-input"
+              value={version}
+              onChange={(e) => setVersion(e.target.value)}
+              placeholder="e.g., v2.5.0, Release 2.5, or Platform 2026-Q1"
+              autoFocus
+            />
+            <small>Used for auditability and tracking documentation changes</small>
+          </div>
+
+          <label htmlFor="notes-textarea">
+            <strong>Release Notes</strong>
+          </label>
           <textarea
+            id="notes-textarea"
             className="notes-textarea"
             value={releaseNotes}
             onChange={(e) => setReleaseNotes(e.target.value)}
             placeholder="Paste your release notes here (from Jira, GitHub, release notes doc, etc.)..."
-            autoFocus
           />
 
           <div className="edit-actions">
