@@ -1,20 +1,8 @@
 {
-  "timestamp": "2026-03-14T18:44:35.982Z",
-  "runId": "run_1773513875984",
-  "status": "pending_approval",
-  "pending_approval": {
-    "articles": [
-      {
-        "id": 49416435499923,
-        "title": "Navigating the Mobile App Inbox",
-        "body": "<p class=\"wysiwyg-text-align-center\"><iframe src=\"//www.loom.com/embed/ab65fbcf51714935a6c52923bdb522d8\" width=\"560\" height=\"315\" frameborder=\"0\" allowfullscreen=\"\"></iframe></p><p> </p><p>The Inbox in the Hi Marley mobile app helps you manage your cases more effectively by organizing conversations and giving you powerful search, filter, and sort options.</p><h2 id=\"h_01J979S1XY7Q1ZY9ZKG4AABZXB\"> </h2><h2 id=\"h_01J923HTDSKV75M49XZGDAWXF0\">Viewing Cases</h2><figure style=\"width: 50%;\" class=\"image wysiwyg-image image_resized wysiwyg-image-resized\"><img style=\"aspect-ratio: 828/1792;\" src=\"https://himarley-staging.zendesk.com/hc/article_attachments/49416435496211\" width=\"828\" height=\"1792\"></figure><ul>\n<li>Scroll through your <strong>Inbox</strong> to view all the active cases assigned to you.</li>\n<li>Each case displays a preview of the most recent message.</li>\n<li>Indicators:<ul>\n<li>A <strong>red dot</strong> means the message is unread.</li>\n<li>A <strong>gray arrow</strong> shows whether the last message was sent or received.</li>\n</ul>\n</li>\n</ul><h2 id=\"h_01J979S1XYHJ74AHXX2EA2MCJM\"> </h2><h2 id=\"h_01J923HTDSW4BEAXBNB1FM9C2Q\">Searching for a Case</h2><figure style=\"width: 50%;\" class=\"image wysiwyg-image image_resized wysiwyg-image-resized\"><img style=\"aspect-ratio: 828/1792;\" src=\"https://himarley-staging.zendesk.com/hc/article_attachments/49416435496467\" width=\"828\" height=\"1792\"></figure><p>Tap the <strong>Search</strong> icon to quickly find a specific case by:</p><ul>\n<li><strong>Customer Name</strong></li>\n<li><strong>Phone Number</strong></li>\n<li><strong>Case Number</strong></li>\n</ul><h2 id=\"h_01J979S1XYMRH1CDMQ41SGHVE8\"> </h2><h2 id=\"h_01J923HTDSKX6397GC1648G3WA\">Using Inbox Filters</h2><p class=\"wysiwyg-text-align-center\"><img style=\"aspect-ratio: 720/1558; width: 50%;\" class=\"image_resized wysiwyg-image-resized\" src=\"https://himarley-staging.zendesk.com/hc/article_attachments/49416428650643\" width=\"720\" height=\"1558\"></p><ul><li>Tap <strong>Inbox Filters</strong> to modify which Hi Marley cases are displayed in your inbox.<ul><li>For example, you can filter to view only <strong>unread messages</strong> or cases where you’re collaborating with other operators.</li></ul>\n</li></ul><h2 id=\"h_01J979S1XYFBPP8DDMEBCR4ZEQ\"> </h2><h2 id=\"01J979QGD7Y5MESAHKW87B741B\">Sorting Cases</h2><figure style=\"width: 50%;\" class=\"image wysiwyg-image image_resized wysiwyg-image-resized\"><img style=\"aspect-ratio: 828/1792;\" src=\"https://himarley-staging.zendesk.com/hc/article_attachments/49416435496979\" width=\"828\" height=\"1792\"></figure><ul><li>Sorting helps you prioritize your caseload. Options include sorting by:<ul><li>\n<strong>Smart Sort</strong>, which prioritizes cases based on tags, such as the <strong>Needs Attention</strong> tag.</li></ul>\n</li></ul><h2 id=\"h_01J979S1XYF2KA9E971ERXTKQ2\">Pinning Cases</h2><figure style=\"width: 50%;\" class=\"image wysiwyg-image image_resized wysiwyg-image-resized\"><img style=\"aspect-ratio: 720/1558;\" src=\"https://himarley-staging.zendesk.com/hc/article_attachments/49416428651667\" width=\"720\" height=\"1558\"></figure><ul>\n<li>You can pin important cases to keep them at the top of your inbox for easy access.</li>\n<li>Tap the <strong>thumbtack</strong> icon on a chat to pin it.</li>\n</ul><h2 id=\"h_01J979RZEPYYJHZ9CT8BQPVW5K\">Explore Your Inbox Today!</h2><p>With the Hi Marley mobile app’s enhanced inbox, managing your caseload is easier than ever. Whether you’re filtering unread messages, searching by case number, or pinning priority chats, you can stay organized and responsive to customer needs.</p><p class=\"wysiwyg-text-align-center\"> </p>",
-        "updated_at": "2026-02-25T12:45:48Z",
-        "created_at": "2026-02-25T12:45:48Z",
-        "draft": false,
-        "locale": "en-us"
-      }
-    ]
-  },
-  "approvalsReceived": [],
-  "history": []
+  "current_run_id": null,
+  "run_timestamp": null,
+  "articles": [],
+  "approvals_needed": [],
+  "approvals_received": [],
+  "all_approved": false
 }

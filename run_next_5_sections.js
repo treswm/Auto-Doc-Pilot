@@ -802,9 +802,10 @@ async function main() {
       parentsReady,
     } = batchItem;
 
-    if (!parentsReady) {
-      continue;
-    }
+    // Process articles regardless of parent translation status (parent translations are optional)
+    // if (!parentsReady) {
+    //   continue;
+    // }
 
     console.log(`\n=== Section Articles: ${sectionName} (${sectionId}) ===`);
 

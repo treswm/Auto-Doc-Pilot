@@ -9,6 +9,7 @@ if (!ZENDESK_SUBDOMAIN || !ZENDESK_OAUTH_ACCESS_TOKEN) {
 }
 
 const zendeskBaseUrl = `https://${ZENDESK_SUBDOMAIN}.zendesk.com/api/v2`;
+const SOURCE_LOCALE = "en-us";
 
 async function safeFetch(url, options, label) {
   try {
@@ -29,7 +30,7 @@ function zendeskAuthHeader() {
 
 async function fetchAllSections() {
   const allSections = [];
-  let nextPageUrl = `${zendeskBaseUrl}/help_center/en-us/sections.json?page[size]=100`;
+  let nextPageUrl = `${zendeskBaseUrl}/help_center/${SOURCE_LOCALE}/sections.json?page[size]=100`;
 
   while (nextPageUrl) {
     console.log(`Fetching sections page...`);
@@ -64,7 +65,7 @@ async function main() {
   const sectionsplanPath = "sections_plan.json";
   let existingPlan = {
     target_locale: "fr-ca",
-    source_locale: "en-us",
+    source_locale: SOURCE_LOCALE,
     sections: [],
   };
 
@@ -81,7 +82,7 @@ async function main() {
   const allSections = await fetchAllSections();
   console.log(`✅ Fetched ${allSections.length} sections from Zendesk\n`);
 
-  // Transform to our format (just id and name)
+  // Transform to our format (just id and name for plan)
   const syncedSections = allSections.map((section) => ({
     id: section.id,
     name: section.name,
@@ -95,7 +96,7 @@ async function main() {
     console.log(`📦 Backup created: ${backupPath}`);
   }
 
-  // Update and write
+  // Update and write plan
   const updatedPlan = {
     target_locale: existingPlan.target_locale,
     source_locale: existingPlan.source_locale,
@@ -108,6 +109,24 @@ async function main() {
   );
 
   console.log(`✅ Updated ${sectionsplanPath} with ${syncedSections.length} sections`);
+
+  // Also write sections_full.json with full metadata
+  const fullSectionsPath = "sections_full.json";
+  const backupFullPath = `sections_full_backup_${timestamp}.json`;
+  if (fs.existsSync(fullSectionsPath)) {
+    fs.copyFileSync(fullSectionsPath, backupFullPath);
+  }
+
+  const fullSections = allSections.map((section) => ({
+    id: section.id,
+    name: section.name,
+    category_id: section.category_id,
+    html_url: section.html_url,
+  }));
+
+  fs.writeFileSync(fullSectionsPath, JSON.stringify({ sections: fullSections }, null, 2));
+  console.log(`✅ Updated ${fullSectionsPath} with full metadata (includes category_id)`);
+
   console.log(`\n📊 Summary:`);
   console.log(`   - Total sections: ${syncedSections.length}`);
   console.log(`   - Locales: ${existingPlan.source_locale} → ${existingPlan.target_locale}`);

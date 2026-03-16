@@ -1,436 +1,130 @@
 {
   "sections": [
     {
-      "id": 47640795237779,
-      "name": "Getting Started with Settings",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/47640795237779-Getting-Started-with-Settings"
+      "id": 49269013333907,
+      "name": "Mobile App Releases",
+      "category_id": 49206977059859,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49269013333907-Mobile-App-Releases"
     },
     {
-      "id": 47613692853395,
-      "name": "Settings - Administration",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/47613692853395-Settings-Administration"
+      "id": 49230295610899,
+      "name": "Web App Releases",
+      "category_id": 49206977059859,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49230295610899-Web-App-Releases"
     },
     {
-      "id": 47613013121939,
-      "name": "Organization",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/47613013121939-Organization"
+      "id": 49207231488531,
+      "name": "SSO",
+      "category_id": 49206751175187,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49207231488531-SSO"
     },
     {
-      "id": 46572920361235,
-      "name": "Product Education Webinars",
-      "category_id": 360006169193,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/46572920361235-Product-Education-Webinars"
+      "id": 49207230664723,
+      "name": "Webhooks",
+      "category_id": 49206751175187,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49207230664723-Webhooks"
     },
     {
-      "id": 45804353695635,
-      "name": "Getting Started",
-      "category_id": 45708904229907,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45804353695635-Getting-Started"
+      "id": 49207199524371,
+      "name": "Integration Overviews",
+      "category_id": 49206751175187,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49207199524371-Integration-Overviews"
     },
     {
-      "id": 45804333166355,
-      "name": "User",
-      "category_id": 45708904229907,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45804333166355-User"
+      "id": 49207214091283,
+      "name": "Partner Integrations",
+      "category_id": 49206751175187,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49207214091283-Partner-Integrations"
     },
     {
-      "id": 45803552579091,
-      "name": "Product Education Webinars",
-      "category_id": 45708904229907,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45803552579091-Product-Education-Webinars"
+      "id": 49207022537107,
+      "name": "New and Notable",
+      "category_id": 49206977059859,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49207022537107-New-and-Notable"
     },
     {
-      "id": 45803474362003,
-      "name": "Web Application",
-      "category_id": 45708904229907,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45803474362003-Web-Application"
+      "id": 49206978014611,
+      "name": "Releases",
+      "category_id": 49206977059859,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206978014611-Releases"
     },
     {
-      "id": 45803450056083,
-      "name": "Guidewire ClaimCenter",
-      "category_id": 45708904229907,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45803450056083-Guidewire-ClaimCenter"
+      "id": 49206985546259,
+      "name": "Messaging and Media",
+      "category_id": 49206782050067,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206985546259-Messaging-and-Media"
     },
     {
-      "id": 45798976547091,
-      "name": "Guidewire ClaimCenter",
-      "category_id": 45798358215059,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45798976547091-Guidewire-ClaimCenter"
+      "id": 49206988318739,
+      "name": "Sign In and Access",
+      "category_id": 49206782050067,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206988318739-Sign-In-and-Access"
     },
     {
-      "id": 45798376748179,
-      "name": "Web Application",
-      "category_id": 45798358215059,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45798376748179-Web-Application"
+      "id": 49206996399635,
+      "name": "Mobile App",
+      "category_id": 49206749755795,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206996399635-Mobile-App"
     },
     {
-      "id": 45712029009555,
-      "name": "Getting Started - User",
-      "category_id": 45708904229907,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45712029009555-Getting-Started-User"
+      "id": 49206940666259,
+      "name": "Connect (Browser Extension)",
+      "category_id": 49206749755795,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206940666259-Connect-Browser-Extension"
     },
     {
-      "id": 45712015948051,
-      "name": "Getting Started - Supervisor",
-      "category_id": 45708904229907,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45712015948051-Getting-Started-Supervisor"
-    },
-    {
-      "id": 45709676424979,
-      "name": "Getting Started - Administrator ",
-      "category_id": 45708904229907,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45709676424979-Getting-Started-Administrator"
-    },
-    {
-      "id": 45708972690963,
-      "name": "Administrator ",
-      "category_id": 45708904229907,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45708972690963-Administrator"
-    },
-    {
-      "id": 42089474176531,
-      "name": "Partner Features",
-      "category_id": 22402349691923,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/42089474176531-Partner-Features"
-    },
-    {
-      "id": 41697291944851,
-      "name": "Verisk™",
-      "category_id": 22402349691923,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/41697291944851-Verisk"
-    },
-    {
-      "id": 9377233788947,
-      "name": "Guidewire ClaimCenter",
-      "category_id": 22402349691923,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/9377233788947-Guidewire-ClaimCenter"
-    },
-    {
-      "id": 1500000353602,
-      "name": "Web App Release Notes",
-      "category_id": 360000856934,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/1500000353602-Web-App-Release-Notes"
-    },
-    {
-      "id": 360012535733,
-      "name": "1️⃣ Setting up Hi Marley",
-      "category_id": 360006169193,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/360012535733-1-Setting-up-Hi-Marley"
-    },
-    {
-      "id": 360012457293,
-      "name": "Web App Features",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/360012457293-Web-App-Features"
-    },
-    {
-      "id": 360009195593,
-      "name": "General Overviews",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/360009195593-General-Overviews"
-    },
-    {
-      "id": 360001916074,
-      "name": "Troubleshooting",
-      "category_id": 360001502193,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/360001916074-Troubleshooting"
-    },
-    {
-      "id": 47613113914259,
-      "name": "Settings - Team Management",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/47613113914259-Settings-Team-Management"
-    },
-    {
-      "id": 47613041445267,
-      "name": "Operational",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/47613041445267-Operational"
-    },
-    {
-      "id": 45711869004179,
-      "name": "Supervisor ",
-      "category_id": 45708904229907,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45711869004179-Supervisor"
-    },
-    {
-      "id": 24339467677203,
-      "name": "Guidewire InsuranceNow",
-      "category_id": 22402349691923,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/24339467677203-Guidewire-InsuranceNow"
-    },
-    {
-      "id": 15504659296787,
-      "name": "2️⃣ Navigating the Hi Marley Web App",
-      "category_id": 360006169193,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/15504659296787-2-Navigating-the-Hi-Marley-Web-App"
-    },
-    {
-      "id": 4406001907347,
-      "name": "Single-Sign On (SSO) Integration",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/4406001907347-Single-Sign-On-SSO-Integration"
-    },
-    {
-      "id": 1500002557622,
-      "name": "Mobile Release Notes",
-      "category_id": 360000856934,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/1500002557622-Mobile-Release-Notes"
-    },
-    {
-      "id": 360010576094,
-      "name": "📊 Insights",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/360010576094--Insights"
-    },
-    {
-      "id": 360011617813,
-      "name": "Hi Marley Mobile App ",
-      "category_id": 10980258050067,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/360011617813-Hi-Marley-Mobile-App"
-    },
-    {
-      "id": 360001916094,
-      "name": "FAQs",
-      "category_id": 360001502193,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/360001916094-FAQs"
-    },
-    {
-      "id": 47613702094227,
-      "name": "Settings - Integrations & Services",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/47613702094227-Settings-Integrations-Services"
-    },
-    {
-      "id": 47613094299539,
-      "name": "Notifications",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/47613094299539-Notifications"
-    },
-    {
-      "id": 45711867841811,
-      "name": "User",
-      "category_id": 45708904229907,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45711867841811-User"
-    },
-    {
-      "id": 38543357475859,
-      "name": "Hi Marley Connect",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/38543357475859-Hi-Marley-Connect"
-    },
-    {
-      "id": 15510370671507,
-      "name": "3️⃣ Case Management",
-      "category_id": 360006169193,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/15510370671507-3-Case-Management"
-    },
-    {
-      "id": 9702037556883,
-      "name": "One, Inc",
-      "category_id": 22402349691923,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/9702037556883-One-Inc"
-    },
-    {
-      "id": 6346596605715,
-      "name": "Feature Integration Guides",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/6346596605715-Feature-Integration-Guides"
-    },
-    {
-      "id": 4406000935699,
-      "name": "Release Preview",
-      "category_id": 360000856934,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/4406000935699-Release-Preview"
-    },
-    {
-      "id": 45711856848659,
-      "name": "Learning & Development",
-      "category_id": 45708904229907,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/45711856848659-Learning-Development"
-    },
-    {
-      "id": 35507680942483,
-      "name": "Conversational First Notice of Loss (CFNOL)",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/35507680942483-Conversational-First-Notice-of-Loss-CFNOL"
-    },
-    {
-      "id": 24147513369491,
-      "name": "4️⃣ Chatting on Cases",
-      "category_id": 360006169193,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/24147513369491-4-Chatting-on-Cases"
-    },
-    {
-      "id": 9377335906707,
-      "name": "Sapiens",
-      "category_id": 22402349691923,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/9377335906707-Sapiens"
-    },
-    {
-      "id": 8111687088403,
-      "name": "Accelerators",
-      "category_id": 360000856934,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/8111687088403-Accelerators"
-    },
-    {
-      "id": 4405960957459,
-      "name": "Webhook Guides",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/4405960957459-Webhook-Guides"
-    },
-    {
-      "id": 47613174557843,
-      "name": "Integrations",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/47613174557843-Integrations"
-    },
-    {
-      "id": 19982951933971,
-      "name": "Case API Actions",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/19982951933971-Case-API-Actions"
-    },
-    {
-      "id": 9377369241747,
-      "name": "Duck Creek",
-      "category_id": 22402349691923,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/9377369241747-Duck-Creek"
-    },
-    {
-      "id": 6769365797395,
-      "name": "Coaching",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/6769365797395-Coaching"
-    },
-    {
-      "id": 1500000348362,
-      "name": "Recommended Workflows",
-      "category_id": 360006169193,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/1500000348362-Recommended-Workflows"
-    },
-    {
-      "id": 47613177180435,
-      "name": "Conversational FNOL",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/47613177180435-Conversational-FNOL"
-    },
-    {
-      "id": 23626051404051,
-      "name": "Copart",
-      "category_id": 22402349691923,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/23626051404051-Copart"
-    },
-    {
-      "id": 19983117341715,
-      "name": "Transcript API Actions",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/19983117341715-Transcript-API-Actions"
-    },
-    {
-      "id": 15505928410643,
+      "id": 49206936781843,
       "name": "Settings",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/15505928410643-Settings"
+      "category_id": 49206749755795,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206936781843-Settings"
     },
     {
-      "id": 19983148082067,
-      "name": "Group Management API Actions",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/19983148082067-Group-Management-API-Actions"
+      "id": 49206935980435,
+      "name": "Insights",
+      "category_id": 49206749755795,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206935980435-Insights"
     },
     {
-      "id": 4404643422227,
-      "name": "Marley Outreach",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/4404643422227-Marley-Outreach"
+      "id": 49206926136339,
+      "name": "Cases, Claims, and Policies",
+      "category_id": 49206749755795,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206926136339-Cases-Claims-and-Policies"
     },
     {
-      "id": 360012536193,
-      "name": "Customizable Automated Messages",
-      "category_id": 360006169193,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/360012536193-Customizable-Automated-Messages"
+      "id": 49206924012179,
+      "name": "Inbox",
+      "category_id": 49206749755795,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206924012179-Inbox"
     },
     {
-      "id": 19983056651539,
-      "name": "Message API Actions",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/19983056651539-Message-API-Actions"
+      "id": 49206962709011,
+      "name": "Web App Features",
+      "category_id": 49206749755795,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206962709011-Web-App-Features"
     },
     {
-      "id": 15510744897299,
-      "name": "Inbound Workflows",
-      "category_id": 1500000142401,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/15510744897299-Inbound-Workflows"
+      "id": 49206877282195,
+      "name": "Best Practices",
+      "category_id": 49206778114323,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206877282195-Best-Practices"
     },
     {
-      "id": 360009078354,
-      "name": "Using Hi Marley",
-      "category_id": 360001502193,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/360009078354-Using-Hi-Marley"
+      "id": 49206913370643,
+      "name": "Manage a Case",
+      "category_id": 49206778114323,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206913370643-Manage-a-Case"
     },
     {
-      "id": 19983115796755,
-      "name": "Scheduled Message API Actions",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/19983115796755-Scheduled-Message-API-Actions"
+      "id": 49206875361555,
+      "name": "Messaging Basics",
+      "category_id": 49206778114323,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206875361555-Messaging-Basics"
     },
     {
-      "id": 19983142897683,
-      "name": "User API Actions",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/19983142897683-User-API-Actions"
-    },
-    {
-      "id": 34188862408851,
-      "name": "Contact API Actions",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/34188862408851-Contact-API-Actions"
-    },
-    {
-      "id": 19983132365843,
-      "name": "Operator API Actions ",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/19983132365843-Operator-API-Actions"
-    },
-    {
-      "id": 19983112626963,
-      "name": "Case Note API Actions",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/19983112626963-Case-Note-API-Actions"
-    },
-    {
-      "id": 19983133782163,
-      "name": "Phone API Actions",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/19983133782163-Phone-API-Actions"
-    },
-    {
-      "id": 19983140364563,
-      "name": "Webhook Actions",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/19983140364563-Webhook-Actions"
-    },
-    {
-      "id": 6674537179027,
-      "name": "Other API Related Guides",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/6674537179027-Other-API-Related-Guides"
-    },
-    {
-      "id": 11942022107795,
-      "name": "Salesforce Service Cloud Integration",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/11942022107795-Salesforce-Service-Cloud-Integration"
-    },
-    {
-      "id": 43266408136211,
-      "name": "Multi Party Texting API Actions",
-      "category_id": 1500000150122,
-      "html_url": "https://himarley.zendesk.com/hc/en-us/sections/43266408136211-Multi-Party-Texting-API-Actions"
+      "id": 49206811922707,
+      "name": "Access & Login",
+      "category_id": 49206778114323,
+      "html_url": "https://himarley-staging.zendesk.com/hc/en-us/sections/49206811922707-Access-Login"
     }
   ]
 }

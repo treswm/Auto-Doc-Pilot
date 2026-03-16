@@ -370,9 +370,7 @@ async function translateApprovedArticles(approvalStatus, runId = null) {
     articlesFailed: 0,
   });
 
-  // Use absolute path from project root
-  const projectRoot = path.dirname(path.dirname(__filename)); // Go up to project root from lib/
-  const translationScript = path.join(projectRoot, "run_next_5_sections.js");
+  const translationScript = path.resolve("run_next_5_sections.js");
 
   if (!fs.existsSync(translationScript)) {
     console.warn("⚠️  Translation script not found, skipping translation");
@@ -392,7 +390,7 @@ async function translateApprovedArticles(approvalStatus, runId = null) {
   const child = execFile(
     process.execPath,
     [translationScript, `--runId=${translationRunId}`],
-    { detached: true, cwd: projectRoot, stdio: ["ignore", "pipe", "pipe"] },
+    { detached: true, stdio: "ignore" },
     (err) => {
       if (err) {
         console.error("Translation process error:", err.message);

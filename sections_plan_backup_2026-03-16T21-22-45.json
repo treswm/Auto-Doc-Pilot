@@ -1,0 +1,90 @@
+{
+  "target_locale": "fr-ca",
+  "source_locale": "en-us",
+  "sections": [
+    {
+      "id": 49269013333907,
+      "name": "Mobile App Releases"
+    },
+    {
+      "id": 49230295610899,
+      "name": "Web App Releases"
+    },
+    {
+      "id": 49207231488531,
+      "name": "SSO"
+    },
+    {
+      "id": 49207230664723,
+      "name": "Webhooks"
+    },
+    {
+      "id": 49207199524371,
+      "name": "Integration Overviews"
+    },
+    {
+      "id": 49207214091283,
+      "name": "Partner Integrations"
+    },
+    {
+      "id": 49207022537107,
+      "name": "New and Notable"
+    },
+    {
+      "id": 49206978014611,
+      "name": "Releases"
+    },
+    {
+      "id": 49206985546259,
+      "name": "Messaging and Media"
+    },
+    {
+      "id": 49206988318739,
+      "name": "Sign In and Access"
+    },
+    {
+      "id": 49206996399635,
+      "name": "Mobile App"
+    },
+    {
+      "id": 49206940666259,
+      "name": "Connect (Browser Extension)"
+    },
+    {
+      "id": 49206936781843,
+      "name": "Settings"
+    },
+    {
+      "id": 49206935980435,
+      "name": "Insights"
+    },
+    {
+      "id": 49206926136339,
+      "name": "Cases, Claims, and Policies"
+    },
+    {
+      "id": 49206924012179,
+      "name": "Inbox"
+    },
+    {
+      "id": 49206962709011,
+      "name": "Web App Features"
+    },
+    {
+      "id": 49206877282195,
+      "name": "Best Practices"
+    },
+    {
+      "id": 49206913370643,
+      "name": "Manage a Case"
+    },
+    {
+      "id": 49206875361555,
+      "name": "Messaging Basics"
+    },
+    {
+      "id": 49206811922707,
+      "name": "Access & Login"
+    }
+  ]
+}
