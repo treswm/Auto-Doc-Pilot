@@ -41,6 +41,28 @@
   color: #78350f;
 }
 
+/* ── Release Header ── */
+.release-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.timestamp-info {
+  padding: var(--spacing-2) var(--spacing-3);
+  background: #f3f4f6;
+  border-left: 3px solid #6b7280;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  color: var(--color-gray-600);
+}
+
+.timestamp-info.processed {
+  background: #ecfdf5;
+  border-left-color: #10b981;
+  color: #047857;
+}
+
 /* ── View Mode ── */
 .release-notes-view {
   display: flex;
@@ -71,6 +93,7 @@
 .view-actions {
   display: flex;
   gap: var(--spacing-3);
+  flex-wrap: wrap;
 }
 
 /* ── Keywords Display ── */
@@ -226,12 +249,21 @@
 /* ── Extract Section ── */
 .extract-section {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  align-items: center;
   padding: var(--spacing-4);
   background: #fef9e7;
   border: 1px solid #fde68a;
   border-radius: var(--border-radius);
   margin-top: var(--spacing-4);
+}
+
+.extract-prompt {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #78350f;
+  font-weight: 500;
 }
 
 .extract-section .btn {

@@ -6,10 +6,12 @@ import '../styles/ReleaseNotesInputSection.css'
  * Paste release notes and auto-extract keywords for article scanning
  */
 function ReleaseNotesInputSection({ onKeywordsExtracted }) {
-  const [isEditing, setIsEditing] = useState(false)
+  const [isAdding, setIsAdding] = useState(false)
   const [releaseNotes, setReleaseNotes] = useState('')
   const [version, setVersion] = useState('')
   const [extractedKeywords, setExtractedKeywords] = useState([])
+  const [addedAt, setAddedAt] = useState(null)
+  const [processedAt, setProcessedAt] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isExtracting, setIsExtracting] = useState(false)
@@ -33,6 +35,8 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
         setReleaseNotes(data.releaseNotes || '')
         setVersion(data.version || '')
         setExtractedKeywords(data.extractedKeywords || [])
+        setAddedAt(data.addedAt || null)
+        setProcessedAt(data.processedAt || null)
       }
     } catch (err) {
       console.error('Error loading release notes:', err)
@@ -65,9 +69,10 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
       const data = await res.json()
 
       if (data.success) {
-        setIsEditing(false)
-        setSuccessMessage('Release notes saved successfully!')
-        setTimeout(() => setSuccessMessage(null), 3000)
+        setIsAdding(false)
+        setAddedAt(data.addedAt)
+        setSuccessMessage('✅ Release notes added successfully! Now extract keywords and scan articles.')
+        setTimeout(() => setSuccessMessage(null), 4000)
       } else {
         setError(data.error || 'Failed to save release notes')
       }
@@ -124,8 +129,30 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
 
   const handleCancel = () => {
     loadReleaseNotes()
-    setIsEditing(false)
+    setIsAdding(false)
     setError(null)
+  }
+
+  const markAsProcessed = async () => {
+    try {
+      const res = await fetch('/api/release-notes/input', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ releaseNotes, version, markProcessed: true })
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        setProcessedAt(data.processedAt)
+        setSuccessMessage('✅ Release marked as processed. Audit trail recorded.')
+        setTimeout(() => setSuccessMessage(null), 3000)
+      }
+    } catch (err) {
+      console.error('Error marking as processed:', err)
+    }
   }
 
   if (isLoading) {
@@ -160,13 +187,25 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
         </div>
       )}
 
-      {!isEditing ? (
+      {!isAdding ? (
         <div className="release-notes-view">
-          {version && (
-            <div className="version-badge">
-              <strong>Version:</strong> {version}
-            </div>
-          )}
+          <div className="release-header">
+            {version && (
+              <div className="version-badge">
+                <strong>Version:</strong> {version}
+              </div>
+            )}
+            {addedAt && (
+              <div className="timestamp-info">
+                <small>📅 Added: {new Date(addedAt).toLocaleString()}</small>
+              </div>
+            )}
+            {processedAt && (
+              <div className="timestamp-info processed">
+                <small>✅ Last Processed: {new Date(processedAt).toLocaleString()}</small>
+              </div>
+            )}
+          </div>
 
           <div className="notes-display">
             <pre className="notes-content">
@@ -175,12 +214,29 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
           </div>
 
           <div className="view-actions">
-            <button
-              className="btn btn-primary"
-              onClick={() => setIsEditing(true)}
-            >
-              ✏️ Edit Release Notes
-            </button>
+            {releaseNotes ? (
+              <>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setIsAdding(true)}
+                >
+                  ✏️ Edit Release
+                </button>
+                <button
+                  className="btn btn-accent"
+                  onClick={markAsProcessed}
+                >
+                  ✅ Mark as Processed
+                </button>
+              </>
+            ) : (
+              <button
+                className="btn btn-primary"
+                onClick={() => setIsAdding(true)}
+              >
+                ➕ Add Release Notes
+              </button>
+            )}
           </div>
 
           {extractedKeywords.length > 0 && (
@@ -248,8 +304,11 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
         </div>
       )}
 
-      {releaseNotes && !isEditing && (
+      {releaseNotes && !isAdding && (
         <div className="extract-section">
+          <p className="extract-prompt">
+            Ready to scan your Help Center? Extract keywords from these release notes:
+          </p>
           <button
             className="btn btn-accent"
             onClick={handleExtractKeywords}

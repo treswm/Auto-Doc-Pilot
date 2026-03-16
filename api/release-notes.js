@@ -16,12 +16,16 @@ router.get("/input", requireAuth, (req, res) => {
   try {
     const releaseNotes = req.session?.releaseNotes || "";
     const version = req.session?.releaseVersion || "";
+    const addedAt = req.session?.releaseVersionTimestamp || null;
+    const processedAt = req.session?.releaseProcessedAt || null;
     const extractedKeywords = req.session?.extractedKeywords || [];
 
     res.json({
       success: true,
       releaseNotes,
       version,
+      addedAt,
+      processedAt,
       extractedKeywords,
     });
   } catch (err) {
@@ -37,7 +41,18 @@ router.get("/input", requireAuth, (req, res) => {
  */
 router.post("/input", requireAuth, (req, res) => {
   try {
-    const { releaseNotes, version } = req.body;
+    const { releaseNotes, version, markProcessed } = req.body;
+
+    // Handle marking as processed
+    if (markProcessed) {
+      req.session.releaseProcessedAt = new Date().toISOString();
+      console.log(`✅ Release marked as processed at ${req.session.releaseProcessedAt}`);
+      return res.json({
+        success: true,
+        message: "Release marked as processed",
+        processedAt: req.session.releaseProcessedAt,
+      });
+    }
 
     if (typeof releaseNotes !== "string") {
       return res.status(400).json({
@@ -59,15 +74,15 @@ router.post("/input", requireAuth, (req, res) => {
     req.session.releaseVersionTimestamp = new Date().toISOString();
 
     console.log(
-      `✅ Release notes saved (v${version}, ${releaseNotes.length} characters)`
+      `✅ Release notes added (v${version}, ${releaseNotes.length} characters)`
     );
 
     res.json({
       success: true,
-      message: "Release notes saved successfully",
+      message: "Release notes added successfully",
       version,
       length: releaseNotes.length,
-      timestamp: req.session.releaseVersionTimestamp,
+      addedAt: req.session.releaseVersionTimestamp,
     });
   } catch (err) {
     console.error("Error saving release notes:", err.message);
