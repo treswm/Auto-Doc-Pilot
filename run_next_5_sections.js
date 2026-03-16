@@ -691,7 +691,7 @@ async function main() {
   // OpenAI usage totals
   const usageTotals = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
 
-  const maxSectionsPerRun = 5;
+  const maxSectionsPerRun = 1; // Demo: process 1 section at a time
   const throttle = Number(THROTTLE_MS) || 900;
   const translatedCategoryIds = new Set();
   const translatedSectionIds = new Set();
