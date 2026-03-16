@@ -65,11 +65,11 @@ router.get("/recent", requireAuth, async (req, res) => {
  */
 router.get("/outdated", requireAuth, async (req, res) => {
   try {
-    const daysSinceUpdate = parseInt(req.query.daysSinceUpdate) || 90;
+    const daysSinceUpdate = parseInt(req.query.daysSinceUpdate) || 30;
     const limit = parseInt(req.query.limit) || 50;
 
     console.log(
-      `📋 Scanning outdated articles (${daysSinceUpdate}+ days, limit ${limit})`
+      `📋 Scanning outdated articles (${daysSinceUpdate}+ days (outdated threshold), limit ${limit})`
     );
 
     const articles = await fetchOutdatedArticles(
