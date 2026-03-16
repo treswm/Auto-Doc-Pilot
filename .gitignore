@@ -1,0 +1,12 @@
+# Credentials — never commit
+.env
+.env.*
+
+# Node
+node_modules/
+
+# Output files (potentially contain article content)
+output/
+
+# macOS
+.DS_Store

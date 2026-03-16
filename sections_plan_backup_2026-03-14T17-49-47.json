@@ -1,0 +1,294 @@
+{
+  "target_locale": "fr-ca",
+  "source_locale": "en-us",
+  "sections": [
+    {
+      "id": 47640795237779,
+      "name": "Getting Started with Settings"
+    },
+    {
+      "id": 47613692853395,
+      "name": "Settings - Administration"
+    },
+    {
+      "id": 47613013121939,
+      "name": "Organization"
+    },
+    {
+      "id": 46572920361235,
+      "name": "Product Education Webinars"
+    },
+    {
+      "id": 45804353695635,
+      "name": "Getting Started"
+    },
+    {
+      "id": 45804333166355,
+      "name": "User"
+    },
+    {
+      "id": 45803552579091,
+      "name": "Product Education Webinars"
+    },
+    {
+      "id": 45803474362003,
+      "name": "Web Application"
+    },
+    {
+      "id": 45803450056083,
+      "name": "Guidewire ClaimCenter"
+    },
+    {
+      "id": 45798976547091,
+      "name": "Guidewire ClaimCenter"
+    },
+    {
+      "id": 45798376748179,
+      "name": "Web Application"
+    },
+    {
+      "id": 45712029009555,
+      "name": "Getting Started - User"
+    },
+    {
+      "id": 45712015948051,
+      "name": "Getting Started - Supervisor"
+    },
+    {
+      "id": 45709676424979,
+      "name": "Getting Started - Administrator "
+    },
+    {
+      "id": 45708972690963,
+      "name": "Administrator "
+    },
+    {
+      "id": 42089474176531,
+      "name": "Partner Features"
+    },
+    {
+      "id": 41697291944851,
+      "name": "Verisk™"
+    },
+    {
+      "id": 9377233788947,
+      "name": "Guidewire ClaimCenter"
+    },
+    {
+      "id": 1500000353602,
+      "name": "Web App Release Notes"
+    },
+    {
+      "id": 360012535733,
+      "name": "1️⃣ Setting up Hi Marley"
+    },
+    {
+      "id": 360012457293,
+      "name": "Web App Features"
+    },
+    {
+      "id": 360009195593,
+      "name": "General Overviews"
+    },
+    {
+      "id": 360001916074,
+      "name": "Troubleshooting"
+    },
+    {
+      "id": 47613113914259,
+      "name": "Settings - Team Management"
+    },
+    {
+      "id": 47613041445267,
+      "name": "Operational"
+    },
+    {
+      "id": 45711869004179,
+      "name": "Supervisor "
+    },
+    {
+      "id": 24339467677203,
+      "name": "Guidewire InsuranceNow"
+    },
+    {
+      "id": 15504659296787,
+      "name": "2️⃣ Navigating the Hi Marley Web App"
+    },
+    {
+      "id": 4406001907347,
+      "name": "Single-Sign On (SSO) Integration"
+    },
+    {
+      "id": 1500002557622,
+      "name": "Mobile Release Notes"
+    },
+    {
+      "id": 360010576094,
+      "name": "📊 Insights"
+    },
+    {
+      "id": 360011617813,
+      "name": "Hi Marley Mobile App "
+    },
+    {
+      "id": 360001916094,
+      "name": "FAQs"
+    },
+    {
+      "id": 47613702094227,
+      "name": "Settings - Integrations & Services"
+    },
+    {
+      "id": 47613094299539,
+      "name": "Notifications"
+    },
+    {
+      "id": 45711867841811,
+      "name": "User"
+    },
+    {
+      "id": 38543357475859,
+      "name": "Hi Marley Connect"
+    },
+    {
+      "id": 15510370671507,
+      "name": "3️⃣ Case Management"
+    },
+    {
+      "id": 9702037556883,
+      "name": "One, Inc"
+    },
+    {
+      "id": 6346596605715,
+      "name": "Feature Integration Guides"
+    },
+    {
+      "id": 4406000935699,
+      "name": "Release Preview"
+    },
+    {
+      "id": 45711856848659,
+      "name": "Learning & Development"
+    },
+    {
+      "id": 35507680942483,
+      "name": "Conversational First Notice of Loss (CFNOL)"
+    },
+    {
+      "id": 24147513369491,
+      "name": "4️⃣ Chatting on Cases"
+    },
+    {
+      "id": 9377335906707,
+      "name": "Sapiens"
+    },
+    {
+      "id": 8111687088403,
+      "name": "Accelerators"
+    },
+    {
+      "id": 4405960957459,
+      "name": "Webhook Guides"
+    },
+    {
+      "id": 47613174557843,
+      "name": "Integrations"
+    },
+    {
+      "id": 19982951933971,
+      "name": "Case API Actions"
+    },
+    {
+      "id": 9377369241747,
+      "name": "Duck Creek"
+    },
+    {
+      "id": 6769365797395,
+      "name": "Coaching"
+    },
+    {
+      "id": 1500000348362,
+      "name": "Recommended Workflows"
+    },
+    {
+      "id": 47613177180435,
+      "name": "Conversational FNOL"
+    },
+    {
+      "id": 23626051404051,
+      "name": "Copart"
+    },
+    {
+      "id": 19983117341715,
+      "name": "Transcript API Actions"
+    },
+    {
+      "id": 15505928410643,
+      "name": "Settings"
+    },
+    {
+      "id": 19983148082067,
+      "name": "Group Management API Actions"
+    },
+    {
+      "id": 4404643422227,
+      "name": "Marley Outreach"
+    },
+    {
+      "id": 360012536193,
+      "name": "Customizable Automated Messages"
+    },
+    {
+      "id": 19983056651539,
+      "name": "Message API Actions"
+    },
+    {
+      "id": 15510744897299,
+      "name": "Inbound Workflows"
+    },
+    {
+      "id": 360009078354,
+      "name": "Using Hi Marley"
+    },
+    {
+      "id": 19983115796755,
+      "name": "Scheduled Message API Actions"
+    },
+    {
+      "id": 19983142897683,
+      "name": "User API Actions"
+    },
+    {
+      "id": 34188862408851,
+      "name": "Contact API Actions"
+    },
+    {
+      "id": 19983132365843,
+      "name": "Operator API Actions "
+    },
+    {
+      "id": 19983112626963,
+      "name": "Case Note API Actions"
+    },
+    {
+      "id": 19983133782163,
+      "name": "Phone API Actions"
+    },
+    {
+      "id": 19983140364563,
+      "name": "Webhook Actions"
+    },
+    {
+      "id": 6674537179027,
+      "name": "Other API Related Guides"
+    },
+    {
+      "id": 11942022107795,
+      "name": "Salesforce Service Cloud Integration"
+    },
+    {
+      "id": 43266408136211,
+      "name": "Multi Party Texting API Actions"
+    }
+  ]
+}

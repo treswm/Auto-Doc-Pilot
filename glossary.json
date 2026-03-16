@@ -1,0 +1,586 @@
+{
+  "glossary": [
+    {
+      "english": "Adjusters",
+      "french": "Évaluateurs",
+      "category": "User Role",
+      "context": "Insurance professionals who handle claims"
+    },
+    {
+      "english": "AI Case Summary",
+      "french": "Résumé de dossier IA",
+      "category": "Feature",
+      "context": "Auto-generated summary of a claim conversation"
+    },
+    {
+      "english": "AI Coaching",
+      "french": "Coaching IA",
+      "category": "Feature",
+      "context": "Real-time alerts to help operators improve performance"
+    },
+    {
+      "english": "AI Photo Assist",
+      "french": "Assistance photo IA",
+      "category": "Feature",
+      "context": "AI-powered photo interpretation for claims"
+    },
+    {
+      "english": "AI Photo Analysis",
+      "french": "Analyse photo IA",
+      "category": "Feature",
+      "context": "AI analysis of claim photos"
+    },
+    {
+      "english": "AI Suggested Response",
+      "french": "Réponse suggérée IA",
+      "category": "Feature",
+      "context": "AI-generated message suggestions"
+    },
+    {
+      "english": "Writing Assistant",
+      "french": "Assistant de rédaction",
+      "category": "Feature",
+      "context": "AI tool to help write messages"
+    },
+    {
+      "english": "Alerts",
+      "french": "Alertes",
+      "category": "Feature",
+      "context": "System signals that flag conversations needing attention"
+    },
+    {
+      "english": "Auto Replies",
+      "french": "Réponses automatiques",
+      "category": "Feature",
+      "context": "Automated responses triggered by specific conditions"
+    },
+    {
+      "english": "Away Message",
+      "french": "Message d'absence",
+      "category": "Feature",
+      "context": "Auto-reply when operator is unavailable"
+    },
+    {
+      "english": "Branded Messaging",
+      "french": "Messagerie de marque",
+      "category": "Feature",
+      "context": "Customer-facing messages aligned to carrier brand"
+    },
+    {
+      "english": "Brands",
+      "french": "Marques",
+      "category": "Feature",
+      "context": "Multiple carrier brands managed in one platform"
+    },
+    {
+      "english": "Case",
+      "french": "Dossier",
+      "category": "Core Concept",
+      "context": "A unified conversation thread about a claim or service interaction"
+    },
+    {
+      "english": "Case Reassignment",
+      "french": "Réassignation de dossier",
+      "category": "Workflow",
+      "context": "Transfer of case ownership between operators"
+    },
+    {
+      "english": "Case Transcripts",
+      "french": "Transcriptions de dossier",
+      "category": "Feature",
+      "context": "Exportable records of full conversations for compliance"
+    },
+    {
+      "english": "Case Visibility",
+      "french": "Visibilité du dossier",
+      "category": "Feature",
+      "context": "Controls determining what content is visible to policyholder vs internal"
+    },
+    {
+      "english": "Claim",
+      "french": "Réclamation",
+      "category": "Core Concept",
+      "context": "An insurance claim or service request"
+    },
+    {
+      "english": "Conversation",
+      "french": "Conversation",
+      "category": "Core Concept",
+      "context": "Two-way communication thread"
+    },
+    {
+      "english": "Conversation Thread",
+      "french": "Fil de conversation",
+      "category": "Core Concept",
+      "context": "Unified communication stream associated with a claim"
+    },
+    {
+      "english": "Configurable Opt-In",
+      "french": "Consentement configurable",
+      "category": "Feature",
+      "context": "Flexible consent flow for SMS messaging"
+    },
+    {
+      "english": "Conversational FNOL",
+      "french": "DCDP conversationnelle",
+      "category": "Feature",
+      "context": "Text-enabled claim intake experience (First Notice of Loss)"
+    },
+    {
+      "english": "FNOL",
+      "french": "DCDP",
+      "category": "Abbreviation",
+      "context": "Déclaration de Cause De Perte (First Notice of Loss)"
+    },
+    {
+      "english": "Dashboards",
+      "french": "Tableaux de bord",
+      "category": "Feature",
+      "context": "Reporting views of performance metrics"
+    },
+    {
+      "english": "Deliverability Monitoring",
+      "french": "Surveillance de la livraison",
+      "category": "Feature",
+      "context": "System monitoring for messaging delivery issues"
+    },
+    {
+      "english": "Email Notifications",
+      "french": "Notifications par courriel",
+      "category": "Feature",
+      "context": "Platform alerts delivered via email"
+    },
+    {
+      "english": "Escalation Signals",
+      "french": "Signaux d'escalade",
+      "category": "Feature",
+      "context": "Indicators showing conversations at risk"
+    },
+    {
+      "english": "Focused Operator",
+      "french": "Opérateur en mode concentré",
+      "category": "Feature",
+      "context": "Inbox mode that reduces noise for high-priority conversations"
+    },
+    {
+      "english": "Group Management",
+      "french": "Gestion de groupe",
+      "category": "Admin",
+      "context": "Admin capability to create and manage teams"
+    },
+    {
+      "english": "Hi Marley",
+      "french": "Hi Marley",
+      "category": "Product Name",
+      "context": "Insurance claims and service platform - keep as-is"
+    },
+    {
+      "english": "Hi Marley Connect",
+      "french": "Hi Marley Connect",
+      "category": "Product Name",
+      "context": "Lightweight embedding of Hi Marley capabilities - keep as-is"
+    },
+    {
+      "english": "Hi Marley Insurance Cloud",
+      "french": "Hi Marley Insurance Cloud",
+      "category": "Product Name",
+      "context": "Platform foundation - keep as-is"
+    },
+    {
+      "english": "Image Redaction",
+      "french": "Suppression d'images",
+      "category": "Feature",
+      "context": "Automated masking of sensitive information in images"
+    },
+    {
+      "english": "Inbound Media",
+      "french": "Média entrant",
+      "category": "Feature",
+      "context": "Photos, videos, documents received from customers"
+    },
+    {
+      "english": "Inactivity Message",
+      "french": "Message d'inactivité",
+      "category": "Feature",
+      "context": "Auto-message triggered when conversation is inactive"
+    },
+    {
+      "english": "Industry Benchmark",
+      "french": "Repère de l'industrie",
+      "category": "Feature",
+      "context": "Performance comparisons against industry averages"
+    },
+    {
+      "english": "Intelligent Translation",
+      "french": "Traduction intelligente",
+      "category": "Feature",
+      "context": "Real-time bidirectional message translation"
+    },
+    {
+      "english": "Insights",
+      "french": "Informations",
+      "category": "Feature",
+      "context": "Reporting views for supervisors covering adoption and KPIs"
+    },
+    {
+      "english": "My Team Insights",
+      "french": "Informations de mon équipe",
+      "category": "Feature",
+      "context": "Team-level performance reporting"
+    },
+    {
+      "english": "My Org Insights",
+      "french": "Informations organisationnelles",
+      "category": "Feature",
+      "context": "Organization-level performance reporting"
+    },
+    {
+      "english": "Message Delivery Rate",
+      "french": "Taux de livraison des messages",
+      "category": "Metric",
+      "context": "Measure of reliable message delivery to policyholders"
+    },
+    {
+      "english": "Message Intelligence",
+      "french": "Intelligence des messages",
+      "category": "Feature",
+      "context": "AI-driven analysis surfacing risk and urgency signals"
+    },
+    {
+      "english": "Message Prefix",
+      "french": "Préfixe de message",
+      "category": "Feature",
+      "context": "Identifier showing which user sent a message"
+    },
+    {
+      "english": "Message Templates",
+      "french": "Modèles de message",
+      "category": "Feature",
+      "context": "Pre-built messages for common claim scenarios"
+    },
+    {
+      "english": "Mobile App",
+      "french": "Application mobile",
+      "category": "Feature",
+      "context": "Mobile access for operators to manage conversations"
+    },
+    {
+      "english": "Multi-Party Texting",
+      "french": "SMS multipartite",
+      "category": "Feature",
+      "context": "Ability to include vendors and partners in conversation thread"
+    },
+    {
+      "english": "Multi-User Collaboration",
+      "french": "Collaboration multi-utilisateur",
+      "category": "Feature",
+      "context": "Multiple users viewing and collaborating on single case"
+    },
+    {
+      "english": "Needs Action Label",
+      "french": "Étiquette Nécessite une action",
+      "category": "Tag",
+      "context": "Indicator that follow-up or response is required"
+    },
+    {
+      "english": "Needs Attention Label",
+      "french": "Étiquette Nécessite une attention",
+      "category": "Tag",
+      "context": "AI-generated indicator for conversations at risk"
+    },
+    {
+      "english": "Needs First Touch",
+      "french": "Nécessite un premier contact",
+      "category": "Tag",
+      "context": "Tag indicating new case needing initial outreach"
+    },
+    {
+      "english": "Has a Question",
+      "french": "Contient une question",
+      "category": "Tag",
+      "context": "Tag for conversations with unanswered questions"
+    },
+    {
+      "english": "Notification Configuration",
+      "french": "Configuration des notifications",
+      "category": "Admin",
+      "context": "Admin settings controlling what events trigger notifications"
+    },
+    {
+      "english": "One-Way Notifications",
+      "french": "Notifications unidirectionnelles",
+      "category": "Feature",
+      "context": "Outbound updates not requiring response"
+    },
+    {
+      "english": "OOO",
+      "french": "ABS",
+      "category": "Abbreviation",
+      "context": "Absent du bureau (Out-of-Office)"
+    },
+    {
+      "english": "Out-of-Office Settings",
+      "french": "Paramètres d'absence du bureau",
+      "category": "Feature",
+      "context": "Configuration for operator absences and auto-replies"
+    },
+    {
+      "english": "Opt-In",
+      "french": "Consentement",
+      "category": "Workflow",
+      "context": "Customer agreement to receive communications"
+    },
+    {
+      "english": "Opt-Out",
+      "french": "Désinscription",
+      "category": "Workflow",
+      "context": "Customer request to stop receiving communications"
+    },
+    {
+      "english": "Opt-In / Opt-Out Management",
+      "french": "Gestion du consentement",
+      "category": "Feature",
+      "context": "Tracking of customer preferences and compliance"
+    },
+    {
+      "english": "Organizational Dashboard",
+      "french": "Tableau de bord organisationnel",
+      "category": "Feature",
+      "context": "High-level view of operational performance across organization"
+    },
+    {
+      "english": "Operator",
+      "french": "Opérateur",
+      "category": "User Role",
+      "context": "User who handles conversations (adjuster, specialist, etc.)"
+    },
+    {
+      "english": "Outbound Media",
+      "french": "Média sortant",
+      "category": "Feature",
+      "context": "Ability to send photos and documents to customers"
+    },
+    {
+      "english": "Permission Management",
+      "french": "Gestion des permissions",
+      "category": "Admin",
+      "context": "Controls governing user access to features"
+    },
+    {
+      "english": "Role-Based Access Control",
+      "french": "Contrôle d'accès basé sur les rôles",
+      "category": "Admin",
+      "context": "Access permissions based on user roles"
+    },
+    {
+      "english": "Policyholder",
+      "french": "Titulaire de police",
+      "category": "Core Concept",
+      "context": "Insurance customer or claimant"
+    },
+    {
+      "english": "Policyholder Profile",
+      "french": "Profil du titulaire de police",
+      "category": "Feature",
+      "context": "Customer profile data connected to core systems"
+    },
+    {
+      "english": "Policyholder Pulse Survey",
+      "french": "Sondage Policyholder Pulse",
+      "category": "Feature",
+      "context": "Embedded customer satisfaction survey in conversation"
+    },
+    {
+      "english": "Privacy Assist",
+      "french": "Assistance confidentialité",
+      "category": "Feature",
+      "context": "Feature supporting privacy and compliance needs"
+    },
+    {
+      "english": "TCPA Privacy Assist",
+      "french": "Assistance TCPA",
+      "category": "Feature",
+      "context": "Privacy feature for regulatory compliance"
+    },
+    {
+      "english": "Primary Operator",
+      "french": "Opérateur principal",
+      "category": "Role",
+      "context": "Main user assigned to manage a case"
+    },
+    {
+      "english": "Queue Management",
+      "french": "Gestion des files d'attente",
+      "category": "Feature",
+      "context": "Routing configuration for case distribution"
+    },
+    {
+      "english": "Recipient Number Lookup",
+      "french": "Recherche de numéro de destinataire",
+      "category": "Feature",
+      "context": "Validation checking if number is reachable"
+    },
+    {
+      "english": "Redaction",
+      "french": "Suppression",
+      "category": "Feature",
+      "context": "Automated masking of sensitive information"
+    },
+    {
+      "english": "Scheduled Messages",
+      "french": "Messages programmés",
+      "category": "Feature",
+      "context": "Messages configured to send at specific times"
+    },
+    {
+      "english": "Secondary Operator",
+      "french": "Opérateur secondaire",
+      "category": "Role",
+      "context": "Additional user supporting a case"
+    },
+    {
+      "english": "Sentiment Analysis",
+      "french": "Analyse du sentiment",
+      "category": "Feature",
+      "context": "AI evaluation of policyholder tone and emotions"
+    },
+    {
+      "english": "Negative Sentiment Alerting",
+      "french": "Alerte sentiment négatif",
+      "category": "Feature",
+      "context": "Alerts for frustrated or distressed customers"
+    },
+    {
+      "english": "Single Sign-On",
+      "french": "Authentification unique",
+      "category": "Feature",
+      "context": "SSO authentication integration"
+    },
+    {
+      "english": "SSO",
+      "french": "SSO",
+      "category": "Abbreviation",
+      "context": "Single Sign-On"
+    },
+    {
+      "english": "Suggested Actions",
+      "french": "Actions suggérées",
+      "category": "Feature",
+      "context": "System recommendations for best next steps"
+    },
+    {
+      "english": "Supervisors",
+      "french": "Superviseurs",
+      "category": "User Role",
+      "context": "Management users overseeing operators"
+    },
+    {
+      "english": "Tags",
+      "french": "Étiquettes",
+      "category": "Feature",
+      "context": "Visual indicators applied to conversations (also called Labels or Badges)"
+    },
+    {
+      "english": "Labels",
+      "french": "Étiquettes",
+      "category": "Feature",
+      "context": "Visual indicators applied to conversations (same as Tags)"
+    },
+    {
+      "english": "Badges",
+      "french": "Étiquettes",
+      "category": "Feature",
+      "context": "Visual indicators applied to conversations (same as Tags)"
+    },
+    {
+      "english": "Team Routing Rules",
+      "french": "Règles de routage d'équipe",
+      "category": "Feature",
+      "context": "Rules controlling which users receive incoming cases"
+    },
+    {
+      "english": "Time to First Contact",
+      "french": "Délai de premier contact",
+      "category": "Metric",
+      "context": "TTFC - elapsed time between claim intake and first operator outreach"
+    },
+    {
+      "english": "TTFC",
+      "french": "DPC",
+      "category": "Abbreviation",
+      "context": "Délai de Premier Contact (Time to First Contact)"
+    },
+    {
+      "english": "Total Loss Assist",
+      "french": "Assistance sinistre total",
+      "category": "Feature",
+      "context": "TLA - solution integrating with total loss workflows"
+    },
+    {
+      "english": "TLA",
+      "french": "TLA",
+      "category": "Abbreviation",
+      "context": "Total Loss Assist"
+    },
+    {
+      "english": "Two-Way Texting",
+      "french": "SMS bidirectionnel",
+      "category": "Feature",
+      "context": "Real-time SMS communication with policyholders"
+    },
+    {
+      "english": "Unaddressed Badges",
+      "french": "Étiquettes non traitées",
+      "category": "Feature",
+      "context": "Visual indicators showing message requiring response"
+    },
+    {
+      "english": "Unified Conversation Thread",
+      "french": "Fil de conversation unifié",
+      "category": "Feature",
+      "context": "Single communication stream connecting adjusters, policyholders, and partners"
+    },
+    {
+      "english": "User Notification Preferences",
+      "french": "Préférences de notification utilisateur",
+      "category": "Feature",
+      "context": "Settings for how and when notifications are delivered"
+    },
+    {
+      "english": "Verisk XactAnalysis Integration",
+      "french": "Intégration Verisk XactAnalysis",
+      "category": "Integration",
+      "context": "Real-time integration for property claim updates"
+    },
+    {
+      "english": "Voice to Text",
+      "french": "Voix en texte",
+      "category": "Feature",
+      "context": "Capability converting voice content to text"
+    },
+    {
+      "english": "Warm Transfer",
+      "french": "Transfert chaud",
+      "category": "Workflow",
+      "context": "Case reassignment with full context preserved"
+    },
+    {
+      "english": "Welcome Flow",
+      "french": "Flux de bienvenue",
+      "category": "Feature",
+      "context": "Configurable onboarding workflow for new conversations"
+    },
+    {
+      "english": "Guidewire",
+      "french": "Guidewire",
+      "category": "Third-party",
+      "context": "Insurance software platform - keep as-is"
+    },
+    {
+      "english": "Zendesk",
+      "french": "Zendesk",
+      "category": "Third-party",
+      "context": "Help Center and support platform - keep as-is"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "approvers": [
+    {
+      "name": "Tres Moore",
+      "slack_user_id": "U018NH75ETU",
+      "email": "tres.moore@himarley.com",
+      "role": "admin"
+    },
+    {
+      "name": "Jake Norton",
+      "slack_user_id": "U03MF8J7KEG",
+      "email": "jake.norton@himarley.com",
+      "role": "reviewer"
+    },
+    {
+      "name": "Xiao Mei",
+      "slack_user_id": "U06NRDCSSSU",
+      "email": "xiao.mei@himarley.com",
+      "role": "reviewer"
+    }
+  ],
+  "approval_required": true,
+  "approval_timeout_hours": 24,
+  "notes": "Add approvers by adding their Slack user ID. To find your Slack user ID: right-click your profile > Copy user ID."
+}
