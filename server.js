@@ -20,7 +20,8 @@ import approversRoutes from "./api/approvers.js";
 import feedbackRoutes from "./api/feedback.js";
 import articlesRoutes from "./api/articles.js";
 import oauthRoutes from "./api/oauth.js";
-import translationsRoutes from \"./api/translations.js\";
+import translationsRoutes from "./api/translations.js";
+import releaseNotesRoutes from "./api/release-notes.js";
 import scannersRoutes from "./api/scanners.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -64,7 +65,8 @@ app.use("/api/approvers", approversRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/articles", articlesRoutes);
 app.use("/api/oauth", oauthRoutes);
-app.use(\"/api/translations\", translationsRoutes);
+app.use("/api/translations", translationsRoutes);
+app.use("/api/release-notes", releaseNotesRoutes);
 app.use("/api/scanners", scannersRoutes);
 
 // ── Static / React ──────────────────────────────────────────────────────────
