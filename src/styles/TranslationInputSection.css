@@ -1,0 +1,151 @@
+/* ── Translation Input Section Styles ── */
+
+.translation-input-section {
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-6);
+  margin: var(--spacing-6) 0;
+}
+
+.section-header {
+  margin-bottom: var(--spacing-6);
+  border-bottom: 2px solid var(--color-blue-100);
+  padding-bottom: var(--spacing-4);
+}
+
+.section-header h3 {
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: 1.25rem;
+  color: var(--color-gray-900);
+}
+
+.section-subtitle {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-gray-600);
+}
+
+/* ── View Mode ── */
+.translation-input-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.input-display {
+  background: white;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-4);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.input-content {
+  margin: 0;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-gray-700);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* ── Edit Mode ── */
+.translation-input-edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.input-textarea {
+  width: 100%;
+  min-height: 500px;
+  padding: var(--spacing-4);
+  border: 2px solid var(--color-blue-300);
+  border-radius: var(--border-radius);
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+}
+
+.input-textarea:focus {
+  outline: none;
+  border-color: var(--color-blue-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.edit-actions {
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: center;
+}
+
+.edit-actions .btn {
+  min-width: 120px;
+}
+
+.edit-actions .btn-success {
+  background-color: #10b981;
+  color: white;
+}
+
+.edit-actions .btn-success:hover {
+  background-color: #059669;
+}
+
+.edit-actions .btn-success:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+/* ── Info Box ── */
+.info-box {
+  background: #f0f9ff;
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #3b82f6;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-4);
+  margin-top: var(--spacing-4);
+}
+
+.info-box p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #1e40af;
+  line-height: 1.5;
+}
+
+.info-box strong {
+  color: #1e3a8a;
+}
+
+/* ── Help Text ── */
+.help-text {
+  margin: var(--spacing-3) 0 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-gray-500);
+  font-style: italic;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .translation-input-section {
+    padding: var(--spacing-4);
+  }
+
+  .input-textarea {
+    min-height: 300px;
+  }
+
+  .edit-actions {
+    flex-direction: column;
+  }
+
+  .edit-actions .btn {
+    width: 100%;
+  }
+}

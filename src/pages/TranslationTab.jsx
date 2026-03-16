@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import FeedbackForm from '../components/FeedbackForm'
+import TranslationInputSection from '../components/TranslationInputSection'
 import '../styles/Tabs.css'
 import '../styles/TranslationTab.css'
 
@@ -108,6 +109,7 @@ function TranslationTab({ user }) {
   const [triggering, setTriggering] = useState(false)
   const [message, setMessage] = useState(null)
   const [selectedArticle, setSelectedArticle] = useState(null)
+  const [translationInput, setTranslationInput] = useState(null)
   const [scannedArticles, setScannedArticles] = useState(null)
   const [scanLoading, setScanLoading] = useState(false)
   const [scanError, setScanError] = useState(null)
