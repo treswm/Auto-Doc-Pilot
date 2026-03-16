@@ -455,7 +455,7 @@ function TranslationTab({ user }) {
                 hint="Did the translations look accurate? Flag any terms that were wrong and we'll update the glossary."
               />
             </div>
-          )}
+          ) : null}
         </>
       )}
 
