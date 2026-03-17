@@ -281,7 +281,7 @@ router.patch("/screenshots/:id", requireAuth, (req, res) => {
 });
 
 // POST /api/articles/save-scanned-images — save images from scanned translation articles
-router.post("/save-scanned-images", requireAuth, (req, res) => {
+router.post("/save-scanned-images", (req, res) => {
   try {
     const { images } = req.body;
     if (!Array.isArray(images)) {

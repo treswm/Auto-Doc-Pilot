@@ -110,6 +110,15 @@
       "status": "pending",
       "createdAt": "2026-03-17T11:53:40.900Z",
       "source": "scanned"
+    },
+    "99999999999_0": {
+      "articleId": "99999999999",
+      "articleTitle": "Test Article",
+      "src": "https://example.com/test.png",
+      "alt": "Test Image",
+      "status": "pending",
+      "createdAt": "2026-03-17T12:04:08.155Z",
+      "source": "scanned"
     }
   },
   "lastWorkflowCycle": "2026-03-15T18:40:04.815Z"
