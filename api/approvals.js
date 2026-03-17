@@ -88,6 +88,36 @@ router.get("/history", requireAuth, (req, res) => {
   }
 });
 
+// GET /api/approvals/download-csv/:filename
+// Download a CSV audit log file
+router.get("/download-csv/:filename", (req, res) => {
+  try {
+    const { filename } = req.params;
+
+    // Security: only allow phase1_audit_*.csv files
+    if (!filename.match(/^phase1_audit_.*\.csv$/)) {
+      return res.status(400).json({ error: "Invalid filename" });
+    }
+
+    const outputDir = "output";
+    const filepath = path.join(outputDir, filename);
+
+    // Verify file exists
+    if (!fs.existsSync(filepath)) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    // Send file as attachment
+    res.download(filepath, filename, (err) => {
+      if (err) {
+        console.error("Download error:", err);
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/approvals/state
 // Returns full raw approval state (for debugging)
 router.get("/state", requireAdmin, (req, res) => {

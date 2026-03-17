@@ -242,7 +242,7 @@ function TranslationTab({ user }) {
             clearInterval(pollInterval)
             setTranslationRunning(false)
             setTranslationProgress(null)
-            const csvName = `translation-${runId}.csv`
+            const csvName = statusData.auditFilename || `translation-${runId}.csv`
             setTranslationResults({
               runId,
               articlesTranslated: statusData.articlesTranslated,
@@ -611,16 +611,16 @@ function TranslationTab({ user }) {
           </div>
           <div className="result-csv">
             <p className="help-text">📄 Audit Log: <strong>{translationResults.csvName}</strong></p>
-            <p className="help-text" style={{ fontSize: '0.85em', marginTop: '0.5rem' }}>
-              Check the History tab to download the full CSV with article details.
-            </p>
           </div>
           <div className="result-actions">
             <button
               className="btn btn-secondary"
-              onClick={() => { setView('history'); fetchHistory() }}
+              onClick={() => {
+                // Download the CSV file
+                window.location.href = `/api/approvals/download-csv/${translationResults.csvName}`
+              }}
             >
-              📥 Download CSV from History
+              📥 Download CSV
             </button>
             <button
               className="btn btn-ghost"
