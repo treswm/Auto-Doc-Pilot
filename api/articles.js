@@ -155,9 +155,10 @@ function extractImages(html) {
  * Links to the published article, which allows users to click the "Edit" button to access the editor.
  * This avoids the complexity of mapping numeric IDs to internal UUIDs.
  */
-function buildEditorUrl(articleId) {
-  // Format: https://{subdomain}.zendesk.com/hc/en-us/articles/{articleId}
-  return `https://${ZENDESK_SUBDOMAIN}.zendesk.com/hc/en-us/articles/${articleId}`;
+function buildEditorUrl(articleId, locale = "fr-ca") {
+  // Format: https://{subdomain}.zendesk.com/hc/{locale}/articles/{articleId}
+  // Default to fr-ca for translation workflow so translators can see translated content
+  return `https://${ZENDESK_SUBDOMAIN}.zendesk.com/hc/${locale}/articles/${articleId}`;
 }
 
 // GET /api/articles/screenshots

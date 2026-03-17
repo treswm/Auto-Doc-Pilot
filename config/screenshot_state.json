@@ -1,22 +1,14 @@
 {
   "screenshots": {
     "49416414070419_0": {
-      "articleId": "49416414070419",
-      "articleTitle": "What can I edit in my profile?",
-      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416414069011",
-      "alt": "Screenshot 2025-03-17 at 8.51.43 AM.png",
-      "status": "pending",
-      "createdAt": "2026-03-17T12:12:50.991Z",
-      "source": "scanned"
+      "status": "no_update",
+      "updatedAt": "2026-03-17T12:29:56.296Z",
+      "updatedBy": "Tres Moore"
     },
     "49416414070419_1": {
-      "articleId": "49416414070419",
-      "articleTitle": "What can I edit in my profile?",
-      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416452534675",
-      "alt": "Screenshot 2025-03-17 at 8.52.30 AM.png",
-      "status": "pending",
-      "createdAt": "2026-03-17T12:12:50.991Z",
-      "source": "scanned"
+      "status": "no_update",
+      "updatedAt": "2026-03-17T12:29:57.591Z",
+      "updatedBy": "Tres Moore"
     }
   },
   "lastWorkflowCycle": "2026-03-17T12:12:51.000Z"
