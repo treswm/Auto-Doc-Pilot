@@ -164,12 +164,12 @@ router.get("/releases", requireAuth, async (req, res) => {
  */
 router.post("/search-and-flag", requireAuth, async (req, res) => {
   try {
-    const { releaseNotes, releaseId, releaseTitle } = req.body;
+    const { releaseId, releaseTitle } = req.body;
 
-    if (!releaseNotes || !releaseId || !releaseTitle) {
+    if (!releaseId || !releaseTitle) {
       return res.status(400).json({
         success: false,
-        error: "releaseNotes, releaseId, and releaseTitle are required",
+        error: "releaseId and releaseTitle are required",
       });
     }
 

@@ -45,9 +45,7 @@ function OutdatedTab({ user }) {
 
       <div className="info-box">
         <p>
-          ⏰ <strong>Phase 2:</strong> Articles flagged as potentially outdated will appear here.
-          Review each one, mark it "Needs Updating" or "Still Good", and provide feedback.
-          Each article links directly to the Help Center so you can review the current content.
+          Articles flagged as potentially outdated will appear here. Review each one, mark it "Needs Updating" or "Still Good", and provide feedback. Each article links directly to the Help Center so you can review the current content.
         </p>
       </div>
 
