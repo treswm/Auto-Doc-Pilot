@@ -200,7 +200,7 @@ function TranslationTab({ user }) {
     } finally {
       setScanLoading(false)
     }
-  }, [fetchVisualMedia])
+  }, [])
 
   const fetchVisualMedia = useCallback(async () => {
     try {
