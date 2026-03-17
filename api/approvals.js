@@ -313,25 +313,37 @@ router.get("/scan-section", (req, res) => {
         
         for (const article of sectionArticles) {
           if (article.draft) continue; // Skip drafts
-          
+
+          // Fetch full article content to get body with images
+          const fullArticleRes = await fetch(
+            `${zendeskBaseUrl}/help_center/articles/${article.id}.json`,
+            { headers: { Authorization: `Bearer ${process.env.ZENDESK_OAUTH_ACCESS_TOKEN}` } }
+          );
+
+          let fullArticleBody = article.body || "";
+          if (fullArticleRes.ok) {
+            const fullArticleData = await fullArticleRes.json();
+            fullArticleBody = fullArticleData.article?.body || article.body || "";
+          }
+
           // Check if French translation exists
           const translationRes = await fetch(
             `${zendeskBaseUrl}/help_center/articles/${article.id}/translations/fr-ca.json`,
             { headers: { Authorization: `Bearer ${process.env.ZENDESK_OAUTH_ACCESS_TOKEN}` } }
           );
-          
+
           let frenchUpdatedAt = null;
           if (translationRes.ok) {
             const frenchData = await translationRes.json();
             frenchUpdatedAt = frenchData.translation?.updated_at;
           }
-          
+
           // Compare timestamps
           const englishUpdatedAt = article.updated_at;
           const needsTranslation = !frenchUpdatedAt || new Date(englishUpdatedAt) > new Date(frenchUpdatedAt);
 
-          // Extract images from the article body
-          const images = extractImages(article.body);
+          // Extract images from the full article body
+          const images = extractImages(fullArticleBody);
 
           articles.push({
             id: article.id,

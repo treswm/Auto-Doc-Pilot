@@ -29,6 +29,87 @@
       "status": "pending",
       "updatedAt": "2026-03-16T19:37:09.987Z",
       "updatedBy": "Tres Moore"
+    },
+    "49416393641363_0": {
+      "articleId": "49416393641363",
+      "articleTitle": "Whitelist Hi Marley 3rd Party cookies",
+      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416393640851",
+      "alt": "image (19).png",
+      "status": "pending",
+      "createdAt": "2026-03-17T11:53:40.900Z",
+      "source": "scanned"
+    },
+    "49416434505235_0": {
+      "articleId": "49416434505235",
+      "articleTitle": "How Do I Change the Phone Number on a Claim?",
+      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416427673107",
+      "alt": "Screenshot 2025-03-17 at 8.39.13 AM.png",
+      "status": "pending",
+      "createdAt": "2026-03-17T11:53:40.900Z",
+      "source": "scanned"
+    },
+    "49416434505235_1": {
+      "articleId": "49416434505235",
+      "articleTitle": "How Do I Change the Phone Number on a Claim?",
+      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416434503315",
+      "alt": "Screenshot 2025-03-17 at 8.39.45 AM.png",
+      "status": "pending",
+      "createdAt": "2026-03-17T11:53:40.900Z",
+      "source": "scanned"
+    },
+    "49416434505235_2": {
+      "articleId": "49416434505235",
+      "articleTitle": "How Do I Change the Phone Number on a Claim?",
+      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416434503699",
+      "alt": "Screenshot 2025-03-17 at 8.39.30 AM.png",
+      "status": "pending",
+      "createdAt": "2026-03-17T11:53:40.900Z",
+      "source": "scanned"
+    },
+    "49416414070419_0": {
+      "articleId": "49416414070419",
+      "articleTitle": "What can I edit in my profile?",
+      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416414069011",
+      "alt": "Screenshot 2025-03-17 at 8.51.43 AM.png",
+      "status": "pending",
+      "createdAt": "2026-03-17T11:53:40.900Z",
+      "source": "scanned"
+    },
+    "49416414070419_1": {
+      "articleId": "49416414070419",
+      "articleTitle": "What can I edit in my profile?",
+      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416452534675",
+      "alt": "Screenshot 2025-03-17 at 8.52.30 AM.png",
+      "status": "pending",
+      "createdAt": "2026-03-17T11:53:40.900Z",
+      "source": "scanned"
+    },
+    "49416418461715_0": {
+      "articleId": "49416418461715",
+      "articleTitle": "What email addresses does Hi Marley use?",
+      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416418460435",
+      "alt": "mceclip3.png",
+      "status": "pending",
+      "createdAt": "2026-03-17T11:53:40.900Z",
+      "source": "scanned"
+    },
+    "49416418461715_1": {
+      "articleId": "49416418461715",
+      "articleTitle": "What email addresses does Hi Marley use?",
+      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416418460819",
+      "alt": "mceclip1.png",
+      "status": "pending",
+      "createdAt": "2026-03-17T11:53:40.900Z",
+      "source": "scanned"
+    },
+    "49416418461715_2": {
+      "articleId": "49416418461715",
+      "articleTitle": "What email addresses does Hi Marley use?",
+      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416418461075",
+      "alt": "mceclip0.png",
+      "status": "pending",
+      "createdAt": "2026-03-17T11:53:40.900Z",
+      "source": "scanned"
     }
   },
   "lastWorkflowCycle": "2026-03-15T18:40:04.815Z"
