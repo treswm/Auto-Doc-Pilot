@@ -178,11 +178,11 @@ function TranslationTab({ user }) {
       if (data.error) throw new Error(data.error)
       setScannedArticles(data.articles)
 
-      // Extract and save images only from articles that need translation
+      // Extract and save images from all scanned articles
       const scannedImages = []
       for (const article of data.articles) {
-        // Only include images from articles marked as "Needs Update"
-        if (article.needsTranslation && article.images && article.images.length > 0) {
+        // Include images from all articles (translation status independent)
+        if (article.images && article.images.length > 0) {
           console.log(`📸 Found ${article.images.length} images in article ${article.id}: ${article.title}`)
           article.images.forEach((img, idx) => {
             scannedImages.push({
