@@ -131,7 +131,7 @@ Keep keywords concise (1-3 words each).`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-5",
         messages: [
           {
             role: "system",
