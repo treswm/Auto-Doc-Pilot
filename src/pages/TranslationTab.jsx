@@ -473,6 +473,7 @@ function TranslationTab({ user }) {
           >
             {scanLoading ? 'Scanning...' : '🔍 Scan Recent'}
           </button>
+          {/* Commented out for demo - Run Workflow Now button
           <button
             className="btn btn-primary"
             onClick={handleTriggerWorkflow}
@@ -480,6 +481,7 @@ function TranslationTab({ user }) {
           >
             {triggering ? 'Starting...' : '▶ Run Workflow Now'}
           </button>
+          */}
         </div>
       </div>
 
@@ -506,8 +508,7 @@ function TranslationTab({ user }) {
             <div className="content-placeholder">
               <p>No pending approvals</p>
               <p className="help-text">
-                Click "Run Workflow Now" to scan for recently edited articles,
-                or the workflow will run automatically on Monday at 9am.
+                The workflow will run automatically on Monday at 9am to scan for recently edited articles.
               </p>
             </div>
           ) : pending && !translationRunning ? (
