@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import FeedbackForm from '../components/FeedbackForm'
 import TranslationInputSection from '../components/TranslationInputSection'
+import TranslationTrainingInput from '../components/TranslationTrainingInput'
 import '../styles/Tabs.css'
 import '../styles/TranslationTab.css'
 
@@ -346,6 +347,10 @@ function TranslationTab({ user }) {
             className={`btn btn-ghost ${view === 'visual-media' ? 'active' : ''}`}
             onClick={() => { setView('visual-media'); fetchVisualMedia() }}
           >Visual Media</button>
+          <button
+            className={`btn btn-ghost ${view === 'training-input' ? 'active' : ''}`}
+            onClick={() => setView('training-input')}
+          >📚 Training Input</button>
           <button
             className="btn btn-accent"
             onClick={scanRecentArticles}
@@ -745,6 +750,13 @@ function TranslationTab({ user }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ── Translation Training Input view ── */}
+      {view === 'training-input' && (
+        <div>
+          <TranslationTrainingInput />
         </div>
       )}
     </div>
