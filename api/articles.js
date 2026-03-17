@@ -538,4 +538,75 @@ router.get("/flags/:releaseId", requireAuth, (req, res) => {
   }
 });
 
+// GET /api/articles/releases-history — Get all previous releases
+router.get("/releases-history", requireAuth, (req, res) => {
+  try {
+    const flags = loadArticleFlags();
+    const allFlags = Object.values(flags.flags);
+
+    // Group flags by releaseId
+    const releaseMap = {};
+    allFlags.forEach((flag) => {
+      if (!releaseMap[flag.releaseId]) {
+        releaseMap[flag.releaseId] = [];
+      }
+      releaseMap[flag.releaseId].push(flag);
+    });
+
+    // Build releases array with summary info
+    const releases = Object.entries(releaseMap).map(([releaseId, articles]) => {
+      const flaggedCount = articles.filter((a) => a.status === "flagged").length;
+      const updatedCount = articles.filter(
+        (a) => a.reviewStatus === "updated"
+      ).length;
+      const noUpdateCount = articles.filter(
+        (a) => a.reviewStatus === "no_update"
+      ).length;
+      const pendingCount = articles.filter(
+        (a) => a.reviewStatus === "review_later" || a.reviewStatus === null
+      ).length;
+
+      return {
+        releaseId,
+        releaseTitle: articles[0]?.flaggedByRelease || releaseId,
+        flaggedCount: articles.length,
+        updatedCount,
+        noUpdateCount,
+        pendingCount,
+        articles: articles.map((a) => ({
+          id: a.articleId,
+          title: a.articleTitle || `Article ${a.articleId}`,
+          helpCenterUrl: a.articleUrl,
+          reviewStatus: a.reviewStatus,
+          status: a.status,
+          flaggedAt: a.flaggedAt,
+          reviewedAt: a.reviewedAt,
+          reviewedBy: a.reviewedBy,
+          notes: a.notes,
+        })),
+      };
+    });
+
+    // Sort by most recent first
+    releases.sort(
+      (a, b) =>
+        new Date(b.articles[0]?.flaggedAt || 0) -
+        new Date(a.articles[0]?.flaggedAt || 0)
+    );
+
+    console.log(
+      `📚 Retrieved ${releases.length} releases from history`
+    );
+
+    res.json({
+      success: true,
+      releases,
+      count: releases.length,
+    });
+  } catch (err) {
+    console.error("Error retrieving releases history:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

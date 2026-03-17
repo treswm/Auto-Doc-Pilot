@@ -5,7 +5,7 @@ import '../styles/ReleaseNotesInputSection.css'
  * Release Notes Input Section
  * Paste release notes and auto-extract keywords for article scanning
  */
-function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete }) {
+function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete, flaggedArticles, releaseId, analysis: analysisFromParent }) {
   const [isAdding, setIsAdding] = useState(false)
   const [releaseNotes, setReleaseNotes] = useState('')
   const [version, setVersion] = useState('')
@@ -144,6 +144,31 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete }) {
 
   const markAsProcessed = async () => {
     try {
+      // If there are flagged articles, persist them to the database
+      if (flaggedArticles && flaggedArticles.length > 0 && releaseId && analysisFromParent) {
+        const articleIds = flaggedArticles.map(a => a.id)
+
+        const flagRes = await fetch('/api/articles/flag-by-release', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            releaseId,
+            releaseTitle: version || 'Release Analysis',
+            affectedAreas: analysisFromParent.affectedFeatures || [],
+            articleIds
+          })
+        })
+
+        const flagData = await flagRes.json()
+        if (!flagData.success) {
+          console.error('Failed to flag articles:', flagData.error)
+        }
+      }
+
+      // Mark the release notes as processed
       const res = await fetch('/api/release-notes/input', {
         method: 'POST',
         headers: {
@@ -156,11 +181,12 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete }) {
       const data = await res.json()
       if (data.success) {
         setProcessedAt(data.processedAt)
-        setSuccessMessage('✅ Release marked as processed. Audit trail recorded.')
+        setSuccessMessage('✅ Release marked as processed and articles flagged for review.')
         setTimeout(() => setSuccessMessage(null), 3000)
       }
     } catch (err) {
       console.error('Error marking as processed:', err)
+      setError('Failed to process release: ' + err.message)
     }
   }
 
@@ -296,8 +322,8 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete }) {
           </div>
 
           <p className="help-text">
-            💡 After saving, click "Extract Keywords" to have OpenAI identify the key features
-            and topics that might require Help Center article updates.
+            💡 After saving, click "Analyze Release Impact with AI" to have OpenAI identify the features
+            affected by this release and recommend Help Center articles that may need updates.
           </p>
         </div>
       )}
@@ -338,16 +364,23 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete }) {
             <div className="analysis-block">
               <h5>📚 Recommended Articles to Review</h5>
               <ul className="analysis-list">
-                {analysis.recommendedArticles.map((article, i) => (
-                  <li key={i}>{article}</li>
-                ))}
+                {analysis.recommendedArticles.map((article, i) => {
+                  const title = typeof article === 'string' ? article : article.title
+                  const reason = typeof article === 'string' ? '' : article.reason
+                  return (
+                    <li key={i}>
+                      <strong>{title}</strong>
+                      {reason && <p className="article-reason">{reason}</p>}
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           )}
 
           <div className="analysis-actions">
             <p className="analysis-status">
-              ✅ Ready to search Help Center for {analysis.searchQueries.length} related topics
+              ✅ Ready to search your Help Center and flag articles for review
             </p>
           </div>
         </div>

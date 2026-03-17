@@ -10,6 +10,10 @@ function ReleasesTab({ user }) {
   const [releaseTitle, setReleaseTitle] = useState(null)
   const [flaggedArticles, setFlaggedArticles] = useState([])
   const [flaggingLoading, setFlaggingLoading] = useState(false)
+  const [articleStatuses, setArticleStatuses] = useState({})
+  const [previousReleases, setPreviousReleases] = useState([])
+  const [selectedReleaseHistory, setSelectedReleaseHistory] = useState(null)
+  const [articleReasons, setArticleReasons] = useState({})
 
 
   const handleAnalysisComplete = (analysisData) => {
@@ -46,33 +50,96 @@ function ReleasesTab({ user }) {
 
       setFlaggedArticles(data.foundArticles || [])
 
-      // Now flag the articles
-      if (data.foundArticles && data.foundArticles.length > 0) {
-        const articleIds = data.foundArticles.map(a => a.id)
-
-        const flagRes = await fetch('/api/articles/flag-by-release', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            releaseId,
-            releaseTitle: releaseTitle || 'Release Analysis',
-            affectedAreas: analysis.affectedFeatures || [],
-            articleIds
-          })
-        })
-
-        const flagData = await flagRes.json()
-        if (!flagData.success) throw new Error(flagData.error || 'Failed to flag articles')
-      }
+      // Articles are now displayed in session but NOT persisted to database yet
+      // They will only be persisted when user marks the release as processed
     } catch (err) {
       console.error('Error searching and flagging articles:', err.message)
     } finally {
       setFlaggingLoading(false)
     }
   }, [analysis, releaseId, releaseTitle])
+
+  const handleArticleStatus = (articleId, status) => {
+    setArticleStatuses(prev => ({
+      ...prev,
+      [articleId]: status
+    }))
+  }
+
+  const updateArticleStatus = async (articleId, status) => {
+    try {
+      await fetch(`/api/articles/flag/${releaseId}_${articleId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          reviewStatus: status,
+          reviewedBy: user?.name || 'Unknown'
+        })
+      })
+      handleArticleStatus(articleId, status)
+    } catch (err) {
+      console.error('Failed to update article status:', err)
+    }
+  }
+
+  const fetchPreviousReleases = useCallback(async () => {
+    try {
+      const res = await fetch('/api/articles/releases-history', {
+        credentials: 'include'
+      })
+      const data = await res.json()
+      if (data.success) {
+        setPreviousReleases(data.releases || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch releases history:', err)
+    }
+  }, [])
+
+  const loadReleaseHistory = (release) => {
+    setSelectedReleaseHistory(release)
+  }
+
+  const handleMarkAsProcessed = async () => {
+    try {
+      if (!flaggedArticles || flaggedArticles.length === 0 || !releaseId || !analysis) {
+        console.error('Missing required data to process release')
+        return
+      }
+
+      const articleIds = flaggedArticles.map(a => a.id)
+
+      // Persist articles to database
+      const flagRes = await fetch('/api/articles/flag-by-release', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          releaseId,
+          releaseTitle: releaseTitle || 'Release Analysis',
+          affectedAreas: analysis.affectedFeatures || [],
+          articleIds
+        })
+      })
+
+      const flagData = await flagRes.json()
+      if (!flagData.success) throw new Error(flagData.error || 'Failed to flag articles')
+
+      // Clear current view after successful processing
+      setFlaggedArticles([])
+      setAnalysis(null)
+      setReleaseId(null)
+      setArticleStatuses({})
+
+      // Refresh previous releases list
+      await fetchPreviousReleases()
+    } catch (err) {
+      console.error('Error marking release as processed:', err.message)
+    }
+  }
 
   return (
     <div className="tab-container">
@@ -88,12 +155,15 @@ function ReleasesTab({ user }) {
 
       <ReleaseNotesInputSection
         onAnalysisComplete={handleAnalysisComplete}
+        flaggedArticles={flaggedArticles}
+        releaseId={releaseId}
+        analysis={analysis}
       />
 
       {analysis && !flaggedArticles.length && (
         <div className="search-articles-section">
           <h4>🔍 Ready to Search Help Center</h4>
-          <p>Click below to search your Help Center for {analysis.searchQueries?.length || 0} related topics and flag affected articles:</p>
+          <p>Click below to search your Help Center and identify articles that need updates based on this release:</p>
           <button
             className="btn btn-primary"
             onClick={searchAndFlagArticles}
@@ -108,7 +178,7 @@ function ReleasesTab({ user }) {
         <>
           <div className="scan-info">
             <p>
-              ✅ Found and flagged <strong>{flaggedArticles.length}</strong> articles for this release
+              ✅ Found and flagged <strong>{flaggedArticles.length}</strong> articles for this release. Review and mark their status, then click "Mark as Processed" below.
             </p>
           </div>
           <div className="articles-grid">
@@ -124,28 +194,67 @@ function ReleasesTab({ user }) {
                   <span className="status-badge flagged">Flagged for Review</span>
                 </div>
                 <div className="article-meta">
-                  <p>📅 Updated: {new Date(article.updated_at).toLocaleString()}</p>
+                  <p>📅 Last updated: {new Date(article.updated_at).toLocaleString()}</p>
+                  {analysis?.affectedFeatures && analysis.affectedFeatures.length > 0 && (
+                    <p className="article-flag-reason">
+                      <strong>Affected by:</strong> {analysis.affectedFeatures.join(', ')}
+                    </p>
+                  )}
                 </div>
-                <div className="article-actions">
-                  <a
-                    href={article.helpCenterUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-primary btn-sm"
-                  >
-                    Review Article ↗
-                  </a>
-                  <a
-                    href={article.helpCenterUrlFr}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-ghost btn-sm"
-                  >
-                    French ↗
-                  </a>
-                </div>
+                {articleStatuses[article.id] ? (
+                  <div className="article-resolved">
+                    <div className="resolved-audit-info">
+                      <span className="badge badge-success">✓ {articleStatuses[article.id] === 'updated' ? 'Updated' : articleStatuses[article.id] === 'no_update' ? 'Does Not Require Updating' : 'Review Later'}</span>
+                    </div>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => handleArticleStatus(article.id, null)}
+                    >
+                      Undo
+                    </button>
+                  </div>
+                ) : (
+                  <div className="article-actions">
+                    <a
+                      href={article.helpCenterUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-primary btn-sm"
+                    >
+                      Review Article ↗
+                    </a>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => updateArticleStatus(article.id, 'updated')}
+                    >
+                      Mark as Updated
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => updateArticleStatus(article.id, 'review_later')}
+                    >
+                      Review Later
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => updateArticleStatus(article.id, 'no_update')}
+                    >
+                      Does Not Require Updating
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
+          </div>
+
+          <div className="process-release-section">
+            <button
+              className="btn btn-success"
+              onClick={handleMarkAsProcessed}
+            >
+              ✅ Mark as Processed
+            </button>
+            <p className="process-info">Click when you're done reviewing articles. This will save the release to your Previous Releases history.</p>
           </div>
         </>
       )}
@@ -158,6 +267,109 @@ function ReleasesTab({ user }) {
           hint="Mark if this article needs updating for the release, and provide any specific feedback."
         />
       )}
+
+      {/* Previous Releases Section */}
+      <div className="previous-releases-section">
+        <div className="releases-header">
+          <h3>📚 Previous Releases</h3>
+          <button className="btn btn-ghost btn-sm" onClick={fetchPreviousReleases}>
+            Load Release History
+          </button>
+        </div>
+
+        {previousReleases.length === 0 && (
+          <div className="content-placeholder">
+            <p>No previous releases found</p>
+            <p className="help-text">Releases you've analyzed and reviewed will appear here</p>
+          </div>
+        )}
+
+        {previousReleases.length > 0 && !selectedReleaseHistory && (
+          <div className="releases-list">
+            {previousReleases.map(release => (
+              <div key={release.releaseId} className="release-item">
+                <div className="release-info">
+                  <h4>{release.releaseTitle || release.releaseId}</h4>
+                  <p className="release-meta">
+                    {release.flaggedCount} articles flagged • {release.updatedCount} updated • {release.pendingCount} pending
+                  </p>
+                </div>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => loadReleaseHistory(release)}
+                >
+                  View Details
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {selectedReleaseHistory && (
+          <div className="release-detail">
+            <button className="btn btn-ghost btn-sm" onClick={() => setSelectedReleaseHistory(null)}>
+              ← Back to Releases
+            </button>
+            <h3>{selectedReleaseHistory.releaseTitle || selectedReleaseHistory.releaseId}</h3>
+            <div className="release-stats">
+              <div className="stat">
+                <span className="stat-label">Flagged</span>
+                <span className="stat-value">{selectedReleaseHistory.flaggedCount}</span>
+              </div>
+              <div className="stat">
+                <span className="stat-label">Updated</span>
+                <span className="stat-value updated">{selectedReleaseHistory.updatedCount}</span>
+              </div>
+              <div className="stat">
+                <span className="stat-label">Pending</span>
+                <span className="stat-value pending">{selectedReleaseHistory.pendingCount}</span>
+              </div>
+            </div>
+            <div className="release-audit-log">
+              <h4>📋 Review Audit Log</h4>
+              <div className="audit-entries">
+                {selectedReleaseHistory.articles && selectedReleaseHistory.articles.map(article => (
+                  <div key={article.id} className="audit-entry">
+                    <div className="entry-header">
+                      <span className="entry-title">{article.title}</span>
+                      <span className={`status-badge ${article.reviewStatus}`}>
+                        {article.reviewStatus === 'updated' ? '✓ Updated' :
+                         article.reviewStatus === 'no_update' ? '✓ Does Not Require Updating' :
+                         article.reviewStatus === 'review_later' ? '⏱ Review Later' :
+                         '⏳ Pending'}
+                      </span>
+                    </div>
+                    <div className="entry-details">
+                      <p className="entry-id">Article ID: {article.id}</p>
+                      {article.reviewedAt && (
+                        <p className="entry-timestamp">
+                          Reviewed: {new Date(article.reviewedAt).toLocaleString()} by {article.reviewedBy || 'Unknown'}
+                        </p>
+                      )}
+                      {article.flaggedAt && (
+                        <p className="entry-timestamp">
+                          Flagged: {new Date(article.flaggedAt).toLocaleString()}
+                        </p>
+                      )}
+                      {article.notes && (
+                        <p className="entry-notes"><strong>Notes:</strong> {article.notes}</p>
+                      )}
+                    </div>
+                    <a
+                      href={article.helpCenterUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-ghost btn-xs"
+                    >
+                      View Article ↗
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -216,9 +216,9 @@ router.post("/analyze-impact", requireAuth, async (req, res) => {
 Given release notes, analyze what features are being added/changed and what documentation needs updates.
 
 Example: If "new field added to create case form" → recommend updating:
-- "How to create a case" article
-- "Create case API documentation"
-- Any field/form reference documentation
+- "How to create a case" article (reason: new field in form requires updating instructions)
+- "Create case API documentation" (reason: API endpoint now includes new field parameter)
+- Any field/form reference documentation (reason: field reference updated)
 
 For your response, think about:
 - Direct documentation (guides on using the feature)
@@ -229,7 +229,16 @@ For your response, think about:
 Return ONLY a valid JSON object (no markdown, no code blocks) with exactly these fields:
 {
   "affectedFeatures": ["Feature 1", "Feature 2"],
-  "recommendedArticles": ["Article topic 1", "Article topic 2"],
+  "recommendedArticles": [
+    {
+      "title": "Article topic 1",
+      "reason": "Why this article needs updating"
+    },
+    {
+      "title": "Article topic 2",
+      "reason": "Why this article needs updating"
+    }
+  ],
   "searchQueries": ["search term 1", "search term 2"]
 }`;
 
@@ -288,23 +297,31 @@ Return ONLY a valid JSON object (no markdown, no code blocks) with exactly these
       throw new Error("Invalid response: searchQueries must be an array");
     }
 
+    // Normalize recommendedArticles to ensure they have title and reason
+    const normalizedArticles = analysis.recommendedArticles.map((article) => {
+      if (typeof article === "string") {
+        return { title: article, reason: "" };
+      }
+      return article;
+    });
+
     // Store analysis in session
     req.session.releaseImpactAnalysis = {
       affectedFeatures: analysis.affectedFeatures,
-      recommendedArticles: analysis.recommendedArticles,
+      recommendedArticles: normalizedArticles,
       searchQueries: analysis.searchQueries,
       analyzedAt: new Date().toISOString(),
     };
 
     console.log(`✅ Release impact analyzed:`);
     console.log(`   Affected features: ${analysis.affectedFeatures.length}`);
-    console.log(`   Recommended articles: ${analysis.recommendedArticles.length}`);
+    console.log(`   Recommended articles: ${normalizedArticles.length}`);
     console.log(`   Search queries: ${analysis.searchQueries.length}`);
 
     res.json({
       success: true,
       affectedFeatures: analysis.affectedFeatures,
-      recommendedArticles: analysis.recommendedArticles,
+      recommendedArticles: normalizedArticles,
       searchQueries: analysis.searchQueries,
       tokens: data.usage.total_tokens,
     });
