@@ -112,7 +112,7 @@ function TranslationTab({ user }) {
   const [history, setHistory] = useState([])
   const [approvers, setApprovers] = useState([])
   const [view, setView] = useState('pending') // 'pending' | 'scan-results' | 'history' | 'approvers' | 'visual-media' | 'translation-results'
-  const [screenshotSection, setScreenshotSection] = useState('pendingApproval') // 'pendingApproval' | 'invalidDate' | 'resolved'
+  const [screenshotSection, setScreenshotSection] = useState('pendingApproval') // 'pendingApproval' | 'resolved'
   const [screenshots, setVisualMedia] = useState(null)
   const [voting, setVoting] = useState(false)
   const [triggering, setTriggering] = useState(false)
@@ -611,15 +611,6 @@ function TranslationTab({ user }) {
               Pending Approval
               {screenshots && (
                 <span className="subnav-count">{screenshots.pendingApproval?.length ?? 0}</span>
-              )}
-            </button>
-            <button
-              className={`subnav-btn ${screenshotSection === 'invalidDate' ? 'active' : ''}`}
-              onClick={() => setScreenshotSection('invalidDate')}
-            >
-              Invalid Date
-              {screenshots && (
-                <span className="subnav-count">{screenshots.invalidDate?.length ?? 0}</span>
               )}
             </button>
             <button
