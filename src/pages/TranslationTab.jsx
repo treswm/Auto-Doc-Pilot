@@ -49,11 +49,19 @@ function ScreenshotList({ items, onAction }) {
 
             {screenshot.status !== 'pending' ? (
               <div className="screenshot-resolved">
-                <div className="resolved-info">
-                  <span className="badge badge-success">✓ {STATUS_LABEL[screenshot.status]}</span>
-                  <span className="resolved-meta">
-                    by {screenshot.updatedBy} • {screenshot.updatedAt ? new Date(screenshot.updatedAt).toLocaleString() : 'unknown time'}
-                  </span>
+                <div className="resolved-audit-info">
+                  <div className="audit-row">
+                    <span className="audit-label">Status:</span>
+                    <span className="badge badge-success">✓ {STATUS_LABEL[screenshot.status]}</span>
+                  </div>
+                  <div className="audit-row">
+                    <span className="audit-label">Timestamp:</span>
+                    <span className="audit-value">{screenshot.updatedAt ? new Date(screenshot.updatedAt).toLocaleString() : 'unknown time'}</span>
+                  </div>
+                  <div className="audit-row">
+                    <span className="audit-label">Marked by:</span>
+                    <span className="audit-value">{screenshot.updatedBy || 'unknown user'}</span>
+                  </div>
                 </div>
                 <button
                   className="btn btn-ghost btn-sm"
@@ -104,7 +112,7 @@ function TranslationTab({ user }) {
   const [history, setHistory] = useState([])
   const [approvers, setApprovers] = useState([])
   const [view, setView] = useState('pending') // 'pending' | 'scan-results' | 'history' | 'approvers' | 'visual-media' | 'translation-results'
-  const [screenshotSection, setScreenshotSection] = useState('pendingApproval') // 'pendingApproval' | 'invalidDate' | 'articles'
+  const [screenshotSection, setScreenshotSection] = useState('pendingApproval') // 'pendingApproval' | 'resolved'
   const [screenshots, setVisualMedia] = useState(null)
   const [voting, setVoting] = useState(false)
   const [triggering, setTriggering] = useState(false)
@@ -389,7 +397,12 @@ function TranslationTab({ user }) {
           <button
             className={`btn btn-ghost ${view === 'visual-media' ? 'active' : ''}`}
             onClick={() => { setView('visual-media'); fetchVisualMedia() }}
-          >Visual Media</button>
+          >
+            Visual Media
+            {screenshots?.pendingApproval?.length > 0 && (
+              <span className="notification-badge">{screenshots.pendingApproval.length}</span>
+            )}
+          </button>
           <button
             className={`btn btn-ghost ${view === 'training-input' ? 'active' : ''}`}
             onClick={() => setView('training-input')}
@@ -591,24 +604,6 @@ function TranslationTab({ user }) {
               Pending Approval
               {screenshots && (
                 <span className="subnav-count">{screenshots.pendingApproval?.length ?? 0}</span>
-              )}
-            </button>
-            <button
-              className={`subnav-btn ${screenshotSection === 'invalidDate' ? 'active' : ''}`}
-              onClick={() => setScreenshotSection('invalidDate')}
-            >
-              Invalid Date
-              {screenshots && (
-                <span className="subnav-count">{screenshots.invalidDate?.length ?? 0}</span>
-              )}
-            </button>
-            <button
-              className={`subnav-btn ${screenshotSection === 'articles' ? 'active' : ''}`}
-              onClick={() => setScreenshotSection('articles')}
-            >
-              Article(s)
-              {screenshots && (
-                <span className="subnav-count">{screenshots.articles?.length ?? 0}</span>
               )}
             </button>
             <button

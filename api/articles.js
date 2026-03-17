@@ -292,7 +292,11 @@ router.patch("/screenshots/:id", requireAuth, (req, res) => {
 
   const user = req.user?.name || req.user?.email || "unknown";
   const data = loadScreenshotState();
+
+  // Preserve existing screenshot data while updating status and audit info
+  const existing = data.screenshots[id] || {};
   data.screenshots[id] = {
+    ...existing,
     status,
     updatedAt: new Date().toISOString(),
     updatedBy: user,
