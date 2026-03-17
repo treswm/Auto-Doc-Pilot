@@ -1,0 +1,264 @@
+/* ── Admin Panel ── */
+
+.admin-panel {
+  width: 100%;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.admin-title {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin: 0 0 2px 0;
+  letter-spacing: -0.3px;
+}
+
+.admin-subtitle {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── Approver Cards ── */
+
+.approver-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4) var(--spacing-5);
+  background: white;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-radius-lg);
+  transition: box-shadow 0.15s ease;
+}
+
+.approver-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.approver-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-gray-100);
+  color: var(--color-gray-700);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.approver-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.approver-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.approver-you-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.approver-email {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.approver-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  flex-shrink: 0;
+}
+
+.admin-remove-btn {
+  color: var(--color-danger) !important;
+  border-color: transparent !important;
+}
+
+.admin-remove-btn:hover:not(:disabled) {
+  background-color: var(--color-danger-light) !important;
+  border-color: transparent !important;
+  color: var(--color-danger) !important;
+}
+
+.admin-remove-btn:disabled {
+  color: var(--color-gray-300) !important;
+}
+
+/* ── Inline remove confirmation ── */
+
+.remove-confirm {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.remove-confirm-text {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-danger);
+}
+
+/* ── Dialog ── */
+
+.admin-dialog {
+  border: none;
+  border-radius: var(--border-radius-xl);
+  padding: 0;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--shadow-xl);
+  background: white;
+  margin: auto;
+}
+
+.admin-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+}
+
+.admin-dialog[open] {
+  animation: dialogIn 0.18s ease;
+}
+
+@keyframes dialogIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)  scale(1); }
+}
+
+.admin-dialog-inner {
+  padding: var(--spacing-6);
+}
+
+.admin-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.admin-dialog-header h3 {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.admin-dialog-close {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--border-radius);
+  border: none;
+  background: none;
+  color: var(--color-gray-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.admin-dialog-close:hover {
+  background: var(--color-gray-100);
+  color: var(--color-primary);
+}
+
+.admin-dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+}
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-4);
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.form-field label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-gray-700);
+}
+
+.form-field input,
+.form-field select {
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-3);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-radius-lg);
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+  color: var(--color-primary);
+  background: white;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
+}
+
+.form-field input::placeholder {
+  color: var(--color-gray-400);
+}
+
+.admin-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-3);
+  padding-top: var(--spacing-2);
+  border-top: 1px solid var(--color-gray-100);
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dialog {
+    max-width: calc(100vw - 2rem);
+    margin: var(--spacing-4);
+  }
+}
