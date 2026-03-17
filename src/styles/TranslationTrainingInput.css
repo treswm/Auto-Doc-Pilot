@@ -29,10 +29,12 @@
 
 .training-input-content pre {
   margin: 0;
+  padding: 1rem;
   font-family: 'Courier New', monospace;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: #111827;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #111827 !important;
+  background-color: #ffffff !important;
   white-space: pre-wrap;
   word-wrap: break-word;
 }
