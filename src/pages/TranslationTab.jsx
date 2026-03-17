@@ -752,6 +752,27 @@ function TranslationTab({ user }) {
                   ← Back
                 </button>
               </div>
+
+              {translationRunning && (
+                <div className="translation-progress-box">
+                  <div className="progress-header">
+                    <h4>Translation in Progress</h4>
+                  </div>
+                  {translationProgress ? (
+                    <>
+                      <p className="progress-text">Translating articles... ({translationProgress.translated}/{translationProgress.total} completed)</p>
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{ width: `${(translationProgress.translated / translationProgress.total) * 100}%` }}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <p className="progress-text">⏳ Starting translation workflow...</p>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             scannedArticles && (

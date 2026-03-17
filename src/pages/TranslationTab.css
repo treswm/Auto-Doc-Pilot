@@ -450,6 +450,65 @@
   box-shadow: 0 6px 24px rgba(15, 23, 42, 0.4);
 }
 
+/* Translation Progress Box */
+.translation-progress-box {
+  background: linear-gradient(135deg, #f0f9ff 0%, #eff6ff 100%);
+  border: 2px solid #3b82f6;
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-4);
+  margin-top: var(--spacing-4);
+  animation: slideUp 0.3s ease-out;
+}
+
+.progress-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-3);
+}
+
+.progress-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.progress-text {
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: 0.9rem;
+  color: #1e40af;
+  font-weight: 500;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #bfdbfe;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .summary-cards {

@@ -118,8 +118,8 @@ router.get("/download-csv/:filename", (req, res) => {
   try {
     const { filename } = req.params;
 
-    // Security: only allow phase1_audit_*.csv files
-    if (!filename.match(/^phase1_audit_.*\.csv$/)) {
+    // Security: only allow translation_*.csv files (supports both old and new naming)
+    if (!filename.match(/^(phase1_audit_|translation_update_).*\.csv$/)) {
       return res.status(400).json({ error: "Invalid filename" });
     }
 
