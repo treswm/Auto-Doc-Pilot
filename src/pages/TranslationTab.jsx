@@ -222,6 +222,12 @@ function TranslationTab({ user }) {
     try {
       const res = await fetch('/api/articles/screenshots', { credentials: 'include' })
       const data = await res.json()
+      console.log('📸 Visual Media fetched:', {
+        pendingApprovalCount: data.pendingApproval?.length || 0,
+        resolvedCount: data.resolved?.length || 0,
+        totalCount: data.total || 0,
+        data
+      })
       setVisualMedia(data)
     } catch (err) {
       console.error('Failed to fetch screenshots:', err)

@@ -313,12 +313,15 @@ router.patch("/screenshots/:id", requireAuth, (req, res) => {
 router.post("/save-scanned-images", (req, res) => {
   try {
     const { images } = req.body;
+    console.log(`\n📥 save-scanned-images received ${images?.length || 0} images:`, images?.map(img => ({ articleId: img.articleId, title: img.articleTitle, hasImage: !!img.src })));
+
     if (!Array.isArray(images)) {
       return res.status(400).json({ error: "images must be an array" });
     }
 
     const state = loadScreenshotState();
     let savedCount = 0;
+    const savedIds = [];
 
     for (const img of images) {
       const id = `${img.articleId}_${img.index}`;
@@ -335,14 +338,19 @@ router.post("/save-scanned-images", (req, res) => {
           source: "scanned"
         };
         savedCount++;
+        savedIds.push(id);
+      } else {
+        console.log(`⚠️ Image already exists: ${id}`);
       }
     }
 
     saveScreenshotState(state);
+    console.log(`✅ Saved ${savedCount} images:`, savedIds);
     res.json({
       success: true,
       message: `Saved ${savedCount} new images from scanned articles`,
-      savedCount
+      savedCount,
+      savedIds
     });
   } catch (err) {
     console.error("Error saving scanned images:", err);

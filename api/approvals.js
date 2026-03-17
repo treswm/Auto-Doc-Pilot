@@ -44,6 +44,10 @@ function extractImages(html) {
     }
   }
 
+  if (media.length > 0) {
+    console.log(`🖼️ extractImages found ${media.length} images`);
+  }
+
   return media;
 }
 
@@ -356,6 +360,10 @@ router.get("/scan-section", (req, res) => {
 
           // Extract images from the full article body
           const images = extractImages(fullArticleBody);
+
+          if (needsTranslation && images.length > 0) {
+            console.log(`📋 Article ${article.id} (${article.title}): needsTranslation=${needsTranslation}, images=${images.length}`);
+          }
 
           articles.push({
             id: article.id,
