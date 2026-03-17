@@ -1,4 +1,32 @@
 {
-  "screenshots": {},
-  "lastWorkflowCycle": null
+  "screenshots": {
+    "49416434505235_0": {
+      "articleId": "49416434505235",
+      "articleTitle": "How Do I Change the Phone Number on a Claim?",
+      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416427673107",
+      "alt": "Screenshot 2025-03-17 at 8.39.13 AM.png",
+      "status": "pending",
+      "createdAt": "2026-03-17T13:14:51.992Z",
+      "source": "scanned"
+    },
+    "49416434505235_1": {
+      "articleId": "49416434505235",
+      "articleTitle": "How Do I Change the Phone Number on a Claim?",
+      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416434503315",
+      "alt": "Screenshot 2025-03-17 at 8.39.45 AM.png",
+      "status": "pending",
+      "createdAt": "2026-03-17T13:14:51.992Z",
+      "source": "scanned"
+    },
+    "49416434505235_2": {
+      "articleId": "49416434505235",
+      "articleTitle": "How Do I Change the Phone Number on a Claim?",
+      "src": "https://himarley-staging.zendesk.com/hc/article_attachments/49416434503699",
+      "alt": "Screenshot 2025-03-17 at 8.39.30 AM.png",
+      "status": "pending",
+      "createdAt": "2026-03-17T13:14:51.992Z",
+      "source": "scanned"
+    }
+  },
+  "lastWorkflowCycle": "2026-03-17T12:58:15.032Z"
 }

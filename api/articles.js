@@ -284,9 +284,10 @@ router.get("/screenshots", requireAuth, (req, res) => {
 // PATCH /api/articles/screenshots/:id — update a screenshot's status
 router.patch("/screenshots/:id", requireAuth, (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, assignedTo } = req.body;
 
-  if (!["updated", "update_later", "no_update", "pending"].includes(status)) {
+  // Validate status if provided
+  if (status && !["updated", "update_later", "no_update", "pending"].includes(status)) {
     return res.status(400).json({ error: "Invalid status. Use: updated, update_later, no_update, pending" });
   }
 
@@ -295,18 +296,31 @@ router.patch("/screenshots/:id", requireAuth, (req, res) => {
 
   // Preserve existing screenshot data while updating status and audit info
   const existing = data.screenshots[id] || {};
-  data.screenshots[id] = {
+  const updates = {
     ...existing,
-    status,
-    updatedAt: new Date().toISOString(),
-    updatedBy: user,
   };
+
+  // Update status if provided
+  if (status) {
+    updates.status = status;
+    updates.updatedAt = new Date().toISOString();
+    updates.updatedBy = user;
+  }
+
+  // Update assignedTo if provided
+  if (assignedTo) {
+    updates.assignedTo = assignedTo;
+  }
+
+  data.screenshots[id] = updates;
   saveScreenshotState(data);
 
-  // Log the action
-  addAuditEntry(id, status, user);
+  // Log the action if status changed
+  if (status) {
+    addAuditEntry(id, status, user);
+  }
 
-  res.json({ message: "Screenshot status updated", id, status });
+  res.json({ message: "Screenshot updated", id, status, assignedTo });
 });
 
 // POST /api/articles/save-scanned-images — save images from scanned translation articles

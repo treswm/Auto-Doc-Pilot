@@ -62,6 +62,12 @@ function ScreenshotList({ items, onAction }) {
                     <span className="audit-label">Marked by:</span>
                     <span className="audit-value">{screenshot.updatedBy || 'unknown user'}</span>
                   </div>
+                  {screenshot.assignedTo && (
+                    <div className="audit-row">
+                      <span className="audit-label">Assigned to:</span>
+                      <span className="audit-value">👤 {screenshot.assignedTo}</span>
+                    </div>
+                  )}
                 </div>
                 <button
                   className="btn btn-ghost btn-sm"
@@ -126,6 +132,8 @@ function TranslationTab({ user }) {
   const [currentRunId, setCurrentRunId] = useState(null)
   const [translationProgress, setTranslationProgress] = useState(null)
   const [translationResults, setTranslationResults] = useState(null)
+  const [assignedTo, setAssignedTo] = useState(null)
+  const [assignmentSaved, setAssignmentSaved] = useState(false)
 
   // ── Data fetching ─────────────────────────────────────────────────────────
 
@@ -255,6 +263,44 @@ function TranslationTab({ user }) {
       await fetchVisualMedia()
     } catch (err) {
       console.error('Failed to update screenshot status:', err)
+    }
+  }
+
+  const handleAssignScannedImages = async (assigneeValue) => {
+    try {
+      console.log('📌 Assigning scanned images to:', assigneeValue)
+
+      // Get all pending approval images
+      if (!screenshots?.pendingApproval || screenshots.pendingApproval.length === 0) {
+        console.warn('No images to assign')
+        return
+      }
+
+      // Determine assignee name
+      let assigneeName = assigneeValue === 'myself' ? user?.name || 'Myself' : assigneeValue
+
+      // Update all scanned images with assignment
+      for (const image of screenshots.pendingApproval) {
+        await fetch(`/api/articles/screenshots/${image.id}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assignedTo: assigneeName }),
+        })
+      }
+
+      // Refresh visual media to show assignments
+      await fetchVisualMedia()
+      setAssignedTo(assigneeValue)
+      setAssignmentSaved(true)
+      setMessage({
+        type: 'success',
+        text: `✅ Images assigned to ${assigneeName}`
+      })
+      setTimeout(() => setAssignmentSaved(false), 2000)
+    } catch (err) {
+      console.error('Failed to assign images:', err)
+      setMessage({ type: 'error', text: 'Failed to assign images. Please try again.' })
     }
   }
 
@@ -772,6 +818,34 @@ function TranslationTab({ user }) {
                   </tbody>
                 </table>
               </div>
+
+              {/* Assignment section */}
+              {screenshots?.pendingApproval && screenshots.pendingApproval.length > 0 && (
+                <div className="assignment-section">
+                  <h4>📌 Assign Visual Media</h4>
+                  <p className="help-text">
+                    Assign these {screenshots.pendingApproval.length} image{screenshots.pendingApproval.length !== 1 ? 's' : ''} for review:
+                  </p>
+                  <div className="assignment-row">
+                    <select
+                      className="form-control"
+                      value={assignedTo || ''}
+                      onChange={(e) => handleAssignScannedImages(e.target.value)}
+                    >
+                      <option value="">-- Select team member --</option>
+                      <option value="myself">👤 Myself</option>
+                      {approvers && approvers.map((approver, idx) => (
+                        <option key={idx} value={approver.name}>
+                          {approver.name}
+                        </option>
+                      ))}
+                    </select>
+                    {assignmentSaved && (
+                      <span className="assignment-status">✅ Assigned</span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className="scan-actions">
                 <button
