@@ -158,9 +158,10 @@ router.get("/releases", requireAuth, async (req, res) => {
 
 /**
  * POST /api/scanners/search-and-flag
- * Intelligent release analysis: analyze release notes and flag affected articles
- * Body: { releaseNotes: string, releaseId: string, releaseTitle: string }
- * Flow: analyze impact → search articles → flag them
+ * Search and flag articles based on cached release analysis
+ * Body: { releaseId: string, releaseTitle: string }
+ * Uses: cached analysis from session (populated by /api/release-notes/analyze-impact)
+ * Flow: use cached analysis → search articles → return flagged articles
  */
 router.post("/search-and-flag", requireAuth, async (req, res) => {
   try {
@@ -173,78 +174,15 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
       });
     }
 
-    console.log(`🔍 Analyzing release for impact analysis...`);
+    console.log(`🔍 Using cached release impact analysis...`);
 
-    // Step 1: Call OpenAI to analyze the release
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error("Missing OPENAI_API_KEY in environment variables");
+    // Step 1: Get the cached analysis from session
+    const cachedAnalysis = req.session?.releaseImpactAnalysis;
+    if (!cachedAnalysis) {
+      throw new Error("No analysis data found. Please analyze the release first.");
     }
 
-    const systemPrompt = `You are a Help Center content strategist for a Zendesk Help Center.
-
-Given release notes, analyze what features are being added/changed and what documentation needs updates.
-
-Example: If "new field added to create case form" → recommend updating:
-- "How to create a case" article
-- "Create case API documentation"
-- Any field/form reference documentation
-
-For your response, think about:
-- Direct documentation (guides on using the feature)
-- API documentation (if backend changes)
-- Related features documentation (things that integrate with this feature)
-- User experience guides
-
-Return ONLY a valid JSON object (no markdown, no code blocks) with exactly these fields:
-{
-  "affectedFeatures": ["Feature 1", "Feature 2"],
-  "recommendedArticles": ["Article topic 1", "Article topic 2"],
-  "searchQueries": ["search term 1", "search term 2"]
-}`;
-
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt,
-          },
-          {
-            role: "user",
-            content: `Analyze this release and identify what Help Center articles need updating:\n\n${releaseNotes}`,
-          },
-        ],
-        temperature: 0.5,
-        max_tokens: 1000,
-      }),
-    });
-
-    if (!openaiResponse.ok) {
-      const error = await openaiResponse.json();
-      throw new Error(`OpenAI API error: ${error.error?.message || "Unknown error"}`);
-    }
-
-    const openaiData = await openaiResponse.json();
-    let analysisText = openaiData.choices[0].message.content.trim();
-
-    // Remove markdown code block formatting if present
-    analysisText = analysisText.replace(/^```json\n?/, "").replace(/\n?```$/, "");
-
-    // Parse JSON response
-    let analysis;
-    try {
-      analysis = JSON.parse(analysisText);
-    } catch (parseErr) {
-      console.error("Failed to parse OpenAI response:", analysisText);
-      throw new Error("Failed to parse release impact analysis from OpenAI");
-    }
+    const analysis = cachedAnalysis;
 
     const searchQueries = analysis.searchQueries || [];
     const affectedFeatures = analysis.affectedFeatures || [];
