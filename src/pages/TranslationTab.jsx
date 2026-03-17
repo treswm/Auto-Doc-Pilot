@@ -350,7 +350,7 @@ function TranslationTab({ user }) {
           <button
             className={`btn btn-ghost ${view === 'training-input' ? 'active' : ''}`}
             onClick={() => setView('training-input')}
-          >📚 Training Input</button>
+          >Translation Training</button>
           <button
             className="btn btn-accent"
             onClick={scanRecentArticles}
