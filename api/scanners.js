@@ -218,6 +218,10 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
       phase: "release_updates",
     }));
 
+    // Limit display to first 6 articles for demo speed, but track total found
+    const displayArticles = enrichedArticles.slice(0, 6);
+    const totalFound = enrichedArticles.length;
+
     // Return analysis and articles (frontend will call flag-by-release to persist)
     res.json({
       success: true,
@@ -228,8 +232,9 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
         recommendedArticles,
         searchQueries,
       },
-      foundArticles: enrichedArticles,
-      articleCount: enrichedArticles.length,
+      foundArticles: displayArticles,
+      articleCount: displayArticles.length,
+      totalArticlesFound: totalFound,
     });
   } catch (err) {
     console.error("Error in search-and-flag:", err.message);

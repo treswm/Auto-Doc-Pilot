@@ -9,6 +9,7 @@ function ReleasesTab({ user }) {
   const [releaseId, setReleaseId] = useState(null)
   const [releaseTitle, setReleaseTitle] = useState(null)
   const [flaggedArticles, setFlaggedArticles] = useState([])
+  const [totalArticlesFound, setTotalArticlesFound] = useState(0)
   const [flaggingLoading, setFlaggingLoading] = useState(false)
   const [articleStatuses, setArticleStatuses] = useState({})
   const [previousReleases, setPreviousReleases] = useState([])
@@ -49,6 +50,7 @@ function ReleasesTab({ user }) {
       if (!data.success) throw new Error(data.error || 'Failed to search articles')
 
       setFlaggedArticles(data.foundArticles || [])
+      setTotalArticlesFound(data.totalArticlesFound || data.foundArticles.length || 0)
 
       // Articles are now displayed in session but NOT persisted to database yet
       // They will only be persisted when user marks the release as processed
@@ -130,6 +132,7 @@ function ReleasesTab({ user }) {
 
       // Clear current view after successful processing
       setFlaggedArticles([])
+      setTotalArticlesFound(0)
       setAnalysis(null)
       setReleaseId(null)
       setArticleStatuses({})
@@ -178,7 +181,7 @@ function ReleasesTab({ user }) {
         <>
           <div className="scan-info">
             <p>
-              ✅ Found and flagged <strong>{flaggedArticles.length}</strong> articles for this release. Review and mark their status, then click "Mark as Processed" below.
+              ✅ Found <strong>{totalArticlesFound}</strong> articles for this release. {totalArticlesFound > flaggedArticles.length && `Showing the first ${flaggedArticles.length} for quick review.`} Mark their status, then click "Mark as Processed" below.
             </p>
           </div>
           <div className="articles-grid">
