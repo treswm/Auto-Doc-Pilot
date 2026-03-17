@@ -744,6 +744,8 @@
 .view-tabs .btn.active {
   color: var(--color-primary);
   border-bottom-color: var(--color-primary);
+  background-color: rgba(79, 70, 229, 0.1);
+  font-weight: 700;
 }
 
 /* ── Outdated Score Display ── */
