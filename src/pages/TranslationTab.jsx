@@ -161,13 +161,46 @@ function TranslationTab({ user }) {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setScannedArticles(data.articles)
+
+      // Extract and save images from scanned articles for visual media
+      const scannedImages = []
+      for (const article of data.articles) {
+        if (article.images && article.images.length > 0) {
+          article.images.forEach((img, idx) => {
+            scannedImages.push({
+              articleId: article.id,
+              articleTitle: article.title,
+              src: img.src,
+              alt: img.alt,
+              index: idx
+            })
+          })
+        }
+      }
+
+      // Save scanned images to visual media if any found
+      if (scannedImages.length > 0) {
+        try {
+          await fetch('/api/articles/save-scanned-images', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ images: scannedImages })
+          })
+          // Refresh visual media to show newly added images
+          await fetchVisualMedia()
+        } catch (imgErr) {
+          console.warn('Warning: Could not save scanned images to visual media', imgErr)
+        }
+      }
+
       setView('scan-results')
     } catch (err) {
       setScanError(err.message)
     } finally {
       setScanLoading(false)
     }
-  }, [])
+  }, [fetchVisualMedia])
 
   const fetchVisualMedia = useCallback(async () => {
     try {

@@ -23,6 +23,30 @@ function helpCenterUrl(articleId, locale = "en-us") {
   return `https://${ZENDESK_SUBDOMAIN}.zendesk.com/hc/${locale}/articles/${articleId}`;
 }
 
+// Extract images from HTML content
+function extractImages(html) {
+  if (!html) return [];
+  const media = [];
+
+  // Extract images and GIFs
+  const imgRegex = /<img[^>]+>/gi;
+  const srcRegex = /src=["']([^"']+)["']/i;
+  const altRegex = /alt=["']([^"']*)["']/i;
+
+  let match;
+  while ((match = imgRegex.exec(html)) !== null) {
+    const tag = match[0];
+    const src = srcRegex.exec(tag)?.[1] || "";
+    const alt = altRegex.exec(tag)?.[1] || "";
+
+    if (src) {
+      media.push({ src, alt });
+    }
+  }
+
+  return media;
+}
+
 // GET /api/approvals/pending
 // Returns the current pending approval round (if any)
 router.get("/pending", requireAuth, (req, res) => {
@@ -305,7 +329,10 @@ router.get("/scan-section", (req, res) => {
           // Compare timestamps
           const englishUpdatedAt = article.updated_at;
           const needsTranslation = !frenchUpdatedAt || new Date(englishUpdatedAt) > new Date(frenchUpdatedAt);
-          
+
+          // Extract images from the article body
+          const images = extractImages(article.body);
+
           articles.push({
             id: article.id,
             title: article.title,
@@ -313,6 +340,7 @@ router.get("/scan-section", (req, res) => {
             frenchUpdatedAt,
             needsTranslation,
             url: article.html_url,
+            images,
           });
         }
         

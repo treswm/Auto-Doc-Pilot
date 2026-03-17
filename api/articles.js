@@ -280,6 +280,47 @@ router.patch("/screenshots/:id", requireAuth, (req, res) => {
   res.json({ message: "Screenshot status updated", id, status });
 });
 
+// POST /api/articles/save-scanned-images — save images from scanned translation articles
+router.post("/save-scanned-images", requireAuth, (req, res) => {
+  try {
+    const { images } = req.body;
+    if (!Array.isArray(images)) {
+      return res.status(400).json({ error: "images must be an array" });
+    }
+
+    const state = loadScreenshotState();
+    let savedCount = 0;
+
+    for (const img of images) {
+      const id = `${img.articleId}_${img.index}`;
+
+      // Only save if not already tracked
+      if (!state.screenshots[id]) {
+        state.screenshots[id] = {
+          articleId: String(img.articleId),
+          articleTitle: img.articleTitle,
+          src: img.src,
+          alt: img.alt,
+          status: "pending",
+          createdAt: new Date().toISOString(),
+          source: "scanned"
+        };
+        savedCount++;
+      }
+    }
+
+    saveScreenshotState(state);
+    res.json({
+      success: true,
+      message: `Saved ${savedCount} new images from scanned articles`,
+      savedCount
+    });
+  } catch (err) {
+    console.error("Error saving scanned images:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/articles/audit-log — retrieve audit log
 router.get("/audit-log", requireAuth, (req, res) => {
   const log = loadAuditLog();
