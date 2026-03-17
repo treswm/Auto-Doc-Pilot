@@ -247,6 +247,30 @@ router.get("/screenshots", requireAuth, (req, res) => {
     }
   }
 
+  // 4. Scanned Images — manually saved images from scan-section with source: "scanned"
+  for (const id in screenshotState.screenshots) {
+    const screenshot = screenshotState.screenshots[id];
+    if (screenshot.source === "scanned") {
+      const displayItem = {
+        id,
+        articleId: screenshot.articleId,
+        articleTitle: screenshot.articleTitle,
+        src: screenshot.src,
+        alt: screenshot.alt,
+        status: screenshot.status || "pending",
+        updatedAt: screenshot.updatedAt || null,
+        updatedBy: screenshot.updatedBy || null,
+        zendeskEditorUrl: buildEditorUrl(screenshot.articleId),
+      };
+
+      if (displayItem.status === "pending") {
+        articles.push(displayItem);
+      } else {
+        resolved.push(displayItem);
+      }
+    }
+  }
+
   res.json({
     pendingApproval,
     invalidDate,
