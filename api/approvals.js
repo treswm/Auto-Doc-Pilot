@@ -218,13 +218,25 @@ router.post("/trigger", (req, res) => {
   const child = execFile(
     process.execPath,
     args,
-    { detached: true, stdio: "ignore" },
+    { detached: true, stdio: "pipe" }, // Changed from "ignore" to "pipe" to capture output
     (err) => {
       if (err) {
         console.error("Workflow trigger error:", err.message);
       }
     }
   );
+
+  // Capture stdout and stderr for debugging
+  if (child.stdout) {
+    child.stdout.on("data", (data) => {
+      console.log(`[workflow] ${data}`);
+    });
+  }
+  if (child.stderr) {
+    child.stderr.on("data", (data) => {
+      console.error(`[workflow] ${data}`);
+    });
+  }
 
   child.unref(); // Let it run independently
 
