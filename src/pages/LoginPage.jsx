@@ -47,7 +47,7 @@ function LoginPage({ onLoginSuccess }) {
             </svg>
           </div>
 
-          <h1>Doc Pilot</h1>
+          <h1>Auto Doc Pilot</h1>
           <p className="subtitle">Help Center documentation automation</p>
 
           <form onSubmit={handleLogin} className="login-form">

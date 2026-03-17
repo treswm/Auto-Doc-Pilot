@@ -97,7 +97,7 @@ function App() {
               <polygon points="6,1 11,3.5 11,8.5 6,11 1,8.5 1,3.5"/>
             </svg>
           </div>
-          <span className="brand-name">Doc Pilot</span>
+          <span className="brand-name">Auto Doc Pilot</span>
         </div>
 
         <p className="sidebar-label">Workflows</p>
