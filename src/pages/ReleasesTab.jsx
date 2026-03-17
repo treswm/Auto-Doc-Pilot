@@ -10,6 +10,11 @@ function ReleasesTab({ user }) {
   const [keywordsInput, setKeywordsInput] = useState('')
   const [usedKeywords, setUsedKeywords] = useState(null)
   const [selectedArticle, setSelectedArticle] = useState(null)
+  const [analysis, setAnalysis] = useState(null)
+  const [releaseId, setReleaseId] = useState(null)
+  const [releaseTitle, setReleaseTitle] = useState(null)
+  const [flaggedArticles, setFlaggedArticles] = useState([])
+  const [flaggingLoading, setFlaggingLoading] = useState(false)
 
   const scanReleaseArticles = useCallback(async () => {
     if (!keywordsInput.trim()) {
@@ -52,6 +57,69 @@ function ReleasesTab({ user }) {
     setKeywordsInput(keywordsForSearch)
   }
 
+  const handleAnalysisComplete = (analysisData) => {
+    setAnalysis(analysisData)
+    // Generate a releaseId based on timestamp + version
+    const id = `release_${Date.now()}`
+    setReleaseId(id)
+  }
+
+  const searchAndFlagArticles = useCallback(async () => {
+    if (!analysis || !releaseId) {
+      setScanError('Please analyze the release first')
+      return
+    }
+
+    setFlaggingLoading(true)
+    setScanError(null)
+
+    try {
+      const res = await fetch('/api/scanners/search-and-flag', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          releaseNotes: '', // Frontend doesn't have this, backend uses the analysis
+          releaseId,
+          releaseTitle: releaseTitle || 'Release Analysis'
+        })
+      })
+
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Failed to search articles')
+
+      setFlaggedArticles(data.foundArticles || [])
+
+      // Now flag the articles
+      if (data.foundArticles && data.foundArticles.length > 0) {
+        const articleIds = data.foundArticles.map(a => a.id)
+
+        const flagRes = await fetch('/api/articles/flag-by-release', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            releaseId,
+            releaseTitle: releaseTitle || 'Release Analysis',
+            affectedAreas: analysis.affectedFeatures || [],
+            articleIds
+          })
+        })
+
+        const flagData = await flagRes.json()
+        if (!flagData.success) throw new Error(flagData.error || 'Failed to flag articles')
+      }
+    } catch (err) {
+      setScanError(err.message)
+    } finally {
+      setFlaggingLoading(false)
+    }
+  }, [analysis, releaseId, releaseTitle])
+
   return (
     <div className="tab-container">
       <div className="tab-header">
@@ -65,7 +133,10 @@ function ReleasesTab({ user }) {
         </p>
       </div>
 
-      <ReleaseNotesInputSection onKeywordsExtracted={handleKeywordsExtracted} />
+      <ReleaseNotesInputSection
+        onKeywordsExtracted={handleKeywordsExtracted}
+        onAnalysisComplete={handleAnalysisComplete}
+      />
 
       <div className="release-input-section">
         <label htmlFor="keywords-input" className="input-label">
@@ -168,6 +239,66 @@ function ReleasesTab({ user }) {
             </p>
           </div>
         )
+      )}
+
+      {analysis && !flaggedArticles.length && (
+        <div className="search-articles-section">
+          <h4>🔍 Ready to Search Help Center</h4>
+          <p>Click below to search your Help Center for {analysis.searchQueries?.length || 0} related topics and flag affected articles:</p>
+          <button
+            className="btn btn-primary"
+            onClick={searchAndFlagArticles}
+            disabled={flaggingLoading}
+          >
+            {flaggingLoading ? 'Searching & Flagging...' : '🚀 Find Affected Articles'}
+          </button>
+        </div>
+      )}
+
+      {flaggedArticles.length > 0 && (
+        <>
+          <div className="scan-info">
+            <p>
+              ✅ Found and flagged <strong>{flaggedArticles.length}</strong> articles for this release
+            </p>
+          </div>
+          <div className="articles-grid">
+            {flaggedArticles.map(article => (
+              <div
+                key={article.id}
+                className={`article-card ${selectedArticle?.id === article.id ? 'selected' : ''}`}
+                onClick={() => setSelectedArticle(article)}
+              >
+                <div className="article-header">
+                  <h4>{article.title}</h4>
+                  <span className="article-id">ID: {article.id}</span>
+                  <span className="status-badge flagged">Flagged for Review</span>
+                </div>
+                <div className="article-meta">
+                  <p>📅 Updated: {new Date(article.updated_at).toLocaleString()}</p>
+                </div>
+                <div className="article-actions">
+                  <a
+                    href={article.helpCenterUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-primary btn-sm"
+                  >
+                    Review Article ↗
+                  </a>
+                  <a
+                    href={article.helpCenterUrlFr}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-ghost btn-sm"
+                  >
+                    French ↗
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {selectedArticle && (

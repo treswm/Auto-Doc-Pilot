@@ -5,16 +5,17 @@ import '../styles/ReleaseNotesInputSection.css'
  * Release Notes Input Section
  * Paste release notes and auto-extract keywords for article scanning
  */
-function ReleaseNotesInputSection({ onKeywordsExtracted }) {
+function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete }) {
   const [isAdding, setIsAdding] = useState(false)
   const [releaseNotes, setReleaseNotes] = useState('')
   const [version, setVersion] = useState('')
   const [extractedKeywords, setExtractedKeywords] = useState([])
+  const [analysis, setAnalysis] = useState(null)
   const [addedAt, setAddedAt] = useState(null)
   const [processedAt, setProcessedAt] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [isExtracting, setIsExtracting] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState(null)
   const [successMessage, setSuccessMessage] = useState(null)
 
@@ -84,18 +85,18 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
     }
   }
 
-  const handleExtractKeywords = async () => {
+  const handleAnalyzeImpact = async () => {
     if (!releaseNotes.trim()) {
       setError('Please paste release notes first')
       return
     }
 
-    setIsExtracting(true)
+    setIsAnalyzing(true)
     setError(null)
     setSuccessMessage(null)
 
     try {
-      const res = await fetch('/api/release-notes/extract-keywords', {
+      const res = await fetch('/api/release-notes/analyze-impact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -107,23 +108,31 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
       const data = await res.json()
 
       if (data.success) {
-        setExtractedKeywords(data.keywords || [])
-        setSuccessMessage(`✨ Extracted ${data.keywords?.length || 0} keywords!`)
-        
-        // Callback to parent component with keywords
-        if (onKeywordsExtracted) {
-          onKeywordsExtracted(data.keywordsForSearch)
+        setAnalysis({
+          affectedFeatures: data.affectedFeatures || [],
+          recommendedArticles: data.recommendedArticles || [],
+          searchQueries: data.searchQueries || []
+        })
+        setSuccessMessage(`✨ Analysis complete! Found ${data.affectedFeatures?.length || 0} affected features.`)
+
+        // Callback to parent component with analysis
+        if (onAnalysisComplete) {
+          onAnalysisComplete({
+            affectedFeatures: data.affectedFeatures,
+            recommendedArticles: data.recommendedArticles,
+            searchQueries: data.searchQueries
+          })
         }
-        
+
         setTimeout(() => setSuccessMessage(null), 3000)
       } else {
-        setError(data.error || 'Failed to extract keywords')
+        setError(data.error || 'Failed to analyze release impact')
       }
     } catch (err) {
-      console.error('Error extracting keywords:', err)
+      console.error('Error analyzing release impact:', err)
       setError(err.message)
     } finally {
-      setIsExtracting(false)
+      setIsAnalyzing(false)
     }
   }
 
@@ -238,17 +247,6 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
               </button>
             )}
           </div>
-
-          {extractedKeywords.length > 0 && (
-            <div className="keywords-display">
-              <h4>🏷️ Extracted Keywords</h4>
-              <div className="keywords-chips">
-                {extractedKeywords.map((keyword, i) => (
-                  <span key={i} className="keyword-chip">{keyword}</span>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       ) : (
         <div className="release-notes-edit">
@@ -307,23 +305,59 @@ function ReleaseNotesInputSection({ onKeywordsExtracted }) {
       {releaseNotes && !isAdding && (
         <div className="extract-section">
           <p className="extract-prompt">
-            Ready to scan your Help Center? Extract keywords from these release notes:
+            Ready to find affected articles? Analyze this release to identify documentation that needs updates:
           </p>
           <button
             className="btn btn-accent"
-            onClick={handleExtractKeywords}
-            disabled={isExtracting || !releaseNotes.trim()}
+            onClick={handleAnalyzeImpact}
+            disabled={isAnalyzing || !releaseNotes.trim()}
           >
-            {isExtracting ? 'Extracting Keywords...' : '✨ Extract Keywords with AI'}
+            {isAnalyzing ? 'Analyzing Impact...' : '🔍 Analyze Release Impact with AI'}
           </button>
+        </div>
+      )}
+
+      {analysis && !isAdding && (
+        <div className="analysis-section">
+          <div className="analysis-header">
+            <h4>📊 Release Impact Analysis</h4>
+          </div>
+
+          {analysis.affectedFeatures.length > 0 && (
+            <div className="analysis-block">
+              <h5>🎯 Affected Features</h5>
+              <ul className="analysis-list">
+                {analysis.affectedFeatures.map((feature, i) => (
+                  <li key={i}>{feature}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {analysis.recommendedArticles.length > 0 && (
+            <div className="analysis-block">
+              <h5>📚 Recommended Articles to Review</h5>
+              <ul className="analysis-list">
+                {analysis.recommendedArticles.map((article, i) => (
+                  <li key={i}>{article}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="analysis-actions">
+            <p className="analysis-status">
+              ✅ Ready to search Help Center for {analysis.searchQueries.length} related topics
+            </p>
+          </div>
         </div>
       )}
 
       <div className="info-box">
         <p>
-          <strong>📝 How this works:</strong> Paste any release notes, save them, then click 
-          "Extract Keywords" to have OpenAI identify the key features and topics. The extracted 
-          keywords automatically populate the search field to find relevant Help Center articles.
+          <strong>📝 How this works:</strong> Paste release notes and save them. Click "Analyze Release Impact"
+          to have OpenAI identify affected features and recommend which Help Center articles likely need updates.
+          Then click "Find Affected Articles" to search your Help Center and create flagged articles for review.
         </p>
       </div>
     </div>

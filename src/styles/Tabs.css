@@ -337,3 +337,61 @@
   border-color: var(--color-blue-400);
   background: var(--color-blue-50);
 }
+
+/* ── Search & Flag Articles Section ── */
+.search-articles-section {
+  background: linear-gradient(135deg, #fef3c7, #fef9e7);
+  border: 2px solid #f59e0b;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-5);
+  margin: var(--spacing-4) 0;
+  text-align: center;
+}
+
+.search-articles-section h4 {
+  margin: 0 0 var(--spacing-2) 0;
+  color: #92400e;
+  font-size: 1.0625rem;
+}
+
+.search-articles-section p {
+  margin: 0 0 var(--spacing-4) 0;
+  color: #78350f;
+  font-size: 0.9375rem;
+}
+
+.search-articles-section .btn {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  color: white;
+  font-weight: 600;
+  padding: var(--spacing-3) var(--spacing-6);
+}
+
+.search-articles-section .btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f97316, #fb923c);
+}
+
+/* ── Status Badge ── */
+.status-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: 4px;
+  margin-top: var(--spacing-2);
+}
+
+.status-badge.flagged {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.status-badge.updated {
+  background: #bbf7d0;
+  color: #166534;
+}
+
+.status-badge.no-update {
+  background: #d1d5db;
+  color: #374151;
+}

@@ -12,6 +12,7 @@ const router = express.Router();
 const APPROVAL_STATE_PATH = "config/approval_state.json";
 const SCREENSHOT_STATE_PATH = "config/screenshot_state.json";
 const AUDIT_LOG_PATH = "config/audit_log.json";
+const ARTICLE_FLAGS_PATH = "config/article_flags.json";
 const ZENDESK_SUBDOMAIN = process.env.ZENDESK_SUBDOMAIN || "himarley";
 const ZENDESK_BRAND_ID = process.env.ZENDESK_STAGING_BRAND_ID || "49194539612563";
 
@@ -48,6 +49,19 @@ function loadAuditLog() {
 
 function saveAuditLog(data) {
   fs.writeFileSync(AUDIT_LOG_PATH, JSON.stringify(data, null, 2));
+}
+
+function loadArticleFlags() {
+  if (!fs.existsSync(ARTICLE_FLAGS_PATH)) return { flags: {}, lastReleaseId: null };
+  try {
+    return JSON.parse(fs.readFileSync(ARTICLE_FLAGS_PATH, "utf-8"));
+  } catch {
+    return { flags: {}, lastReleaseId: null };
+  }
+}
+
+function saveArticleFlags(data) {
+  fs.writeFileSync(ARTICLE_FLAGS_PATH, JSON.stringify(data, null, 2));
 }
 
 function addAuditEntry(screenshotId, action, user) {
@@ -376,6 +390,152 @@ router.post("/save-scanned-images", (req, res) => {
 router.get("/audit-log", requireAuth, (req, res) => {
   const log = loadAuditLog();
   res.json(log);
+});
+
+// POST /api/articles/flag-by-release — Flag articles for a release
+// Body: { releaseId, releaseTitle, affectedAreas: [], articleIds: [] }
+router.post("/flag-by-release", requireAuth, (req, res) => {
+  try {
+    const { releaseId, releaseTitle, affectedAreas, articleIds } = req.body;
+
+    if (!releaseId || !releaseTitle || !Array.isArray(articleIds) || articleIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "releaseId, releaseTitle, and articleIds array are required",
+      });
+    }
+
+    const flags = loadArticleFlags();
+    const now = new Date().toISOString();
+    const flaggedArticles = [];
+
+    // Create a flag for each article
+    articleIds.forEach((articleId) => {
+      const flagId = `${releaseId}_${articleId}`;
+      flags.flags[flagId] = {
+        releaseId,
+        articleId,
+        articleTitle: "", // Will be populated by frontend
+        articleUrl: `https://${ZENDESK_SUBDOMAIN}.zendesk.com/hc/articles/${articleId}`,
+        flaggedAt: now,
+        flaggedByRelease: releaseTitle,
+        status: "flagged",
+        reviewStatus: null,
+        reviewedBy: null,
+        reviewedAt: null,
+        notes: "",
+        affectedAreas: affectedAreas || [],
+      };
+      flaggedArticles.push(flags.flags[flagId]);
+    });
+
+    flags.lastReleaseId = releaseId;
+    saveArticleFlags(flags);
+
+    console.log(`✅ Flagged ${articleIds.length} articles for release: ${releaseTitle}`);
+
+    res.json({
+      success: true,
+      message: `Flagged ${articleIds.length} articles`,
+      flaggedArticles,
+      count: articleIds.length,
+    });
+  } catch (err) {
+    console.error("Error flagging articles:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/articles/flag/:flagId — Update flag status
+// Body: { reviewStatus, reviewedBy, notes }
+router.patch("/flag/:flagId", requireAuth, (req, res) => {
+  try {
+    const { flagId } = req.params;
+    const { reviewStatus, reviewedBy, notes } = req.body;
+
+    if (!["updated", "no_update", "review_later"].includes(reviewStatus)) {
+      return res.status(400).json({
+        success: false,
+        error: "reviewStatus must be one of: updated, no_update, review_later",
+      });
+    }
+
+    const flags = loadArticleFlags();
+    const flag = flags.flags[flagId];
+
+    if (!flag) {
+      return res.status(404).json({
+        success: false,
+        error: "Flag not found",
+      });
+    }
+
+    // Update the flag
+    flag.status = "reviewed";
+    flag.reviewStatus = reviewStatus;
+    flag.reviewedBy = reviewedBy;
+    flag.reviewedAt = new Date().toISOString();
+    flag.notes = notes || "";
+
+    saveArticleFlags(flags);
+
+    // Add audit entry
+    const auditEntry = {
+      flagId,
+      articleId: flag.articleId,
+      action: `marked as "${reviewStatus}"`,
+      user: reviewedBy,
+      timestamp: flag.reviewedAt,
+    };
+    const log = loadAuditLog();
+    log.logs.push(auditEntry);
+    saveAuditLog(log);
+
+    console.log(`✅ Updated flag ${flagId}: ${reviewStatus}`);
+
+    res.json({
+      success: true,
+      message: "Flag updated",
+      flag,
+    });
+  } catch (err) {
+    console.error("Error updating flag:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/articles/flags/:releaseId — Get all flags for a release
+router.get("/flags/:releaseId", requireAuth, (req, res) => {
+  try {
+    const { releaseId } = req.params;
+    const flags = loadArticleFlags();
+
+    // Filter flags for this release
+    const releaseFlags = Object.values(flags.flags).filter(
+      (flag) => flag.releaseId === releaseId
+    );
+
+    // Count by status
+    const flagged = releaseFlags.filter((f) => f.status === "flagged").length;
+    const reviewed = releaseFlags.filter((f) => f.status === "reviewed").length;
+
+    console.log(
+      `📊 Retrieved ${releaseFlags.length} flags for release ${releaseId} (flagged: ${flagged}, reviewed: ${reviewed})`
+    );
+
+    res.json({
+      success: true,
+      flags: releaseFlags,
+      counts: {
+        total: releaseFlags.length,
+        flagged,
+        reviewed,
+      },
+    });
+  } catch (err) {
+    console.error("Error retrieving flags:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

@@ -185,4 +185,133 @@ Keep keywords concise (1-3 words each).`;
   }
 });
 
+/**
+ * POST /api/release-notes/analyze-impact
+ * Intelligent release analysis: identify affected features and recommend articles to update
+ * Body: { releaseNotes: string }
+ * Returns: { affectedFeatures: [], recommendedArticles: [], searchQueries: [] }
+ */
+router.post("/analyze-impact", requireAuth, async (req, res) => {
+  try {
+    const { releaseNotes } = req.body;
+
+    if (!releaseNotes || typeof releaseNotes !== "string") {
+      return res.status(400).json({
+        success: false,
+        error: "releaseNotes is required and must be a string",
+      });
+    }
+
+    // Validate OpenAI API key
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("Missing OPENAI_API_KEY in environment variables");
+    }
+
+    console.log(`🤖 Analyzing release impact...`);
+
+    // Build the intelligent system prompt
+    const systemPrompt = `You are a Help Center content strategist for a Zendesk Help Center.
+
+Given release notes, analyze what features are being added/changed and what documentation needs updates.
+
+Example: If "new field added to create case form" → recommend updating:
+- "How to create a case" article
+- "Create case API documentation"
+- Any field/form reference documentation
+
+For your response, think about:
+- Direct documentation (guides on using the feature)
+- API documentation (if backend changes)
+- Related features documentation (things that integrate with this feature)
+- User experience guides
+
+Return ONLY a valid JSON object (no markdown, no code blocks) with exactly these fields:
+{
+  "affectedFeatures": ["Feature 1", "Feature 2"],
+  "recommendedArticles": ["Article topic 1", "Article topic 2"],
+  "searchQueries": ["search term 1", "search term 2"]
+}`;
+
+    // Call OpenAI API
+    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt,
+          },
+          {
+            role: "user",
+            content: `Analyze this release and identify what Help Center articles need updating:\n\n${releaseNotes}`,
+          },
+        ],
+        temperature: 0.5,
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!openaiResponse.ok) {
+      const error = await openaiResponse.json();
+      throw new Error(`OpenAI API error: ${error.error?.message || "Unknown error"}`);
+    }
+
+    const data = await openaiResponse.json();
+    let analysisText = data.choices[0].message.content.trim();
+
+    // Remove markdown code block formatting if present
+    analysisText = analysisText.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+
+    // Parse JSON response
+    let analysis;
+    try {
+      analysis = JSON.parse(analysisText);
+    } catch (parseErr) {
+      console.error("Failed to parse OpenAI response:", analysisText);
+      throw new Error("Failed to parse release impact analysis from OpenAI");
+    }
+
+    // Validate response structure
+    if (!analysis.affectedFeatures || !Array.isArray(analysis.affectedFeatures)) {
+      throw new Error("Invalid response: affectedFeatures must be an array");
+    }
+    if (!analysis.recommendedArticles || !Array.isArray(analysis.recommendedArticles)) {
+      throw new Error("Invalid response: recommendedArticles must be an array");
+    }
+    if (!analysis.searchQueries || !Array.isArray(analysis.searchQueries)) {
+      throw new Error("Invalid response: searchQueries must be an array");
+    }
+
+    // Store analysis in session
+    req.session.releaseImpactAnalysis = {
+      affectedFeatures: analysis.affectedFeatures,
+      recommendedArticles: analysis.recommendedArticles,
+      searchQueries: analysis.searchQueries,
+      analyzedAt: new Date().toISOString(),
+    };
+
+    console.log(`✅ Release impact analyzed:`);
+    console.log(`   Affected features: ${analysis.affectedFeatures.length}`);
+    console.log(`   Recommended articles: ${analysis.recommendedArticles.length}`);
+    console.log(`   Search queries: ${analysis.searchQueries.length}`);
+
+    res.json({
+      success: true,
+      affectedFeatures: analysis.affectedFeatures,
+      recommendedArticles: analysis.recommendedArticles,
+      searchQueries: analysis.searchQueries,
+      tokens: data.usage.total_tokens,
+    });
+  } catch (err) {
+    console.error("Release impact analysis error:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;
