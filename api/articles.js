@@ -264,7 +264,7 @@ router.get("/screenshots", requireAuth, (req, res) => {
       };
 
       if (displayItem.status === "pending") {
-        articles.push(displayItem);
+        pendingApproval.push(displayItem);
       } else {
         resolved.push(displayItem);
       }
