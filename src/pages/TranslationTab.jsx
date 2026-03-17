@@ -112,7 +112,7 @@ function TranslationTab({ user }) {
   const [history, setHistory] = useState([])
   const [approvers, setApprovers] = useState([])
   const [view, setView] = useState('pending') // 'pending' | 'scan-results' | 'history' | 'approvers' | 'visual-media' | 'translation-results'
-  const [screenshotSection, setScreenshotSection] = useState('pendingApproval') // 'pendingApproval' | 'resolved'
+  const [screenshotSection, setScreenshotSection] = useState('pendingApproval') // 'pendingApproval' | 'invalidDate' | 'resolved'
   const [screenshots, setVisualMedia] = useState(null)
   const [voting, setVoting] = useState(false)
   const [triggering, setTriggering] = useState(false)
@@ -175,6 +175,7 @@ function TranslationTab({ user }) {
       for (const article of data.articles) {
         // Only include images from articles marked as "Needs Update"
         if (article.needsTranslation && article.images && article.images.length > 0) {
+          console.log(`📸 Found ${article.images.length} images in article ${article.id}: ${article.title}`)
           article.images.forEach((img, idx) => {
             scannedImages.push({
               articleId: article.id,
@@ -187,20 +188,26 @@ function TranslationTab({ user }) {
         }
       }
 
+      console.log(`📤 Saving ${scannedImages.length} total scanned images to Visual Media`)
+
       // Save scanned images to visual media if any found
       if (scannedImages.length > 0) {
         try {
-          await fetch('/api/articles/save-scanned-images', {
+          const saveRes = await fetch('/api/articles/save-scanned-images', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ images: scannedImages })
           })
+          const saveData = await saveRes.json()
+          console.log(`✅ Saved images response:`, saveData)
           // Refresh visual media to show newly added images
           await fetchVisualMedia()
         } catch (imgErr) {
           console.warn('Warning: Could not save scanned images to visual media', imgErr)
         }
+      } else {
+        console.log('⚠️ No images found in articles needing translation')
       }
 
       setView('scan-results')
@@ -604,6 +611,15 @@ function TranslationTab({ user }) {
               Pending Approval
               {screenshots && (
                 <span className="subnav-count">{screenshots.pendingApproval?.length ?? 0}</span>
+              )}
+            </button>
+            <button
+              className={`subnav-btn ${screenshotSection === 'invalidDate' ? 'active' : ''}`}
+              onClick={() => setScreenshotSection('invalidDate')}
+            >
+              Invalid Date
+              {screenshots && (
+                <span className="subnav-count">{screenshots.invalidDate?.length ?? 0}</span>
               )}
             </button>
             <button
