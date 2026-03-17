@@ -81,10 +81,12 @@
 
 .notes-content {
   margin: 0;
+  padding: 1rem;
   font-family: 'Monaco', 'Courier New', monospace;
-  font-size: 0.875rem;
-  line-height: 1.6;
-  color: var(--color-gray-700);
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #111827 !important;
+  background-color: #ffffff !important;
   white-space: pre-wrap;
   word-wrap: break-word;
 }
