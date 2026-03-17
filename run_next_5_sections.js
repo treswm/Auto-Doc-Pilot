@@ -54,6 +54,24 @@ if (runIdArg) {
   console.log(`📋 Translation run ID: ${runId}`);
 }
 
+// Debug logging to file
+let debugLogFile = null;
+function debugLog(message) {
+  const msg = `[${new Date().toISOString()}] ${message}\n`;
+  console.log(message);
+  if (runId && !debugLogFile) {
+    debugLogFile = path.join(process.env.HOME || process.env.USERPROFILE, ".focus-desk", `translation-run-${runId}.log`);
+    ensureStatusDir();
+  }
+  if (debugLogFile) {
+    try {
+      fs.appendFileSync(debugLogFile, msg);
+    } catch (e) {
+      // Silently fail if we can't write to the log
+    }
+  }
+}
+
 /**
  * Ensure status directory exists
  */
@@ -634,6 +652,12 @@ async function main() {
   const runStartTime = new Date().toISOString();
 
   console.log(`\n🚀 Translation run started: ${runStartTime}`);
+  debugLog(`🚀 Translation run started: ${runStartTime}`);
+  debugLog(`runId: ${runId}`);
+  debugLog(`Model: ${OPENAI_MODEL}`);
+  debugLog(`Target locale: ${TARGET_LOCALE}`);
+  debugLog(`Glossary terms loaded: ${glossaryTerms.length}`);
+
   console.log(`Model: ${OPENAI_MODEL}`);
   console.log(`Target locale: ${TARGET_LOCALE}`);
   console.log(`Throttle: ${THROTTLE_MS}ms between requests`);
@@ -862,6 +886,7 @@ async function main() {
         const exists = await translationExists(articleId, TARGET_LOCALE);
         if (exists) {
           skippedExistingCount += 1;
+          debugLog(`⏭️  SKIP Article ${articleId}: ${a.title} - translation already exists`);
 
           csvRows.push({
             sectionName,
