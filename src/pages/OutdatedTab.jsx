@@ -61,7 +61,12 @@ function OutdatedTab({ user }) {
         outdatedScore: generateOutdatedScore(article.id, calculateDaysStale(article.updated_at))
       }))
 
-      setOutdatedArticles(articlesWithScores)
+      // Sort articles by outdated score (highest first)
+      const sortedArticles = articlesWithScores.sort((a, b) =>
+        b.outdatedScore.total - a.outdatedScore.total
+      )
+
+      setOutdatedArticles(sortedArticles)
       setTotalArticlesFound(total)
       setArticleStatuses({})
     } catch (err) {
@@ -368,8 +373,13 @@ function OutdatedTab({ user }) {
       {view === 'glossary' && (
         <div className="glossary-section">
           <div className="glossary-header">
-            <h3>📚 Hi Marley Terminology Glossary</h3>
-            <p className="glossary-subtitle">Key terms used in Help Center articles and their French-Canadian translations</p>
+            <div className="glossary-header-content">
+              <h3>📚 Hi Marley Terminology Glossary</h3>
+              <p className="glossary-subtitle">Source of truth for terminology and semantic drift scoring</p>
+            </div>
+            <button className="glossary-edit-btn">
+              ✏️ Edit
+            </button>
           </div>
 
           <div className="glossary-content">
@@ -397,7 +407,7 @@ function OutdatedTab({ user }) {
 
           <div className="glossary-note">
             <p>
-              <strong>💡 Note:</strong> This glossary is used for terminology drift scoring. Articles that use outdated terminology or inconsistent translations may score higher on the "terminology/semantic drift" metric.
+              <strong>💡 Note:</strong> This is the source of truth for terminology and semantic drift scoring. Articles using outdated terminology or inconsistent language relative to this glossary will score higher on the "terminology/semantic drift" component of the Outdated Score.
             </p>
           </div>
         </div>
