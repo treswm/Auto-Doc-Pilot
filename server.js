@@ -6,12 +6,21 @@
  */
 
 import "dotenv/config";
+
+// Zendesk staging uses a cert that Node can't verify locally
+if (process.env.ZENDESK_ENVIRONMENT === "staging") {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+}
+
 import express from "express";
 import cors from "cors";
 import session from "express-session";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+
+// Auth middleware
+import { requireAuth } from "./middleware/requireAuth.js";
 
 // Route handlers
 import authRoutes from "./api/auth.js";
@@ -61,7 +70,7 @@ app.get("/api/health", (req, res) =>
 
 app.use("/api/auth", authRoutes);
 app.use("/api/approvals", approvalsRoutes);
-app.use("/api/approvers", approversRoutes);
+app.use("/api/approvers", requireAuth, approversRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/articles", articlesRoutes);
 app.use("/api/oauth", oauthRoutes);

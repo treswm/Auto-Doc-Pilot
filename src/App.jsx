@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage'
 import TranslationTab from './pages/TranslationTab'
 import OutdatedTab from './pages/OutdatedTab'
 import ReleasesTab from './pages/ReleasesTab'
+import AdminTab from './pages/AdminTab'
 import './App.css'
 
 function App() {
@@ -82,12 +83,21 @@ function App() {
         >
           🚀 Release Notes
         </button>
+        {user.role === 'admin' && (
+          <button
+            className={`tab-btn ${activeTab === 'admin' ? 'active' : ''}`}
+            onClick={() => setActiveTab('admin')}
+          >
+            Admin
+          </button>
+        )}
       </nav>
 
       <main className="tab-content">
         {activeTab === 'translation' && <TranslationTab user={user} />}
         {activeTab === 'outdated' && <OutdatedTab user={user} />}
         {activeTab === 'releases' && <ReleasesTab user={user} />}
+        {activeTab === 'admin' && <AdminTab user={user} />}
       </main>
     </div>
   )
