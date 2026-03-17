@@ -4,9 +4,23 @@
  */
 
 import express from "express";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { requireAuth } from "../middleware/requireAuth.js";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const TRAINING_INPUT_FILE = path.join(__dirname, "..", ".data", "translation-training-input.txt");
+
 const router = express.Router();
+
+// Ensure .data directory exists
+function ensureDataDir() {
+  const dataDir = path.dirname(TRAINING_INPUT_FILE);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+}
 
 // Default translation instructions if none provided
 const DEFAULT_TRANSLATION_INPUT = `Translation Corrects:
@@ -124,9 +138,13 @@ Welcome Flow - A configurable onboarding workflow that defines the welcome messa
  */
 router.get("/input", requireAuth, (req, res) => {
   try {
-    // In a real implementation, this would fetch from a database
-    // For now, we'll just return the default or user-provided input
-    const translationInput = req.session?.translationInput || DEFAULT_TRANSLATION_INPUT;
+    ensureDataDir();
+
+    // Try to load from file first, then fall back to default
+    let translationInput = DEFAULT_TRANSLATION_INPUT;
+    if (fs.existsSync(TRAINING_INPUT_FILE)) {
+      translationInput = fs.readFileSync(TRAINING_INPUT_FILE, "utf-8");
+    }
 
     res.json({
       success: true,
@@ -154,16 +172,21 @@ router.post("/input", requireAuth, (req, res) => {
       });
     }
 
-    // Save to session (in production, save to database)
+    ensureDataDir();
+
+    // Save to persistent file
+    fs.writeFileSync(TRAINING_INPUT_FILE, translationInput, "utf-8");
+
+    // Also save to session for this request
     req.session.translationInput = translationInput;
 
     console.log(
-      `✅ Translation input saved (${translationInput.length} characters)`
+      `✅ Translation training input saved (${translationInput.length} characters)`
     );
 
     res.json({
       success: true,
-      message: "Translation input saved successfully",
+      message: "Translation training input saved successfully",
       length: translationInput.length,
     });
   } catch (err) {
