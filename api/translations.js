@@ -238,7 +238,7 @@ Translate the content below while adhering to these guidelines. Maintain the sam
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-5",
         messages: [
           {
             role: "system",
@@ -320,7 +320,7 @@ Translate the content below while adhering to these guidelines. Maintain the sam
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "gpt-4",
+            model: "gpt-5",
             messages: [
               {
                 role: "system",
