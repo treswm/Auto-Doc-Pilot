@@ -1,15 +1,4 @@
 {
-  "screenshots": {
-    "49416414070419_0": {
-      "status": "no_update",
-      "updatedAt": "2026-03-17T12:29:56.296Z",
-      "updatedBy": "Tres Moore"
-    },
-    "49416414070419_1": {
-      "status": "no_update",
-      "updatedAt": "2026-03-17T12:29:57.591Z",
-      "updatedBy": "Tres Moore"
-    }
-  },
-  "lastWorkflowCycle": "2026-03-17T12:12:51.000Z"
+  "screenshots": {},
+  "lastWorkflowCycle": null
 }
