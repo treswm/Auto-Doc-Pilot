@@ -712,6 +712,9 @@ async function main() {
   let sectionTranslationsCreatedCount = 0;
   let sectionTranslationsSkippedExistingCount = 0;
 
+  // Track error messages for status reporting
+  const errors = [];
+
   // OpenAI usage totals
   const usageTotals = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
 
@@ -805,6 +808,10 @@ async function main() {
       console.error(`\n⚠️  Section ${sectionId} parent translation failed: ${failureReason}`);
       console.error(`   Action: ${action}`);
 
+      // Track error for status reporting
+      const errorMsg = `Section ${sectionId} (${sectionName}): ${failureReason} [${action}]`;
+      errors.push(errorMsg);
+
       logManualReview({
         sectionName,
         sectionId,
@@ -856,6 +863,10 @@ async function main() {
 
           console.error(`\n⚠️  Article ${articleId} skipped: ${failureReason}`);
           console.error(`   Action: ${action}`);
+
+          // Track error for status reporting
+          const errorMsg = `Article ${articleId} (${a.title}): ${failureReason} [${action}]`;
+          errors.push(errorMsg);
 
           csvRows.push({
             sectionName,
@@ -945,6 +956,7 @@ async function main() {
             totalArticles: totalProcessed,
             articlesTranslated: translatedCount,
             articlesFailed: skippedParseErrorCount + skippedTimeoutCount,
+            errors,
           });
         }
       } catch (articleErr) {
@@ -956,6 +968,10 @@ async function main() {
 
         console.error(`\n⚠️  Article ${articleId} failed: ${failureReason}`);
         console.error(`   Action: ${action}`);
+
+        // Track error for status reporting
+        const errorMsg = `Article ${articleId} (${a.title}): ${failureReason} [${action}]`;
+        errors.push(errorMsg);
 
         csvRows.push({
           sectionName,
@@ -991,6 +1007,7 @@ async function main() {
       totalArticles: translatedCount + skippedExistingCount + skippedLargeArticleCount + skippedParseErrorCount + skippedTimeoutCount,
       articlesTranslated: translatedCount,
       articlesFailed: skippedParseErrorCount + skippedTimeoutCount,
+      errors,
     });
   }
 
@@ -1074,6 +1091,7 @@ async function main() {
       totalArticles: translatedCount + skippedExistingCount + skippedLargeArticleCount + skippedParseErrorCount + skippedTimeoutCount,
       articlesTranslated: translatedCount,
       articlesFailed: skippedParseErrorCount + skippedTimeoutCount,
+      errors,
     });
     console.log(`✅ Status updated: workflow completed (runId: ${runId})`);
   }
