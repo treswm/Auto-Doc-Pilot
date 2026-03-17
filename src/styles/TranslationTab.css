@@ -530,6 +530,45 @@
   display: flex;
   gap: var(--spacing-3);
   flex-wrap: wrap;
+  margin-top: var(--spacing-6);
+}
+
+.error-details {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-6);
+  margin: var(--spacing-6) 0;
+}
+
+.error-details h4 {
+  margin: 0 0 var(--spacing-4) 0;
+  color: #92400e;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.error-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.error-item {
+  background: white;
+  padding: var(--spacing-3);
+  border-left: 3px solid #f59e0b;
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  font-family: 'Courier New', monospace;
+}
+
+.error-text {
+  margin: 0;
+  color: #92400e;
+  word-break: break-word;
 }
 
 /* ── Scan Results View Styles ── */

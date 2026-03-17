@@ -284,21 +284,30 @@ function TranslationTab({ user }) {
               articlesFailed: statusData.articlesFailed,
               totalArticles: statusData.totalArticles,
               csvName,
+              errors: statusData.errors || [],
               completedAt: new Date().toISOString(),
             })
+
+            // Format message based on results
+            let messageText = `✅ Translation completed! ${statusData.articlesTranslated} articles translated`
+            if (statusData.articlesFailed > 0) {
+              messageText += `, ${statusData.articlesFailed} failed`
+            }
+            messageText += `. 📄 ${csvName}`
+
             setMessage({
-              type: 'success',
-              text: `✅ Translation completed! ${statusData.articlesTranslated} articles translated, ${statusData.articlesFailed} failed. 📄 ${csvName}`
+              type: statusData.articlesFailed > 0 ? 'warning' : 'success',
+              text: messageText
             })
             setView('translation-results')
           } else if (statusData.status === 'failed') {
             clearInterval(pollInterval)
             setTranslationRunning(false)
             setTranslationProgress(null)
-            const errorMsg = statusData.errors && statusData.errors.length > 0
-              ? statusData.errors[0]
+            const errorMessages = (statusData.errors && statusData.errors.length > 0)
+              ? statusData.errors.slice(0, 3).join('\n')
               : 'Translation failed'
-            setMessage({ type: 'error', text: `❌ Translation failed: ${errorMsg}` })
+            setMessage({ type: 'error', text: `❌ Translation failed:\n${errorMessages}` })
           }
         } catch (err) {
           console.error('Failed to check translation status:', err)
@@ -651,6 +660,25 @@ function TranslationTab({ user }) {
           <div className="result-csv">
             <p className="help-text">📄 Audit Log: <strong>{translationResults.csvName}</strong></p>
           </div>
+
+          {translationResults.errors && translationResults.errors.length > 0 && (
+            <div className="error-details">
+              <h4>⚠️ Failed Articles ({translationResults.errors.length})</h4>
+              <div className="error-list">
+                {translationResults.errors.slice(0, 10).map((error, idx) => (
+                  <div key={idx} className="error-item">
+                    <p className="error-text">{error}</p>
+                  </div>
+                ))}
+              </div>
+              {translationResults.errors.length > 10 && (
+                <p className="help-text">
+                  ... and {translationResults.errors.length - 10} more. See the CSV for full details.
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="result-actions">
             <button
               className="btn btn-secondary"
