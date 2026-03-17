@@ -224,7 +224,7 @@ function OutdatedTab({ user }) {
                       <div className="article-resolved">
                         <div className="resolved-audit-info">
                           <span className="badge badge-success">
-                            ✓ {articleStatuses[article.id] === 'needs_update' ? 'Needs Updating' : articleStatuses[article.id] === 'still_good' ? 'Still Good' : 'Review Later'}
+                            ✓ {articleStatuses[article.id] === 'updated' ? 'Updated' : articleStatuses[article.id] === 'still_current' ? 'Still Current' : 'Review Later'}
                           </span>
                         </div>
                         <button
@@ -246,9 +246,9 @@ function OutdatedTab({ user }) {
                         </a>
                         <button
                           className="btn btn-primary btn-sm"
-                          onClick={() => handleArticleStatus(article.id, 'needs_update')}
+                          onClick={() => handleArticleStatus(article.id, 'updated')}
                         >
-                          Needs Updating
+                          Mark as Updated
                         </button>
                         <button
                           className="btn btn-ghost btn-sm"
@@ -258,9 +258,9 @@ function OutdatedTab({ user }) {
                         </button>
                         <button
                           className="btn btn-ghost btn-sm"
-                          onClick={() => handleArticleStatus(article.id, 'still_good')}
+                          onClick={() => handleArticleStatus(article.id, 'still_current')}
                         >
-                          Still Good
+                          Still Current
                         </button>
                       </div>
                     )}
@@ -336,8 +336,8 @@ function OutdatedTab({ user }) {
                       <div className="entry-header">
                         <span className="entry-title">{article.title}</span>
                         <span className={`status-badge ${article.reviewStatus}`}>
-                          {article.reviewStatus === 'needs_update' ? '🔧 Needs Updating' :
-                           article.reviewStatus === 'still_good' ? '✓ Still Good' :
+                          {article.reviewStatus === 'updated' ? '✓ Updated' :
+                           article.reviewStatus === 'still_current' ? '✓ Still Current' :
                            article.reviewStatus === 'review_later' ? '⏱ Review Later' :
                            '⏳ Pending'}
                         </span>

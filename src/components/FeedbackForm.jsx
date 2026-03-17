@@ -15,6 +15,7 @@ function FeedbackForm({ type, entityId, label, hint }) {
   const [open, setOpen] = useState(false)
   const [rating, setRating] = useState(null)       // 'good' | 'bad'
   const [correction, setCorrection] = useState('')
+  const [promptFeedback, setPromptFeedback] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState(null)
@@ -30,7 +31,7 @@ function FeedbackForm({ type, entityId, label, hint }) {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ entityId, rating, correction }),
+        body: JSON.stringify({ entityId, rating, correction, promptFeedback }),
       })
       if (!res.ok) throw new Error('Feedback submission failed')
       setSubmitted(true)
@@ -80,7 +81,7 @@ function FeedbackForm({ type, entityId, label, hint }) {
             >👎 Needs improvement</button>
           </div>
 
-          {/* Correction / comment */}
+          {/* Correction / comment (shown only if rating is 'bad') */}
           {rating === 'bad' && (
             <div className="form-group">
               <label htmlFor={`correction-${entityId}`}>
@@ -94,6 +95,31 @@ function FeedbackForm({ type, entityId, label, hint }) {
                   type === 'translation'
                     ? 'e.g. "Policyholder" should be "Preneur d\'assurance" not "Titulaire"'
                     : 'Describe what was incorrect or missing...'
+                }
+                rows={3}
+              />
+            </div>
+          )}
+
+          {/* Prompt improvement feedback (always shown when rating is selected) */}
+          {rating && (
+            <div className="form-group">
+              <label htmlFor={`prompt-feedback-${entityId}`}>
+                📝 Improve future scans
+              </label>
+              <p className="form-description">
+                Suggest how we can improve the AI analysis prompt for better results in future scans:
+              </p>
+              <textarea
+                id={`prompt-feedback-${entityId}`}
+                value={promptFeedback}
+                onChange={(e) => setPromptFeedback(e.target.value)}
+                placeholder={
+                  type === 'outdated'
+                    ? 'e.g. "Also check for outdated API references" or "Pay more attention to updated screenshots"'
+                    : type === 'translation'
+                    ? 'e.g. "Check for technical terms more carefully" or "Look for consistency with brand terminology"'
+                    : 'e.g. "Consider impact on user guides and API docs"'
                 }
                 rows={3}
               />
