@@ -102,7 +102,7 @@ function TranslationTab({ user }) {
   const [pending, setPending] = useState(null)
   const [history, setHistory] = useState([])
   const [approvers, setApprovers] = useState([])
-  const [view, setView] = useState('pending') // 'pending' | 'scanner' | 'history' | 'approvers' | 'visual-media' | 'translation-results'
+  const [view, setView] = useState('pending') // 'pending' | 'scan-results' | 'history' | 'approvers' | 'visual-media' | 'translation-results'
   const [screenshotSection, setScreenshotSection] = useState('pendingApproval') // 'pendingApproval' | 'invalidDate' | 'articles'
   const [screenshots, setVisualMedia] = useState(null)
   const [voting, setVoting] = useState(false)
@@ -154,13 +154,13 @@ function TranslationTab({ user }) {
     setScanLoading(true)
     setScanError(null)
     try {
-      const res = await fetch('/api/scanners/recent?daysBack=7&limit=50', { 
-        credentials: 'include' 
+      const res = await fetch('/api/approvals/scan-section?sectionId=49206877282195', {
+        credentials: 'include'
       })
       const data = await res.json()
-      if (!data.success) throw new Error(data.error || 'Failed to scan articles')
+      if (data.error) throw new Error(data.error)
       setScannedArticles(data.articles)
-      setView('scanner')
+      setView('scan-results')
     } catch (err) {
       setScanError(err.message)
     } finally {
@@ -632,13 +632,13 @@ function TranslationTab({ user }) {
         </div>
       )}
 
-      {/* ── Scanner view ── */}
-      {view === 'scanner' && (
+      {/* ── Scan Results view ── */}
+      {view === 'scan-results' && (
         <div>
-          <h3 className="section-title">📋 Scanned Articles (Recent)</h3>
+          <h3 className="section-title">📋 Best Practices Section - Translation Status</h3>
           {scanLoading && (
             <div className="content-placeholder">
-              <p>🔍 Scanning for recently edited articles...</p>
+              <p>🔍 Scanning Best Practices section...</p>
             </div>
           )}
           {scanError && (
@@ -650,41 +650,74 @@ function TranslationTab({ user }) {
             </div>
           )}
           {scannedArticles && scannedArticles.length > 0 ? (
-            <div className="articles-grid">
-              {scannedArticles.map(article => (
-                <div key={article.id} className="article-card">
-                  <div className="article-header">
-                    <h4>{article.title}</h4>
-                    <span className="article-id">ID: {article.id}</span>
-                  </div>
-                  <div className="article-meta">
-                    <p>📅 Updated: {new Date(article.updated_at).toLocaleString()}</p>
-                  </div>
-                  <div className="article-actions">
-                    <a
-                      href={article.helpCenterUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-primary btn-sm"
-                    >
-                      View Article ↗
-                    </a>
-                    <a
-                      href={article.helpCenterUrlFr}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-ghost btn-sm"
-                    >
-                      French ↗
-                    </a>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <div className="scan-summary">
+                <p className="help-text">
+                  Found <strong>{scannedArticles.length}</strong> articles •
+                  <strong>{scannedArticles.filter(a => a.needsTranslation).length}</strong> need translation
+                </p>
+              </div>
+              <div className="articles-table">
+                <table className="scan-table">
+                  <thead>
+                    <tr>
+                      <th>Article Title</th>
+                      <th>English Updated</th>
+                      <th>French Updated</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {scannedArticles.map(article => (
+                      <tr key={article.id} className={article.needsTranslation ? 'needs-translation' : 'up-to-date'}>
+                        <td className="article-title-cell">
+                          <div>
+                            <strong>{article.title}</strong>
+                            <p className="article-id-small">ID: {article.id}</p>
+                          </div>
+                        </td>
+                        <td className="date-cell">
+                          {new Date(article.englishUpdatedAt).toLocaleString()}
+                        </td>
+                        <td className="date-cell">
+                          {article.frenchUpdatedAt
+                            ? new Date(article.frenchUpdatedAt).toLocaleString()
+                            : <span className="no-translation">No translation</span>
+                          }
+                        </td>
+                        <td className="status-cell">
+                          {article.needsTranslation ? (
+                            <span className="badge badge-warning">⚠️ Needs Update</span>
+                          ) : (
+                            <span className="badge badge-success">✓ Up to date</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="scan-actions">
+                <button
+                  className="btn btn-primary"
+                  onClick={handleTriggerWorkflow}
+                  disabled={triggering || translationRunning}
+                >
+                  {triggering || translationRunning ? 'Starting...' : '▶ Run Translation Now'}
+                </button>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => setView('pending')}
+                >
+                  ← Back
+                </button>
+              </div>
             </div>
           ) : (
             scannedArticles && (
               <div className="content-placeholder">
-                <p>No articles found matching the scan criteria</p>
+                <p>No articles found in Best Practices section</p>
               </div>
             )
           )}

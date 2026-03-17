@@ -225,3 +225,82 @@ router.get("/status/:runId", requireAuth, (req, res) => {
 });
 
 export default router;
+
+// GET /api/approvals/scan-section
+// Scan a section for articles that need translation
+// Returns articles where English version is newer than French translation
+router.get("/scan-section", (req, res) => {
+  const { sectionId = "49206877282195" } = req.query; // Default to Best Practices
+  
+  (async () => {
+    try {
+      console.log(`\n📋 Scanning section ${sectionId} for translation candidates...`);
+      
+      const articles = [];
+      let nextPage = `/help_center/en-us/sections/${sectionId}/articles.json?page[size]=100`;
+      const zendeskBaseUrl = `https://${process.env.ZENDESK_SUBDOMAIN}.zendesk.com/api/v2`;
+      
+      // Fetch all articles in the section
+      while (nextPage) {
+        const res = await fetch(`${zendeskBaseUrl}${nextPage}`, {
+          headers: {
+            Authorization: `Bearer ${process.env.ZENDESK_OAUTH_ACCESS_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        });
+        
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Failed to fetch articles: ${res.status} ${text}`);
+        }
+        
+        const data = await res.json();
+        const sectionArticles = data.articles || [];
+        
+        for (const article of sectionArticles) {
+          if (article.draft) continue; // Skip drafts
+          
+          // Check if French translation exists
+          const translationRes = await fetch(
+            `${zendeskBaseUrl}/help_center/articles/${article.id}/translations/fr-ca.json`,
+            { headers: { Authorization: `Bearer ${process.env.ZENDESK_OAUTH_ACCESS_TOKEN}` } }
+          );
+          
+          let frenchUpdatedAt = null;
+          if (translationRes.ok) {
+            const frenchData = await translationRes.json();
+            frenchUpdatedAt = frenchData.translation?.updated_at;
+          }
+          
+          // Compare timestamps
+          const englishUpdatedAt = article.updated_at;
+          const needsTranslation = !frenchUpdatedAt || new Date(englishUpdatedAt) > new Date(frenchUpdatedAt);
+          
+          articles.push({
+            id: article.id,
+            title: article.title,
+            englishUpdatedAt,
+            frenchUpdatedAt,
+            needsTranslation,
+            url: article.html_url,
+          });
+        }
+        
+        nextPage = data.next_page ? data.next_page.replace(zendeskBaseUrl, "") : null;
+      }
+      
+      const needsTranslation = articles.filter(a => a.needsTranslation);
+      console.log(`✅ Found ${articles.length} articles, ${needsTranslation.length} need translation`);
+      
+      res.json({
+        sectionId,
+        total: articles.length,
+        needingTranslation: needsTranslation.length,
+        articles: articles.sort((a, b) => new Date(b.englishUpdatedAt) - new Date(a.englishUpdatedAt)),
+      });
+    } catch (err) {
+      console.error("Scan error:", err.message);
+      res.status(500).json({ error: err.message });
+    }
+  })();
+});

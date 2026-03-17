@@ -531,3 +531,125 @@
   gap: var(--spacing-3);
   flex-wrap: wrap;
 }
+
+/* ── Scan Results View Styles ── */
+.scan-summary {
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-4);
+  margin-bottom: var(--spacing-6);
+}
+
+.scan-summary p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.scan-summary strong {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.articles-table {
+  overflow-x: auto;
+  margin-bottom: var(--spacing-6);
+}
+
+.scan-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.scan-table thead {
+  background: var(--color-gray-50);
+  border-bottom: 2px solid var(--color-gray-200);
+}
+
+.scan-table th {
+  padding: var(--spacing-3) var(--spacing-4);
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-gray-700);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.scan-table td {
+  padding: var(--spacing-4);
+  border-bottom: 1px solid var(--color-gray-100);
+  font-size: 0.875rem;
+  color: var(--color-gray-700);
+}
+
+.scan-table tbody tr {
+  transition: background-color 0.15s;
+}
+
+.scan-table tbody tr:hover {
+  background: var(--color-gray-50);
+}
+
+.scan-table tbody tr.needs-translation {
+  background: #fffbeb;
+}
+
+.scan-table tbody tr.needs-translation:hover {
+  background: #fef3c7;
+}
+
+.scan-table tbody tr.up-to-date {
+  background: #f0fdf4;
+}
+
+.scan-table tbody tr.up-to-date:hover {
+  background: #dcfce7;
+}
+
+.article-title-cell {
+  font-weight: 500;
+  max-width: 400px;
+  word-wrap: break-word;
+}
+
+.article-id-small {
+  margin: var(--spacing-1) 0 0 0;
+  font-size: 0.75rem;
+  color: var(--color-gray-500);
+  font-family: monospace;
+}
+
+.date-cell {
+  white-space: nowrap;
+  font-family: monospace;
+  font-size: 0.8125rem;
+  color: var(--color-gray-600);
+}
+
+.no-translation {
+  color: var(--color-gray-400);
+  font-style: italic;
+}
+
+.status-cell {
+  text-align: center;
+}
+
+.status-cell .badge {
+  white-space: nowrap;
+}
+
+.scan-actions {
+  display: flex;
+  gap: var(--spacing-4);
+  flex-wrap: wrap;
+  padding: var(--spacing-6);
+  background: var(--color-gray-50);
+  border-radius: var(--border-radius);
+  justify-content: flex-start;
+}
