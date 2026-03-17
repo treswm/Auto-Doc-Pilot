@@ -12,7 +12,6 @@ function LoginPage({ onLoginSuccess }) {
     setLoading(true)
 
     try {
-      // For POC: simple email/password login (Step 2 will add Slack OAuth)
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -35,7 +34,6 @@ function LoginPage({ onLoginSuccess }) {
 
   const handleSlackLogin = async () => {
     // TODO: Step 2 - Implement Slack OAuth
-    // Redirect to /api/auth/slack
     console.log('Slack OAuth coming in Step 2')
   }
 
@@ -43,18 +41,24 @@ function LoginPage({ onLoginSuccess }) {
     <div className="login-page">
       <div className="login-container">
         <div className="login-box">
-          <h1>Help Center Translation Dashboard</h1>
-          <p className="subtitle">Manage translations, outdated articles, and release notes</p>
+          <div className="login-logo">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="white">
+              <polygon points="7,1 13,4 13,10 7,13 1,10 1,4"/>
+            </svg>
+          </div>
+
+          <h1>Doc Pilot</h1>
+          <p className="subtitle">Help Center documentation automation</p>
 
           <form onSubmit={handleLogin} className="login-form">
             <div className="form-group">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="email">Email address</label>
               <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
+                placeholder="you@company.com"
                 required
                 disabled={loading}
               />
@@ -67,7 +71,7 @@ function LoginPage({ onLoginSuccess }) {
               disabled={loading}
               className="login-btn primary"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? 'Signing in...' : 'Continue'}
             </button>
           </form>
 
@@ -79,12 +83,11 @@ function LoginPage({ onLoginSuccess }) {
             disabled={true}
             title="Slack OAuth - Coming in Step 2"
           >
-            Login with Slack (Coming Soon)
+            Continue with Slack
           </button>
 
           <p className="note">
-            For POC: Enter any email address to proceed.
-            Slack OAuth will be added in Step 2.
+            Enter any email to access the POC environment.
           </p>
         </div>
       </div>
