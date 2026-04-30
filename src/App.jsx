@@ -4,6 +4,7 @@ import TranslationTab from './pages/TranslationTab'
 import OutdatedTab from './pages/OutdatedTab'
 import ReleasesTab from './pages/ReleasesTab'
 import AdminTab from './pages/AdminTab'
+import CreateArticleTab from './pages/CreateArticleTab'
 import './App.css'
 
 const TranslationIcon = () => (
@@ -34,10 +35,19 @@ const AdminIcon = () => (
   </svg>
 )
 
+const CreateArticleIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 2H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6L9 2z"/>
+    <path d="M9 2v4h4"/>
+    <path d="M6 9h4M6 11.5h2.5"/>
+  </svg>
+)
+
 const NAV_ITEMS = [
   { id: 'translation', label: 'Translation', Icon: TranslationIcon },
   { id: 'outdated', label: 'Outdated Docs', Icon: OutdatedIcon },
   { id: 'releases', label: 'Release Notes', Icon: ReleasesIcon },
+  { id: 'create-article', label: 'Create Article', Icon: CreateArticleIcon },
 ]
 
 function App() {
@@ -128,6 +138,7 @@ function App() {
           {activeTab === 'translation' && <TranslationTab user={user} />}
           {activeTab === 'outdated' && <OutdatedTab user={user} />}
           {activeTab === 'releases' && <ReleasesTab user={user} />}
+          {activeTab === 'create-article' && <CreateArticleTab user={user} />}
           {activeTab === 'admin' && <AdminTab user={user} />}
         </div>
       </main>

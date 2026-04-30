@@ -1,0 +1,231 @@
+{
+  "description": "Human-reviewed examples of how release features map to Help Center article updates. Used as few-shot examples to improve AI accuracy when analyzing release impact.",
+  "lastUpdated": "2026-04-20",
+  "releaseExamples": [
+    {
+      "releaseVersion": "2.84",
+      "releaseFeature": "End User Phone Number Change Workflow Improvements",
+      "releaseFeatureText": "When an operator updates a customer's phone number on a case, Hi Marley now captures and records the change across multiple touchpoints. This provides full visibility into contact information updates, ensuring accountability and traceability for compliance and operational needs.",
+      "humanDecision": "update_existing",
+      "articleTitle": "How Do I Change the Phone Number on a Claim?",
+      "articleUrl": "https://himarley.zendesk.com/hc/en-us/articles/360020028213",
+      "articleId": "360020028213",
+      "whatChanged": "Updated article text to explain that phone number changes now generate a system message in the conversation transcript across all open cases, are recorded in the Case Event Log, and trigger a Contact Updated Webhook. Added details about the audit trail for compliance.",
+      "sectionAffected": "Main instructional content — the steps and explanation of what happens when you change a phone number",
+      "whyThisArticle": "This is the only article that documents the phone number change workflow. The release adds new behavior (logging, audit trail, webhook) to the exact process this article describes.",
+      "searchQueriesThatWork": ["phone number", "change phone", "phone number on a claim"]
+    },
+    {
+      "releaseVersion": "2.84",
+      "releaseFeature": "Inbox Management Badge Improvement: Configuration for Carrier Employee Message Impact",
+      "releaseFeatureText": "Operators can now choose to exclude internal messages from their Unread badge count, making it easier to spot conversations that need a customer response. The setting can be configured at the organization level and at the individual user profile level.",
+      "humanDecision": "update_existing",
+      "articleTitle": "Managing Your Personal Settings",
+      "articleUrl": "https://himarley.zendesk.com/hc/en-us/articles/12958411366035",
+      "articleId": "12958411366035",
+      "whatChanged": "Updated the Inbox Notifications section to document the new 'Don't mark internal messages as Unread' toggle. Replaced the screenshot of the Inbox Notifications settings panel to show the new toggle option. Added explanation of what the toggle does.",
+      "sectionAffected": "Inbox Notifications subsection — both text and screenshot",
+      "whyThisArticle": "This article documents personal settings including inbox notification preferences. The new toggle for excluding internal messages from Unread count is configured in personal settings, which is exactly what this article covers.",
+      "searchQueriesThatWork": ["personal settings", "inbox notifications", "unread badge", "internal messages"]
+    },
+    {
+      "releaseVersion": "2.84",
+      "releaseFeature": "Inbound Media Restriction Configuration",
+      "releaseFeatureText": "We've introduced inbound media restriction settings to help you manage what types of files policyholders and participants can send into Hi Marley conversations. Define which file types are allowed for inbound messages, block unsupported or non-compliant formats, configure settings at the organization level.",
+      "humanDecision": "create_new",
+      "articleTitle": "Media Restrictions Settings",
+      "articleUrl": "https://himarley.zendesk.com/hc/en-us/articles/47639019436435-Media-Restrictions-Settings",
+      "articleId": "47639019436435",
+      "whatChanged": "Created an entirely new article documenting: what inbound media restrictions are, benefits, how to navigate to the settings (Settings > Organization > Media Restrictions), how to configure allowed/blocked file types, what happens when a restricted file is sent, and included screenshots of the configuration panel.",
+      "sectionAffected": "N/A — new article created from scratch",
+      "whyThisArticle": "No existing article covered inbound media restrictions. This is a brand new feature with its own settings page, so it needs a dedicated article rather than an update to an existing one.",
+      "searchQueriesThatWork": ["media restrictions", "media restrictions settings", "inbound media", "file types", "block files"],
+      "noExistingArticle": true,
+      "articlePlacement": "Hi Marley Web App > Settings > Settings - Administration > Organization",
+      "note": "After this article was created, subsequent analyses should find it via search queries like 'media restrictions settings' and recommend update_existing rather than create_new."
+    },
+    {
+      "releaseVersion": "2.84",
+      "releaseFeature": "Additional Feature Configurations Added to Feature Page",
+      "releaseFeatureText": "Consolidated Auto-Resend Welcome Message and Failed Message Status Display in features page. Added Manual Case Creation feature configuration to enable web app/connect/mobile case creation.",
+      "humanDecision": "update_existing",
+      "articleTitle": "Features Configurations (Settings)",
+      "articleUrl": "https://himarley.zendesk.com/hc/en-us/articles/47617253517843",
+      "articleId": "47617253517843",
+      "whatChanged": "Updated the available features table to include the newly added feature toggles: Auto-Resend Welcome Message, Failed Message Status Display, and Manual Case Creation.",
+      "sectionAffected": "Features table/list — the section that enumerates all available feature toggles",
+      "whyThisArticle": "This article is the reference for the Features Configuration page in Settings. When new feature toggles are added to that page, this article's feature list must be updated to match.",
+      "searchQueriesThatWork": ["features configurations", "feature page", "settings features", "feature toggles"]
+    },
+    {
+      "releaseVersion": "2.79",
+      "releaseFeature": "Inbox – Quick Filters to Find Cases That Need Action",
+      "releaseFeatureText": "We've added new quick filters in the inbox to help you get to the right cases faster: Needs First Touch — see cases that have not yet received a first outbound response. Coaching Carriers Only: Needs Attention — find conversations that have been flagged and require follow-up. Has a Question — quickly locate cases where policyholders have asked a question that still needs a reply. These filters appear in the empty state of the inbox when you don't have a case selected, making it easier to immediately jump into the most important conversations. Available to all carriers, with a different experience for Coaching and Non-Coaching Carriers.",
+      "humanDecision": "update_existing",
+      "articleTitle": "Inbox",
+      "articleUrl": "https://himarley.zendesk.com/hc/en-us/articles/25732492045203-Inbox",
+      "articleId": "25732492045203",
+      "whatChanged": "Added documentation for the new Quick Filters that appear in the inbox empty state (right-hand panel when no case is selected). Documented the three filter buttons — Needs First Touch, Needs Attention (Coaching Carriers only), and Has a Question — how clicking a button applies that filter to the inbox list, and how to switch or clear filters. Included updated screenshot of the inbox empty state with the filter buttons visible.",
+      "sectionAffected": "Inbox UI section — specifically the empty state / right-hand panel description and the section covering case filtering and prioritization",
+      "whyThisArticle": "The Inbox article is the canonical documentation for the inbox UI. Quick Filters are a new UI element that appears directly in the inbox empty state, so this is the right article to document them. The feature impacts Adjuster and Supervisor personas who use the inbox daily.",
+      "searchQueriesThatWork": ["inbox", "quick filters", "needs first touch", "needs attention", "has a question", "inbox filters"]
+    },
+    {
+      "releaseVersion": "2.85",
+      "releaseFeature": "Easier Away Status for Operators",
+      "releaseFeatureText": "You can now more easily set yourself as away from the Personal Settings Dropdown next to your profile avatar. The Personal Settings Dropdown now includes Available and Away options so you can set your status without navigating away from your current view.",
+      "humanDecision": "update_existing",
+      "articleTitle": "Managing Your Personal Settings",
+      "articleUrl": "https://himarley.zendesk.com/hc/en-us/articles/12958411366035",
+      "articleId": "12958411366035",
+      "whatChanged": "Updated the Away Status section to document the new Personal Settings Dropdown location for setting away status. Added instructions explaining that operators can now set Available/Away directly from the profile avatar dropdown without navigating to the full settings page. Updated screenshots of the Personal Settings Dropdown to show the Available/Away toggle options.",
+      "sectionAffected": "Away Status section — both the instructional text and the screenshot showing the dropdown",
+      "whyThisArticle": "This article documents the operator's personal settings including away status. The release changes WHERE operators set their away status (now accessible directly from the profile avatar dropdown), which is exactly the workflow this article covers. The UI change means screenshots showing the old flow are outdated.",
+      "screenshotUpdateNeeded": true,
+      "searchQueriesThatWork": ["personal settings", "away status", "available away", "profile avatar"]
+    },
+    {
+      "releaseVersion": "2.85",
+      "releaseFeature": "Away Message / Out of Office Configuration Changes",
+      "releaseFeatureText": "Carrier admins can now set a default Out of Office message and default status for their organization. Operators can change their Out of Office message from the organization defaults. When setting status to Away, operators are no longer required to provide and send an Out of Office message since messages can now be disabled.",
+      "humanDecision": "update_existing",
+      "articleTitle": "Auto Replies",
+      "articleUrl": "https://himarley.zendesk.com/hc/en-us/articles/",
+      "whatChanged": "Updated to document that (1) operators are no longer required to enter an Out of Office message when setting Away status — it can be disabled, (2) carrier admins can now set org-wide default Out of Office messages and default away status, and (3) individual operators can override the org defaults. Updated screenshots if the Auto Replies configuration UI changed.",
+      "sectionAffected": "Auto reply configuration section — the behavior of when/whether an auto-reply is sent has fundamentally changed",
+      "whyThisArticle": "The Auto Replies article documents the Out of Office / auto-reply message behavior. The release changes this behavior directly: messages are no longer mandatory when Away, admins can set org-level defaults, and operators can override defaults. This is exactly the feature this article covers.",
+      "screenshotUpdateNeeded": true,
+      "searchQueriesThatWork": ["auto replies", "auto reply", "out of office", "away message", "OOO message"]
+    },
+    {
+      "releaseVersion": "2.85",
+      "releaseFeature": "Expanded Opt-In Keywords Now Include 'Oui'",
+      "releaseFeatureText": "Hi Marley now supports 'oui' as an accepted opt-in keyword, expanding accessibility for French-speaking policyholders. This is in addition to existing opt-in keywords like 'yes', 'yes!', and 'si'.",
+      "humanDecision": "update_existing",
+      "articleTitle": "Opt-in & Opt-Out Workflow for Texting",
+      "articleUrl": "https://himarley.zendesk.com/hc/en-us/articles/17393050033811",
+      "articleId": "17393050033811",
+      "whatChanged": "Updated the opt-in keyword examples in 'Step 3: Customer Confirmation' and 'Option 5a: Inbound Text Message' sections to include 'oui' alongside 'yes', 'yes!', and 'si'. Added a note clarifying that Hi Marley supports multiple opt-in keyword variations for accessibility.",
+      "sectionAffected": "Step 3: Customer Confirmation — the example showing accepted opt-in keywords; Option 5a: Inbound Text Message — description of supported keyword variations",
+      "whyThisArticle": "This article documents the opt-in workflow for policyholders and enumerates accepted opt-in keywords. When a new keyword is added, any article that lists opt-in keywords must be updated so the documentation matches the actual supported behavior. Use search queries like 'opt-in', 'opt-out', 'opt in keyword', 'texting workflow', 'text messaging consent'.",
+      "searchQueriesThatWork": ["opt-in", "opt-out", "opt in keyword", "texting", "text messaging consent"]
+    },
+    {
+      "releaseVersion": "2.85",
+      "releaseFeature": "Contact Prefix Field Added to Case Creation and Contact Model",
+      "releaseFeatureText": "A new Contact Prefix field (e.g., Mr., Ms., Dr.) is now available during case creation, allowing operators to personalize how the customer's name appears. The release notes explicitly state: 'Set and retrieved via API' and 'The field is fully supported via API for seamless integration with your existing systems.' This language signals that the change affects both the UI and the Contact API/webhook surface.",
+      "humanDecision": "update_existing",
+      "articleTitle": "Event ID 30: Contact Updated",
+      "articleUrl": "https://himarley.zendesk.com/hc/en-us/articles/38828363931923",
+      "articleId": "38828363931923",
+      "whatChanged": "Updated the POST Payload Example section to include the 'contactPrefix' field in the webhook payload JSON, demonstrating that contact update events now include the prefix. The correct field name in the API payload is 'contactPrefix' (e.g., \"contactPrefix\": \"Mr.\"), not 'prefix'.",
+      "sectionAffected": "POST Payload Example — the JSON payload shown in the example needs the 'contactPrefix' field added alongside first, last, email, mobile, etc.",
+      "whyThisArticle": "The release notes explicitly include the phrases 'Set and retrieved via API' and 'fully supported via API' — these are the trigger signals that API and webhook documentation must be updated. Whenever a release feature description includes phrases like 'set and retrieved via API', 'supported via API', 'fully supported via API', 'available via API', or 'returned in API responses' for a Contact or Case field, ALWAYS generate search queries for the relevant webhook event articles ('contact updated', 'contact API', 'event ID contact') and flag them for payload updates. The correct field name in the payload is 'contactPrefix' (not 'prefix').",
+      "searchQueriesThatWork": ["contact updated", "contact API", "event ID contact", "event ID 30", "contact prefix"]
+    },
+    {
+      "releaseVersion": "2.85",
+      "releaseFeature": "Contact Prefix Messaging Token ($claimantprefix)",
+      "releaseFeatureText": "A new messaging token ($claimantprefix) allows you to dynamically insert the Contact Prefix into conversations and templates. Use it alongside other tokens such as $firstname and $lastname to personalize greetings (e.g., 'Hello $claimantprefix $lastname').",
+      "humanDecision": "update_existing",
+      "articleTitle": "Message Template Tokens",
+      "articleUrl": "https://himarley.zendesk.com/hc/en-us/articles",
+      "articleId": null,
+      "whatChanged": "Added the new '$claimantprefix' token to the Message Template Tokens reference table, with a description of what it inserts (the Contact Prefix, e.g., Mr., Ms., Dr.) and an example of usage alongside $firstname/$lastname.",
+      "sectionAffected": "Token reference table — the row listing all available $-prefixed tokens and their descriptions",
+      "whyThisArticle": "The Message Template Tokens article is a reference list of every available token. Whenever a release introduces a new $-prefixed messaging token, this article must be updated to add the new token, its description, and a usage example. The release note explicitly names the token as '$claimantprefix', which is the exact string a search query should include.",
+      "searchQueriesThatWork": ["message template tokens", "message tokens", "template variables", "dynamic tokens", "$claimantprefix"]
+    },
+    {
+      "releaseVersion": "2.85",
+      "releaseFeature": "Full identityProviderId Support Across Operator APIs",
+      "releaseFeatureText": "The identityProviderId field is now fully supported across all operator-related API endpoints. This field can be used to identify operators by their external identity provider ID, enabling seamless SSO and identity management integrations. The field is available in create, update, and retrieve operator API calls.",
+      "humanDecision": "update_existing",
+      "articleTitle": "Update Operator API",
+      "articleUrl": "https://himarley.zendesk.com/hc/en-us/articles/",
+      "articleId": null,
+      "whatChanged": "Added the new 'identityProviderId' field to the request and response payload examples in the Update Operator API article. The field allows callers to set or retrieve an operator's external identity provider ID. Updated the Parameters table to document identityProviderId (string, optional) alongside existing operator fields like firstName, lastName, email, and role.",
+      "sectionAffected": "Parameters table and Request/Response Payload examples — both need identityProviderId added",
+      "whyThisArticle": "When a release explicitly states that a new field is 'supported across operator APIs' or 'available in operator API calls', any article documenting those API endpoints MUST be updated to add the new field to its parameters table and payload examples. The 'Update Operator API' article is the canonical documentation for modifying operator records via API — adding identityProviderId to operator endpoints directly impacts this article's accuracy.",
+      "lesson": "API field additions that 'span operator APIs' or are 'fully supported via API' are explicit signals to search for and flag ALL operator API documentation articles (Update Operator, Create Operator, Get Operator, etc.). Use search queries like 'operator API', 'update operator', 'create operator' when any release feature includes phrases like 'supported across operator APIs', 'operator API field', 'identityProviderId', or similar API parameter language.",
+      "searchQueriesThatWork": ["operator API", "update operator", "create operator", "operator endpoint", "identityProviderId"]
+    },
+    {
+      "releaseVersion": "2.79",
+      "releaseFeature": "Needs First Touch Terminology Change",
+      "releaseFeatureText": "We're updating terminology in the app and Insights to make the start of a conversation clearer and easier to understand: 'Unanswered Case' and 'Unanswered Opt-In' will now be called 'Needs First Touch.' This change applies across the Hi Marley app and Insights dashboards, including My Org and My Team views. Filters and case lists will display 'Cases that Need First Touch.' The existing Message Type filter in the Inbox will also reflect this updated terminology (e.g., 'Only Needs First Touch'). This is a terminology update only — no changes to functionality. Available to all carriers.",
+      "humanDecision": "update_existing",
+      "articleTitle": "Inbox",
+      "articleUrl": "https://himarley.zendesk.com/hc/en-us/articles/25732492045203-Inbox",
+      "articleId": "25732492045203",
+      "whatChanged": "Updated all references from 'Unanswered Case' and 'Unanswered Opt-In' to 'Needs First Touch' throughout the article. Updated descriptions of the Message Type filter options (e.g., 'Only Needs First Touch') and how the tag appears in the inbox. Updated any references to how this shows in Insights (My Org and My Team) to use the new terminology.",
+      "sectionAffected": "Case tags and terminology section, Message Type filter descriptions, and any references to Insights (My Org & My Team) views",
+      "whyThisArticle": "The Inbox article documents case states, tags, and filters used by adjusters. A terminology change from 'Unanswered Case' / 'Unanswered Opt-In' to 'Needs First Touch' must be reflected everywhere the old terms appeared, including descriptions of inbox behavior, filter labels, and Insights references.",
+      "searchQueriesThatWork": ["needs first touch", "unanswered case", "unanswered opt-in", "inbox", "message type filter", "case tags"]
+    }
+  ],
+  "negativeExamples": [
+    {
+      "releaseVersion": "2.84",
+      "releaseFeature": "Inbound Media Restriction Configuration",
+      "incorrectlyFlaggedArticle": "Admin Responsibilities for Conversational FNOL",
+      "whyItWasWrong": "The AI incorrectly linked inbound media restrictions to this article because both mention admin settings. However, this article is specifically about Conversational FNOL (First Notice of Loss), a completely separate product/feature. There is no mention of inbound media restrictions or media settings in this article. The AI should not match articles just because they share generic terms like 'admin' or 'configuration' — the article's specific topic must relate to the release feature.",
+      "lesson": "Do NOT match articles about unrelated features just because they share generic terms (admin, settings, configuration). The article's SPECIFIC TOPIC must directly relate to the release feature. 'Admin Responsibilities for Conversational FNOL' is about CFNOL onboarding, not media restrictions."
+    },
+    {
+      "releaseVersion": "2.84",
+      "releaseFeature": "Inbound Media Restriction Configuration",
+      "incorrectIncidentDescription": "Analysis recommended 'create_new' for a Media Restrictions article even though an article titled 'Media Restrictions Settings' already existed in the Help Center.",
+      "whyItWasWrong": "The analysis ran after the 'Media Restrictions Settings' article was already created for this feature. Search queries like 'media restrictions settings' would have found it. When an existing article is found that covers the same topic as a potential 'create_new' recommendation, the correct action is 'update_existing', not 'create_new'.",
+      "lesson": "Always generate search queries specific enough to find an existing article if one was already created for this topic (e.g., 'media restrictions settings' not just 'media restriction'). If search finds an article covering this topic, recommend 'update_existing' rather than 'create_new'. A 'create_new' recommendation should only be made when search confirms NO existing article covers the topic."
+    },
+    {
+      "releaseVersion": "2.84",
+      "releaseFeature": "Additional Feature Configurations Added to Feature Page",
+      "incorrectIncidentDescription": "Analysis recommended updating the 'Features Configurations (Settings)' article to add Manual Case Creation and Auto-Resend Welcome Message, but these features were already documented in the article's features table.",
+      "whyItWasWrong": "The article impact analysis did not check whether the specific features mentioned in the release notes (Manual Case Creation, Auto-Resend Welcome Message) were already listed in the article's features table. It assumed the article needed updating without verifying current content.",
+      "lesson": "When recommending an update to a features list or reference table article, verify that the specific items from the release notes are not already present in the article content. If the article already documents the feature (e.g., Manual Case Creation is already in the features table), do NOT flag it as needing an update — mark it as already covered."
+    }
+  ],
+  "patterns": {
+    "updateExisting": {
+      "description": "When a release changes behavior that an existing article already documents",
+      "signals": [
+        "The release modifies an existing workflow or process",
+        "The release adds options to an existing settings page",
+        "The release changes how an existing feature behaves",
+        "There is already an article that describes the affected area",
+        "The release renames a UI label or terminology that is referenced in existing articles — always update articles using the old term"
+      ]
+    },
+    "createNew": {
+      "description": "When a release introduces entirely new functionality with no existing documentation",
+      "signals": [
+        "The release introduces a brand new settings page",
+        "The release adds a new feature that has no conceptual overlap with existing articles",
+        "No existing article covers this topic even partially",
+        "The feature is significant enough to warrant its own standalone article"
+      ]
+    },
+    "doNotMatch": {
+      "description": "Common mistakes to avoid when matching articles to features",
+      "signals": [
+        "Do NOT match articles just because they share generic terms like 'admin', 'settings', 'configuration'",
+        "Do NOT match articles about a different product/feature just because they are in the same Settings section",
+        "Do NOT match articles about CFNOL, FNOL, or Conversational FNOL unless the release feature specifically changes CFNOL functionality",
+        "Do NOT match articles that simply happen to be recently updated — relevance to the feature matters, not recency",
+        "The article's SPECIFIC TOPIC must directly relate to the release feature being analyzed",
+        "Do NOT flag the Inbox article for admin-only features (like Auto-Close, LOB message configuration, or template import/export) — those have their own dedicated settings articles",
+        "Do NOT recommend 'create_new' for a topic when search queries could plausibly find an existing article — generate specific enough queries to verify first",
+        "Do NOT recommend updating a features table or reference list if the specific features from the release notes are already present in that table — check content before recommending",
+        "Do NOT flag API documentation, webhook documentation, or developer/technical guides for operator-facing or admin UI changes (inbox, notifications, case management, settings pages) — these are entirely different article categories",
+        "Do NOT flag third-party integration articles (ClaimCenter, Mitchell, Salesforce, Guidewire, Snapsheet, etc.) for any release that does not explicitly change that integration's configuration, setup steps, or behavior",
+        "Do NOT flag predeployment configuration guides or accelerator setup articles for Hi Marley product UI changes — these are for IT/implementation teams, not end users",
+        "Do NOT use broad search queries like 'notification', 'settings', 'admin', or 'configuration' without a more specific qualifier — these will match unrelated integration and API articles",
+        "A feature that changes the inbox badge appearance only affects the Inbox article (and possibly the personal settings article) — it does NOT affect ClaimCenter guides, webhook docs, API references, or any integration article",
+        "Do NOT classify 'Managing Your Personal Settings' as an Admin/Settings article — it is an OPERATOR/ADJUSTER UI article documenting personal profile and status settings for operators. Any operator-facing UI change to the personal settings dropdown, away status, or notification preferences must check this article.",
+        "Do NOT miss the Auto Replies article when a release changes away message / Out of Office behavior — the Auto Replies article documents when and how auto-reply messages are sent, and any change to mandatory/optional status, defaults, or configuration of that feature requires updating it."
+      ]
+    }
+  }
+}

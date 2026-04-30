@@ -1,6 +1,7 @@
 import "dotenv/config";
 import fs from "fs";
 import path from "path";
+import { chunkHtml } from "./lib/article-processor.js";
 
 const {
   // Zendesk
@@ -40,6 +41,7 @@ if (!OPENAI_API_KEY) {
 
 const zendeskBaseUrl = `https://${ZENDESK_SUBDOMAIN}.zendesk.com/api/v2`;
 const MAX_ARTICLE_BODY_LENGTH = 25000;
+const MAX_TRANSLATION_CHUNK_LENGTH = 12000;
 const MANUAL_REVIEW_PATH = path.join("output", "manual_review_needed.csv");
 const MANUAL_REVIEW_MASTER_PATH = path.join("output", "manual_review_master_list.csv");
 
@@ -238,7 +240,7 @@ async function ensureHelpCenterTranslation({
   const bodyHtml = item.description || item.body || "";
 
   console.log(`Translating ${sourceType} ${objectId}: ${title}`);
-  const { translated, usage } = await openaiTranslate({ title, bodyHtml });
+  const { translated, usage } = await translateZendeskHtml({ title, bodyHtml });
 
   usageTotals.input_tokens += usage.input_tokens || 0;
   usageTotals.output_tokens += usage.output_tokens || 0;
@@ -306,6 +308,7 @@ ${glossaryRef}
 Rules:
 - Use the glossary translations above for all Hi Marley platform terms.
 - For terms NOT in the glossary, use professional insurance industry French (fr-ca).
+- The fragment may start or end mid-structure; preserve the HTML exactly as provided.
 - Preserve ALL HTML tags, attributes, ids, href URLs, image src URLs, and placeholders exactly.
 - Do NOT add or remove HTML elements; translate only human-readable text nodes.
 - Do NOT translate product names like Hi Marley, Hi Marley Connect, Zendesk, or Guidewire.
@@ -364,6 +367,211 @@ Rules:
 
   const usage = data.usage || {};
   return { translated: parsed, usage };
+}
+
+function accumulateUsage(target, usage = {}) {
+  target.input_tokens += usage.input_tokens || 0;
+  target.output_tokens += usage.output_tokens || 0;
+  target.total_tokens += usage.total_tokens || 0;
+}
+
+async function openaiTranslateTitle(title) {
+  const jsonSchema = {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      title: { type: "string" },
+    },
+    required: ["title"],
+  };
+
+  const glossaryRef = buildGlossaryReference();
+  const instructions = `
+Translate a Zendesk Help Center article title from English to French Canadian (fr-ca).
+
+IMPORTANT GLOSSARY - Use these exact translations for Hi Marley platform terms:
+${glossaryRef}
+
+Rules:
+- Use the glossary translations above for all Hi Marley platform terms.
+- For terms NOT in the glossary, use professional insurance industry French (fr-ca).
+- Do NOT translate product names like Hi Marley, Hi Marley Connect, Zendesk, or Guidewire.
+- Return JSON: { "title": "..." }.
+`.trim();
+
+  const input = [
+    { role: "system", content: instructions },
+    { role: "user", content: `TITLE:\n${title}` },
+  ];
+
+  const res = await safeFetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      input,
+      text: {
+        format: {
+          type: "json_schema",
+          name: "zendesk_title_translation",
+          strict: true,
+          schema: jsonSchema,
+        },
+      },
+    }),
+  }, `OpenAI title translation for article title "${title}"`);
+
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`OpenAI error ${res.status} ${res.statusText}\n${text}`);
+  }
+
+  const data = text ? JSON.parse(text) : {};
+  const chunks = [];
+  for (const item of data.output || []) {
+    for (const c of item.content || []) {
+      if (c.type === "output_text" && typeof c.text === "string") chunks.push(c.text);
+    }
+  }
+
+  const parsed = JSON.parse(chunks.join("").trim());
+  return { translated: parsed, usage: data.usage || {} };
+}
+
+async function openaiTranslateBodyChunk({ title, bodyHtml, chunkIndex, chunkCount }) {
+  const jsonSchema = {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      body: { type: "string" },
+    },
+    required: ["body"],
+  };
+
+  const glossaryRef = buildGlossaryReference();
+  const instructions = `
+Translate a Zendesk Help Center article HTML fragment from English to French Canadian (fr-ca).
+
+IMPORTANT GLOSSARY - Use these exact translations for Hi Marley platform terms:
+${glossaryRef}
+
+Rules:
+- Use the glossary translations above for all Hi Marley platform terms.
+- For terms NOT in the glossary, use professional insurance industry French (fr-ca).
+- Preserve ALL HTML tags, attributes, ids, href URLs, image src URLs, and placeholders exactly.
+- Do NOT add or remove HTML elements; translate only human-readable text nodes.
+- Do NOT translate product names like Hi Marley, Hi Marley Connect, Zendesk, or Guidewire.
+- Return JSON: { "body": "..." }.
+`.trim();
+
+  const input = [
+    { role: "system", content: instructions },
+    {
+      role: "user",
+      content: `ARTICLE_TITLE:\n${title}\n\nHTML_FRAGMENT ${chunkIndex + 1} OF ${chunkCount}:\n${bodyHtml}`,
+    },
+  ];
+
+  const res = await safeFetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      input,
+      text: {
+        format: {
+          type: "json_schema",
+          name: "zendesk_body_chunk_translation",
+          strict: true,
+          schema: jsonSchema,
+        },
+      },
+    }),
+  }, `OpenAI body chunk translation ${chunkIndex + 1}/${chunkCount} for article title "${title}"`);
+
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`OpenAI error ${res.status} ${res.statusText}\n${text}`);
+  }
+
+  const data = text ? JSON.parse(text) : {};
+  const chunks = [];
+  for (const item of data.output || []) {
+    for (const c of item.content || []) {
+      if (c.type === "output_text" && typeof c.text === "string") chunks.push(c.text);
+    }
+  }
+
+  const parsed = JSON.parse(chunks.join("").trim());
+  return { translated: parsed, usage: data.usage || {} };
+}
+
+function buildChunkedTranslationPlan(bodyHtml) {
+  const htmlChunks = chunkHtml(bodyHtml, {
+    maxChars: MAX_TRANSLATION_CHUNK_LENGTH,
+    minChunkChars: 2500,
+  });
+
+  if (!htmlChunks.length) {
+    throw new Error("Chunking produced no translatable HTML content");
+  }
+
+  const oversizedChunk = htmlChunks.find((chunk) => chunk.length > MAX_TRANSLATION_CHUNK_LENGTH);
+  if (oversizedChunk) {
+    throw new Error(
+      `Chunking could not reduce one HTML fragment below ${MAX_TRANSLATION_CHUNK_LENGTH} characters`
+    );
+  }
+
+  return htmlChunks;
+}
+
+async function openaiTranslateChunked({ title, bodyHtml }) {
+  const htmlChunks = buildChunkedTranslationPlan(bodyHtml);
+
+  const usageTotals = {
+    input_tokens: 0,
+    output_tokens: 0,
+    total_tokens: 0,
+  };
+
+  const titleResult = await openaiTranslateTitle(title);
+  accumulateUsage(usageTotals, titleResult.usage);
+
+  const translatedChunks = [];
+  for (let i = 0; i < htmlChunks.length; i++) {
+    const result = await openaiTranslateBodyChunk({
+      title,
+      bodyHtml: htmlChunks[i],
+      chunkIndex: i,
+      chunkCount: htmlChunks.length,
+    });
+    translatedChunks.push(result.translated.body);
+    accumulateUsage(usageTotals, result.usage);
+  }
+
+  return {
+    translated: {
+      title: titleResult.translated.title,
+      body: translatedChunks.join("\n"),
+    },
+    usage: usageTotals,
+    chunkCount: htmlChunks.length,
+  };
+}
+
+async function translateZendeskHtml({ title, bodyHtml }) {
+  if ((bodyHtml || "").length > MAX_ARTICLE_BODY_LENGTH) {
+    return openaiTranslateChunked({ title, bodyHtml });
+  }
+
+  return openaiTranslate({ title, bodyHtml });
 }
 
 function estimateCostUSD(usageTotals) {
@@ -573,6 +781,9 @@ function classifyManualReviewAction(errorOrReason) {
   ) {
     return "manual_review_timeout";
   }
+  if (failureReason.includes("Chunking could not reduce")) {
+    return "manual_review_large_article";
+  }
   return "manual_review_failed";
 }
 
@@ -632,16 +843,20 @@ async function scanManualReviewCandidates({ sections, sectionMetaById, masterEnt
         continue;
       }
 
-      addManualReviewEntry(masterEntries, {
-        sectionName,
-        sectionId,
-        articleId,
-        titleEn: article.title,
-        action: "manual_review_large_article",
-        enUrl,
-        frUrl,
-        failureReason: `Article body length ${(article.body || "").length} exceeds max ${MAX_ARTICLE_BODY_LENGTH} characters`,
-      });
+      try {
+        buildChunkedTranslationPlan(article.body || "");
+      } catch (err) {
+        addManualReviewEntry(masterEntries, {
+          sectionName,
+          sectionId,
+          articleId,
+          titleEn: article.title,
+          action: "manual_review_large_article",
+          enUrl,
+          frUrl,
+          failureReason: err.message || String(err),
+        });
+      }
     }
   }
 
@@ -856,43 +1071,6 @@ async function main() {
       const fr_url = `https://${ZENDESK_SUBDOMAIN}.zendesk.com/hc/${TARGET_LOCALE}/articles/${articleId}`;
 
       try {
-        if ((a.body || "").length > MAX_ARTICLE_BODY_LENGTH) {
-          const failureReason = `Article body length ${(a.body || "").length} exceeds max ${MAX_ARTICLE_BODY_LENGTH} characters`;
-          const action = "manual_review_large_article";
-          skippedLargeArticleCount += 1;
-
-          console.error(`\n⚠️  Article ${articleId} skipped: ${failureReason}`);
-          console.error(`   Action: ${action}`);
-
-          // Track error for status reporting
-          const errorMsg = `Article ${articleId} (${a.title}): ${failureReason} [${action}]`;
-          errors.push(errorMsg);
-
-          csvRows.push({
-            sectionName,
-            sectionId,
-            articleId,
-            title_en: a.title,
-            title_fr: "",
-            action,
-            en_url,
-            fr_url,
-          });
-
-          logManualReview({
-            sectionName,
-            sectionId,
-            articleId,
-            titleEn: a.title,
-            action,
-            enUrl: en_url,
-            frUrl: fr_url,
-            failureReason,
-            masterEntries: manualReviewMasterEntries,
-          });
-          continue;
-        }
-
         // Skip if already translated to fr-ca (this includes your earlier POC translations)
         const exists = await translationExists(articleId, TARGET_LOCALE);
         if (exists) {
@@ -914,12 +1092,16 @@ async function main() {
 
         console.log(`Translating article ${articleId}: ${a.title}`);
 
-        const { translated, usage } = await openaiTranslate({ title: a.title, bodyHtml: a.body });
+        const { translated, usage, chunkCount } = await translateZendeskHtml({
+          title: a.title,
+          bodyHtml: a.body,
+        });
+        if (chunkCount) {
+          console.log(`   Using chunked translation (${chunkCount} HTML fragments)`);
+        }
 
         // Accumulate usage (fields vary a bit; cover common keys)
-        usageTotals.input_tokens += usage.input_tokens || 0;
-        usageTotals.output_tokens += usage.output_tokens || 0;
-        usageTotals.total_tokens += usage.total_tokens || 0;
+        accumulateUsage(usageTotals, usage);
 
         // Upload translation
         const payload = {
@@ -963,6 +1145,7 @@ async function main() {
         const failureReason = articleErr.message || String(articleErr);
         const action = classifyManualReviewAction(articleErr);
 
+        if (action === "manual_review_large_article") skippedLargeArticleCount += 1;
         if (action === "manual_review_parse_error") skippedParseErrorCount += 1;
         if (action === "manual_review_timeout") skippedTimeoutCount += 1;
 

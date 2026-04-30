@@ -1,4 +1,4 @@
-# Phase 1 Architecture: Weekly Translation Workflow
+# Architecture Overview
 
 ## Quick Start
 
@@ -20,7 +20,11 @@ npm run start:test
 npm start
 ```
 
-## Component Overview
+## System Areas
+
+### 1. Weekly Translation Workflow
+
+This is the original Phase 1 automation path: scan recently edited Help Center content, request approval, then publish French-Canadian translations back to Zendesk.
 
 ### Entry Point: `scheduler.js`
 - Main orchestration script
@@ -65,7 +69,7 @@ npm start
 - Will post messages and handle button clicks
 - Status updates and completion notifications
 
-## Data Flow
+## Translation Data Flow
 
 ```
 Scheduler ─→ Scan articles ─→ Post to Slack
@@ -76,8 +80,59 @@ Scheduler ─→ Scan articles ─→ Post to Slack
                                     ↓
                          Generate audit log
                                     ↓
-                                  Done
+                                 Done
 ```
+
+### 2. Release Impact Analysis
+
+This is the manual workflow that helps reviewers understand which Help Center articles are affected by a release.
+
+Key backend pieces:
+- `api/release-notes.js` stores release notes, runs release analysis, and analyzes individual candidate articles.
+- `api/scanners.js` searches Zendesk for likely matches, then enriches each candidate with article-specific impact analysis.
+- `lib/article-processor.js` provides shared HTML processing helpers used by both release analysis and translation.
+
+Current behavior:
+- Candidate article analysis uses `htmlToText()` to convert full Zendesk HTML into readable text before sending it to OpenAI.
+- The old failure mode was a 2,000-character raw HTML slice, which biased the model toward article intros and caused weak `alreadyCovered` detection.
+- `POST /api/release-notes/analyze-article-impact` now returns `alreadyCovered`, `affectedSections`, and `specificImpact`.
+- `api/scanners.js` filters out articles where `alreadyCovered === true` before returning results to the frontend.
+
+High-level flow:
+
+```
+Release notes input
+        ↓
+AI extracts affected features + search queries
+        ↓
+Zendesk article search
+        ↓
+Fetch full article HTML for each candidate
+        ↓
+Convert HTML to plain text
+        ↓
+AI decides:
+  - already covered?
+  - affected sections?
+  - specific impact?
+        ↓
+Return only actionable articles
+```
+
+### 3. Large-Article Translation Chunking
+
+Large Help Center articles used to be skipped once their HTML body exceeded `25000` characters. That behavior has been replaced with structure-aware chunked translation in `run_next_5_sections.js`.
+
+How chunking works:
+- `chunkHtml()` in `lib/article-processor.js` splits HTML on preferred structural boundaries first: headings, paragraphs, lists, tables, and rows.
+- The translation runner uses the normal single-pass translation flow for smaller articles.
+- Oversized articles are split into HTML fragments, each fragment is translated independently, and the translated fragments are reassembled in order.
+- If a fragment still cannot be reduced below the chunk limit, the article remains a manual review candidate with `manual_review_large_article`.
+
+Design intent:
+- Keep each chunk semantically coherent enough to translate well.
+- Avoid splitting inside HTML structures unless necessary.
+- Reduce manual-review volume without changing the existing behavior for ordinary articles.
 
 ## State Files
 
@@ -97,13 +152,15 @@ Scheduler ─→ Scan articles ─→ Post to Slack
 - Approvals and approvers
 - Costs and token usage
 
-## Ready for Slack Integration
+**`output/manual_review_master_list.csv`** - Translation exceptions and items still requiring manual follow-up
+- Includes large-article chunking failures and other translation issues
+- Updated by `run_next_5_sections.js`
 
-Once Slack app is approved:
-1. Add `SLACK_BOT_TOKEN` to `.env`
-2. Add `SLACK_SIGNING_SECRET` to `.env`
-3. Uncomment Slack import in `lib/slack-integration.js`
-4. Run `node scheduler.js` - bot will automatically post messages
+## Operational Notes
+
+- Release impact quality improved primarily because article analysis now uses full readable text rather than truncated raw HTML.
+- Chunking is important for translation scalability, but it is not the primary fix for release impact analysis.
+- Manual review is still part of the design for parse failures, timeouts, parent translation failures, and unreducible large HTML fragments.
 
 ## Error Handling
 
@@ -111,6 +168,7 @@ Once Slack app is approved:
 - Slack not ready: Skips posting, logs warning
 - API errors: Logged, workflow stops, audit created
 - Approval timeout: Stops, no translation attempted
+- Large-article chunking failure: logged as `manual_review_large_article`
 
 ## Utility Commands
 

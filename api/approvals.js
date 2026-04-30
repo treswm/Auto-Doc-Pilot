@@ -294,6 +294,47 @@ router.get("/status/:runId", requireAuth, (req, res) => {
   }
 });
 
+// GET /api/approvals/article/:articleId
+// Fetch a specific article by ID with images
+router.get("/article/:articleId", async (req, res) => {
+  const { articleId } = req.params;
+
+  try {
+    console.log(`📄 Fetching article ${articleId}...`);
+
+    const zendeskBaseUrl = `https://${process.env.ZENDESK_SUBDOMAIN}.zendesk.com/api/v2`;
+
+    // Fetch the article
+    const articleRes = await fetch(
+      `${zendeskBaseUrl}/help_center/articles/${articleId}.json`,
+      { headers: { Authorization: `Bearer ${process.env.ZENDESK_OAUTH_ACCESS_TOKEN}` } }
+    );
+
+    if (!articleRes.ok) {
+      return res.status(404).json({ error: `Article ${articleId} not found` });
+    }
+
+    const articleData = await articleRes.json();
+    const article = articleData.article;
+
+    // Extract images
+    const images = extractImages(article.body || "");
+
+    res.json({
+      article: {
+        id: article.id,
+        title: article.title,
+        body: article.body,
+        url: article.html_url,
+        images,
+      }
+    });
+  } catch (err) {
+    console.error("Error fetching article:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
 
 // GET /api/approvals/scan-section

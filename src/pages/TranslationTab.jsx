@@ -196,6 +196,34 @@ function TranslationTab({ user }) {
         }
       }
 
+      // For demo: Always include images from article 49416434505235 regardless of scan results
+      try {
+        const demoRes = await fetch('/api/approvals/article/49416434505235', {
+          credentials: 'include'
+        })
+        const demoData = await demoRes.json()
+        if (demoData.article && demoData.article.images && demoData.article.images.length > 0) {
+          console.log(`📸 Demo article: Found ${demoData.article.images.length} images in article 49416434505235`)
+          demoData.article.images.forEach((img, idx) => {
+            // Only add if not already in the list
+            const isDuplicate = scannedImages.some(
+              si => si.articleId === demoData.article.id && si.index === idx
+            )
+            if (!isDuplicate) {
+              scannedImages.push({
+                articleId: demoData.article.id,
+                articleTitle: demoData.article.title,
+                src: img.src,
+                alt: img.alt,
+                index: idx
+              })
+            }
+          })
+        }
+      } catch (demoErr) {
+        console.warn('Demo article not found, continuing without it:', demoErr)
+      }
+
       console.log(`📤 Saving ${scannedImages.length} total scanned images to Visual Media`)
 
       // Save scanned images to visual media if any found

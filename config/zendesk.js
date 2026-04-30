@@ -12,14 +12,14 @@ const BRANDS = {
   },
   production: {
     name: "Hi Marley",
-    id: process.env.ZENDESK_PRODUCTION_BRAND_ID, // Will be set via env once ready
+    id: process.env.ZENDESK_PRODUCTION_BRAND_ID || 360001112753,
     subdomain: process.env.ZENDESK_SUBDOMAIN,
     description: "Production Help Center",
   },
 };
 
-// Default to staging for safety
-const CURRENT_ENVIRONMENT = process.env.ZENDESK_ENVIRONMENT || "staging";
+// Default to production
+const CURRENT_ENVIRONMENT = process.env.ZENDESK_ENVIRONMENT || "production";
 
 function getCurrentBrand() {
   const brand = BRANDS[CURRENT_ENVIRONMENT];

@@ -14,7 +14,7 @@ const SCREENSHOT_STATE_PATH = "config/screenshot_state.json";
 const AUDIT_LOG_PATH = "config/audit_log.json";
 const ARTICLE_FLAGS_PATH = "config/article_flags.json";
 const ZENDESK_SUBDOMAIN = process.env.ZENDESK_SUBDOMAIN || "himarley";
-const ZENDESK_BRAND_ID = process.env.ZENDESK_STAGING_BRAND_ID || "49194539612563";
+const ZENDESK_BRAND_ID = process.env.ZENDESK_BRAND_ID || "360001112753";
 
 function loadApprovalState() {
   if (!fs.existsSync(APPROVAL_STATE_PATH)) return null;

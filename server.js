@@ -7,10 +7,6 @@
 
 import "dotenv/config";
 
-// Zendesk staging uses a cert that Node can't verify locally
-if (process.env.ZENDESK_ENVIRONMENT === "staging") {
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-}
 
 import express from "express";
 import cors from "cors";
@@ -32,6 +28,8 @@ import oauthRoutes from "./api/oauth.js";
 import translationsRoutes from "./api/translations.js";
 import releaseNotesRoutes from "./api/release-notes.js";
 import scannersRoutes from "./api/scanners.js";
+import productContextRoutes from "./api/product-context.js";
+import createArticleRoutes from "./api/create-article.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -77,6 +75,8 @@ app.use("/api/oauth", oauthRoutes);
 app.use("/api/translations", translationsRoutes);
 app.use("/api/release-notes", releaseNotesRoutes);
 app.use("/api/scanners", scannersRoutes);
+app.use("/api/product-context", productContextRoutes);
+app.use("/api/create-article", createArticleRoutes);
 
 // ── Static / React ──────────────────────────────────────────────────────────
 const publicPath = path.join(__dirname, "public");
