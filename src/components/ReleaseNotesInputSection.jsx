@@ -307,7 +307,7 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete, onM
         const imgMsg = uploadData.imageCount > 0 ? ` (${uploadData.imageCount} screenshots detected)` : ''
         setSuccessMessage(`✅ PDF processed${imgMsg}! Generating prompt for ChatGPT...`)
         setTimeout(() => setSuccessMessage(null), 5000)
-        if (onManualSaveComplete) onManualSaveComplete({ version })
+        if (onManualSaveComplete) onManualSaveComplete({ version, screenshotCount: uploadData.screenshotCount || 0 })
         return
       }
 
@@ -340,6 +340,7 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete, onM
             recommendedArticles: analyzeData.recommendedArticles,
             searchQueries: analyzeData.searchQueries,
             version,
+            screenshotCount: uploadData.screenshotCount || 0,
           })
         }
 

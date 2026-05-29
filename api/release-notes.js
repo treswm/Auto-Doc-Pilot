@@ -10,8 +10,16 @@ import multer from "multer";
 import PDFDocument from "pdfkit";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { processReleasePDF, cleanupUpload } from "../lib/pdf-processor.js";
+import { extractScreenshots } from "../lib/screenshot-extractor.js";
 import { htmlToText, processArticleFromUrl } from "../lib/article-processor.js";
 import { sanitizeAndParseJson } from "../lib/json-sanitizer.js";
+import {
+  fetchSections,
+  createArticle,
+  uploadInlineArticleImage,
+  updateArticleBody,
+} from "../lib/zendesk-api.js";
+import { getCurrentBrand } from "../config/zendesk.js";
 
 const router = express.Router();
 
@@ -247,6 +255,33 @@ router.post("/upload-pdf", requireAuth, upload.single("pdf"), async (req, res) =
       console.log(`📸 Sections with images: ${result.sectionsWithImages.join(", ")}`);
     }
 
+    // Extract the actual embedded screenshots while the PDF is still on disk.
+    // These power the "Build Release Notes Doc with Screenshots" feature.
+    // Failure here must not break the normal analysis flow.
+    let screenshotCount = 0;
+    try {
+      const safeVersion = String(version).replace(/[^a-zA-Z0-9._-]/g, "_") || "release";
+      const outDir = path.join(process.cwd(), "output", "release-screenshots", safeVersion);
+      // Clear any prior extraction for this version so stale shots don't linger
+      try { fs.rmSync(outDir, { recursive: true, force: true }); } catch (e) {}
+      const shots = await extractScreenshots(req.file.path, { outDir });
+      req.session.pdfScreenshots = shots.map((s) => ({
+        page: s.page,
+        index: s.index,
+        width: s.width,
+        height: s.height,
+        path: s.path,
+        file: s.path ? path.basename(s.path) : null,
+        pageHeading: s.pageHeading,
+        pageText: s.pageText,
+      }));
+      req.session.pdfScreenshotVersion = safeVersion;
+      screenshotCount = shots.length;
+    } catch (shotErr) {
+      console.error("Screenshot extraction failed (analysis unaffected):", shotErr.message);
+      req.session.pdfScreenshots = [];
+    }
+
     // Clean up the uploaded file
     cleanupUpload(req.file.path);
 
@@ -256,6 +291,7 @@ router.post("/upload-pdf", requireAuth, upload.single("pdf"), async (req, res) =
       totalPages: result.totalPages,
       imageCount: result.imageCount,
       sectionsWithImages: result.sectionsWithImages,
+      screenshotCount,
       version,
       addedAt: req.session.releaseAddedAt,
     });
@@ -958,6 +994,440 @@ router.get("/export-analysis-pdf", requireAuth, (req, res) => {
     if (!res.headersSent) {
       res.status(500).json({ success: false, error: err.message });
     }
+  }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// SCREENSHOT-ENRICHED RELEASE NOTES → ZENDESK DRAFT
+// Extracts screenshots from the uploaded enablement deck, matches them to the
+// customer-facing features in the release-notes analysis (source of truth),
+// and assembles a draft Help Center article with the screenshots embedded.
+// ════════════════════════════════════════════════════════════════════════════
+
+const SCREENSHOTS_ROOT = path.join(process.cwd(), "output", "release-screenshots");
+
+// Words that carry no matching signal between a feature name and a deck slide.
+const MATCH_STOPWORDS = new Set([
+  "the", "a", "an", "for", "to", "of", "in", "on", "and", "or", "now", "new",
+  "as", "is", "are", "with", "available", "generally", "ga", "beta", "alpha",
+  "release", "feature", "features", "setting", "settings", "from", "one", "add",
+  "added", "improvement", "improvements", "enhancement", "enhancements", "your",
+  "you", "this", "that", "all", "can", "will", "be", "by", "at", "it", "its",
+  "internal", "marley", "hi", "data", "classification", "overview", "update",
+  "updates", "more", "when", "how", "works", "what", "whats", "benefits",
+]);
+
+/** Tokenize a string into significant lowercase words for matching. */
+function significantWords(str) {
+  return new Set(
+    String(str || "")
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((w) => w.length >= 3 && !MATCH_STOPWORDS.has(w))
+  );
+}
+
+/** Overlap score between a feature's words and a deck page's words. */
+function matchScore(featureWords, pageWords) {
+  let score = 0;
+  for (const w of featureWords) if (pageWords.has(w)) score++;
+  return score;
+}
+
+/**
+ * Pull a concise, customer-appropriate description from a slide's text.
+ * Prefers the "What's New" segment; falls back to the leading text after the heading.
+ */
+function extractDeckDescription(pageText, pageHeading) {
+  let text = String(pageText || "")
+    .replace(/^\s*\d+\s*\|\s*©?\s*Hi Marley.*?Internal\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const whatsNew = text.match(/What['’]?s New[:\s]+(.*?)(?:\b(?:Key\s+)?Benefits\b|\bHow It Works\b|\bAvailable\s+[Tt]o\b|$)/i);
+  let desc = whatsNew && whatsNew[1] ? whatsNew[1].trim() : "";
+
+  if (!desc) {
+    // Strip the heading from the front, then take the first chunk of prose.
+    if (pageHeading && text.toLowerCase().startsWith(pageHeading.toLowerCase())) {
+      text = text.slice(pageHeading.length).trim();
+    }
+    desc = text;
+  }
+  if (desc.length > 420) desc = desc.slice(0, 420).replace(/\s+\S*$/, "") + "…";
+  return desc.trim();
+}
+
+// Trailing internal markers that leak into deck slides (Jira keys, version/GA
+// tags, demo/collab notes). Items starting with these are dropped from output.
+const DECK_NOISE_RE = /^(?:HMB\b|HMB\s*-|\d\.\d|demo\b|general availability\b|closed beta\b|in collab|impact$)/i;
+
+/** Split a "Benefits"/"How It Works" blob into list items (bullets or sentences). */
+function splitDeckItems(s) {
+  if (!s) return [];
+  let items;
+  if (s.includes("•")) {
+    items = s.split("•");
+  } else {
+    // Split on sentence boundaries (period followed by a capital letter).
+    items = s.split(/(?<=\.)\s+(?=[A-Z0-9])/);
+  }
+  return items
+    .map((x) => x.trim().replace(/^[:•\-\s]+/, "").trim())
+    // Strip trailing internal markers from within an item (e.g. "...claim. Demo 2.86").
+    .map((x) => x.replace(/\s+(?:Demo|Impact|HMB\s*-?\s*\d+|2\.\d+(?:\s+GA)?|General Availability|Closed Beta).*$/i, "").trim())
+    .filter((x) => x.length > 3 && !DECK_NOISE_RE.test(x))
+    .slice(0, 8)
+    .map((x) => (x.length > 320 ? x.slice(0, 320).replace(/\s+\S*$/, "") + "…" : x));
+}
+
+/**
+ * Parse a deck slide's text into the Hi Marley release-notes content blocks:
+ * { availableTo, whatsNew, benefits[], howItWorks[] }.
+ * The deck slides already use these exact labels.
+ */
+function parseDeckSlide(pageText, pageHeading) {
+  let text = String(pageText || "")
+    .replace(/^\s*\d+\s*\|\s*©?\s*Hi Marley.*?Internal\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (pageHeading && text.toLowerCase().startsWith(pageHeading.toLowerCase())) {
+    text = text.slice(pageHeading.length).trim();
+  }
+
+  const labels = [
+    { key: "availableTo", re: /Available\s+[Tt]o\s*:?/ },
+    { key: "whatsNew", re: /What['’]?s New\s*:?/i },
+    { key: "benefits", re: /(?:Key\s+)?Benefits\s*:?/i },
+    { key: "howItWorks", re: /How It Works\s*:?/i },
+  ];
+  const found = [];
+  for (const l of labels) {
+    const m = text.match(l.re);
+    if (m) found.push({ key: l.key, start: m.index, end: m.index + m[0].length });
+  }
+  found.sort((a, b) => a.start - b.start);
+
+  const out = { availableTo: "", whatsNew: "", benefits: [], howItWorks: [] };
+  for (let i = 0; i < found.length; i++) {
+    const seg = found[i];
+    const segEnd = i + 1 < found.length ? found[i + 1].start : text.length;
+    const content = text.slice(seg.end, segEnd).trim().replace(/^[:•\-\s]+/, "").trim();
+    if (seg.key === "benefits" || seg.key === "howItWorks") {
+      out[seg.key] = splitDeckItems(content);
+    } else {
+      let v = content;
+      if (v.length > 600) v = v.slice(0, 600).replace(/\s+\S*$/, "") + "…";
+      out[seg.key] = v;
+    }
+  }
+  // No labels at all → treat leading text as What's New.
+  if (!out.whatsNew && found.length === 0) {
+    out.whatsNew = extractDeckDescription(pageText, pageHeading);
+  }
+  return out;
+}
+
+/**
+ * GET /api/release-notes/zendesk-sections
+ * Live Help Center section list for the target-section dropdown.
+ */
+router.get("/zendesk-sections", requireAuth, async (req, res) => {
+  try {
+    const sections = await fetchSections("en-us");
+    sections.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    res.json({ success: true, sections });
+  } catch (err) {
+    console.error("Failed to fetch Zendesk sections:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/release-notes/screenshot/:version/:file
+ * Serve an extracted screenshot PNG for the preview UI.
+ */
+router.get("/screenshot/:version/:file", requireAuth, (req, res) => {
+  try {
+    const version = String(req.params.version).replace(/[^a-zA-Z0-9._-]/g, "_");
+    const file = path.basename(String(req.params.file)); // prevent traversal
+    if (!file.toLowerCase().endsWith(".png")) {
+      return res.status(400).end();
+    }
+    const filePath = path.join(SCREENSHOTS_ROOT, version, file);
+    if (!filePath.startsWith(SCREENSHOTS_ROOT) || !fs.existsSync(filePath)) {
+      return res.status(404).end();
+    }
+    res.type("image/png");
+    fs.createReadStream(filePath).pipe(res);
+  } catch (err) {
+    res.status(500).end();
+  }
+});
+
+/**
+ * POST /api/release-notes/build-screenshot-doc
+ * Match customer-facing features (from the release analysis) to deck screenshots
+ * and assemble a per-feature preview. NO Zendesk write happens here.
+ */
+router.post("/build-screenshot-doc", requireAuth, async (req, res) => {
+  try {
+    const analysis = req.session.releaseImpactAnalysis;
+    const screenshots = req.session.pdfScreenshots || [];
+    const version = req.session.pdfScreenshotVersion || req.session.releaseVersion || "release";
+
+    if (!analysis || !Array.isArray(analysis.affectedFeatures) || analysis.affectedFeatures.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No release analysis found. Run the release-notes analysis first.",
+      });
+    }
+    if (screenshots.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: "No screenshots were extracted. Upload the release deck as a PDF first.",
+      });
+    }
+
+    // Compact, per-page view of the deck for matching (group screenshots by page).
+    const pagesMap = new Map();
+    for (const s of screenshots) {
+      if (!pagesMap.has(s.page)) {
+        pagesMap.set(s.page, {
+          page: s.page,
+          heading: s.pageHeading,
+          snippet: (s.pageText || "").slice(0, 500),
+          shotCount: 0,
+        });
+      }
+      pagesMap.get(s.page).shotCount++;
+    }
+    const deckPages = [...pagesMap.values()].sort((a, b) => a.page - b.page);
+
+    // ── Deterministic matching (no AI dependency) ────────────────────────────
+    // The release-notes features are the source of truth. Each deck page (slide)
+    // is assigned to the feature it best matches, by significant-word overlap
+    // against the slide's heading + leading text. Pages whose best score is below
+    // threshold are internal-only (marketing, timeline, demos) and are dropped.
+    const featureWordSets = analysis.affectedFeatures.map((f) => significantWords(f));
+    const MATCH_THRESHOLD = 2; // require ≥2 shared significant words
+
+    // pageToFeature[page] = index of best-matching feature (or -1)
+    const pageToFeature = new Map();
+    for (const p of deckPages) {
+      const pageWords = significantWords(`${p.heading} ${p.snippet}`);
+      let bestIdx = -1;
+      let bestScore = 0;
+      featureWordSets.forEach((fw, idx) => {
+        const score = matchScore(fw, pageWords);
+        if (score > bestScore) {
+          bestScore = score;
+          bestIdx = idx;
+        }
+      });
+      pageToFeature.set(p.page, bestScore >= MATCH_THRESHOLD ? bestIdx : -1);
+    }
+
+    // Build one section per source-of-truth feature, in release order.
+    // Screenshot-bearing pages assigned to that feature also supply its description.
+    const shotMetaByPage = new Map();
+    for (const s of screenshots) {
+      if (!shotMetaByPage.has(s.page)) shotMetaByPage.set(s.page, s);
+    }
+
+    const aiSections = analysis.affectedFeatures.map((feature, idx) => {
+      const matchedPages = deckPages
+        .filter((p) => pageToFeature.get(p.page) === idx)
+        .map((p) => p.page)
+        .sort((a, b) => a - b);
+      // Structured content (Available to / What's New / Benefits / How It Works)
+      // from the first matched slide — mirrors the real release-notes format.
+      let content = { availableTo: "", whatsNew: "", benefits: [], howItWorks: [] };
+      for (const pg of matchedPages) {
+        const meta = shotMetaByPage.get(pg);
+        if (meta) {
+          content = parseDeckSlide(meta.pageText, meta.pageHeading);
+          if (content.whatsNew || content.benefits.length || content.howItWorks.length) break;
+        }
+      }
+      return { feature, description: content.whatsNew, content, pages: matchedPages };
+    });
+
+    // Attach concrete screenshots (by page) to each matched feature.
+    const shotsByPage = new Map();
+    for (const s of screenshots) {
+      if (!shotsByPage.has(s.page)) shotsByPage.set(s.page, []);
+      shotsByPage.get(s.page).push(s);
+    }
+
+    const sections = aiSections.map((sec) => {
+      const pages = Array.isArray(sec.pages) ? sec.pages : [];
+      const shots = [];
+      for (const pg of pages) {
+        for (const s of shotsByPage.get(Number(pg)) || []) {
+          shots.push({
+            file: s.file,
+            page: s.page,
+            width: s.width,
+            height: s.height,
+            url: `/api/release-notes/screenshot/${encodeURIComponent(version)}/${encodeURIComponent(s.file)}`,
+          });
+        }
+      }
+      return {
+        feature: sec.feature,
+        description: sec.description || "",
+        content: sec.content || { availableTo: "", whatsNew: "", benefits: [], howItWorks: [] },
+        screenshots: shots,
+      };
+    });
+
+    const matchedShots = sections.reduce((n, s) => n + s.screenshots.length, 0);
+    console.log(`📸 Built screenshot doc: ${sections.length} feature section(s), ${matchedShots} screenshot(s) matched of ${screenshots.length} extracted`);
+
+    res.json({
+      success: true,
+      version,
+      title: `Release ${req.session.releaseVersion || version} — What's New`,
+      sections,
+      stats: { extracted: screenshots.length, matched: matchedShots, features: sections.length },
+    });
+  } catch (err) {
+    console.error("build-screenshot-doc error:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/release-notes/create-screenshot-draft
+ * Create a DRAFT Help Center article formatted to match Hi Marley's published
+ * release notes (dates header, "Release contents:" ToC with anchors, per-feature
+ * Available to / What's New / Benefits / How It Works blocks, embedded screenshots).
+ * Body: { sectionId, title, sections: [{ feature, description, content, screenshots:[{file,page,width,height}] }] }
+ */
+router.post("/create-screenshot-draft", requireAuth, async (req, res) => {
+  try {
+    const { sectionId, title, sections } = req.body;
+    const version = req.session.pdfScreenshotVersion || "release";
+    const screenshots = req.session.pdfScreenshots || [];
+
+    if (!sectionId) return res.status(400).json({ success: false, error: "sectionId is required" });
+    if (!title || !title.trim()) return res.status(400).json({ success: false, error: "title is required" });
+    if (!Array.isArray(sections) || sections.length === 0) {
+      return res.status(400).json({ success: false, error: "sections must be a non-empty array" });
+    }
+
+    const escapeHtml = (str) =>
+      String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    // Try to pull the release date(s) from the deck text (slide 1 carries them).
+    const allDeckText = screenshots.map((s) => s.pageText || "").join(" ");
+    const relDateMatch = allDeckText.match(/Release Date:\s*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i);
+    const ttMatch = allDeckText.match(/Train the Trainer:\s*([A-Za-z]+\s+\d{1,2},?\s+\d{4})/i);
+    const prodDate = relDateMatch ? relDateMatch[1] : "[add production date]";
+    const uatDate = ttMatch ? ttMatch[1] : "[add UAT date]";
+
+    const anchorFor = (idx) => `h_rn_feat_${idx}`;
+
+    // 1) Create the draft article (inline images need an article id first).
+    const article = await createArticle({
+      sectionId,
+      title: title.trim(),
+      body: "<p>Generating…</p>",
+      draft: true,
+    });
+
+    // 2) Build the body. Header + table of contents first.
+    const head = [];
+    head.push(`<p><strong>Released to UAT</strong>: ${escapeHtml(uatDate)}</p>`);
+    head.push(`<p><strong>Released to Production</strong>: ${escapeHtml(prodDate)}, after business hours</p>`);
+    head.push(`<h2 id="h_rn_contents">Release contents:</h2>`);
+    head.push("<ul>");
+    sections.forEach((sec, idx) => {
+      head.push(`<li><a href="#${anchorFor(idx)}">${escapeHtml(sec.feature)}</a></li>`);
+    });
+    head.push("</ul>");
+    head.push(`<h1>New Features &amp; Enhancements</h1>`);
+
+    // 3) Per-feature blocks (uploading screenshots inline as we go).
+    let uploaded = 0;
+    const bodyParts = [...head];
+
+    for (let idx = 0; idx < sections.length; idx++) {
+      const sec = sections[idx];
+      const content = sec.content || {};
+      const availableTo = (content.availableTo || "").trim() || "All customers";
+      const whatsNew = (content.whatsNew || sec.description || "").trim();
+      const benefits = Array.isArray(content.benefits) ? content.benefits : [];
+      const howItWorks = Array.isArray(content.howItWorks) ? content.howItWorks : [];
+
+      if (idx > 0) bodyParts.push("<hr>");
+      bodyParts.push(`<h3 id="${anchorFor(idx)}">${escapeHtml(sec.feature)}</h3>`);
+      bodyParts.push(`<p><strong>Available to:</strong> ${escapeHtml(availableTo)}</p>`);
+      if (whatsNew) {
+        bodyParts.push(`<p><strong>What's New</strong><br>${escapeHtml(whatsNew)}</p>`);
+      }
+
+      // Screenshots as Zendesk figures, right after What's New.
+      for (const shot of sec.screenshots || []) {
+        const file = path.basename(String(shot.file || ""));
+        const filePath = path.join(SCREENSHOTS_ROOT, version, file);
+        if (!file || !fs.existsSync(filePath)) {
+          console.warn(`Skipping missing screenshot: ${file}`);
+          continue;
+        }
+        try {
+          const buffer = fs.readFileSync(filePath);
+          const { content_url } = await uploadInlineArticleImage(article.id, buffer, file);
+          const w = Number(shot.width) || null;
+          const h = Number(shot.height) || null;
+          const dims = w && h ? ` width="${w}" height="${h}" style="aspect-ratio: ${w}/${h};"` : "";
+          bodyParts.push(
+            `<figure class="wysiwyg-image"><img src="${content_url}" alt="${escapeHtml(sec.feature)} screenshot"${dims}></figure>`
+          );
+          uploaded++;
+        } catch (upErr) {
+          console.error(`Failed to upload ${file}:`, upErr.message);
+        }
+      }
+
+      if (benefits.length) {
+        bodyParts.push(`<p><strong>Benefits</strong></p>`);
+        bodyParts.push("<ul>");
+        for (const b of benefits) bodyParts.push(`<li>${escapeHtml(b)}</li>`);
+        bodyParts.push("</ul>");
+      }
+      if (howItWorks.length) {
+        bodyParts.push(`<h4><strong>How It Works</strong></h4>`);
+        for (const step of howItWorks) bodyParts.push(`<p>${escapeHtml(step)}</p>`);
+      }
+    }
+
+    // 4) Update the draft body with the assembled HTML.
+    const body = bodyParts.join("\n");
+    await updateArticleBody(article.id, body, "en-us");
+
+    const brand = getCurrentBrand();
+    const subdomain = process.env.ZENDESK_SUBDOMAIN || "himarley";
+    const editUrl = `https://${subdomain}.zendesk.com/knowledge/articles/${article.id}?brand_id=${brand.id}`;
+
+    console.log(`✅ Draft article ${article.id} created with ${uploaded} embedded screenshot(s) [${brand.name}]`);
+
+    res.json({
+      success: true,
+      articleId: article.id,
+      uploadedImages: uploaded,
+      draft: true,
+      brand: brand.name,
+      editUrl,
+      htmlUrl: article.html_url || null,
+    });
+  } catch (err) {
+    console.error("create-screenshot-draft error:", err.message);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

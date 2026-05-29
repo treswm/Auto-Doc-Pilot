@@ -30,6 +30,88 @@ function ReleasesTab({ user }) {
   const [unflaggedOpen, setUnflaggedOpen] = useState(false)
   const autoSearchRef = useRef(false)
 
+  // ── Screenshot doc → Zendesk draft ───────────────────────────────────────
+  const [screenshotCount, setScreenshotCount] = useState(0)
+  const [docLoading, setDocLoading] = useState(false)
+  const [docError, setDocError] = useState(null)
+  const [docTitle, setDocTitle] = useState('')
+  const [docSections, setDocSections] = useState(null) // [{feature, description, screenshots:[{file,page,url,width,height,included}]}]
+  const [docStats, setDocStats] = useState(null)
+  const [zendeskSections, setZendeskSections] = useState([])
+  const [selectedSectionId, setSelectedSectionId] = useState('')
+  const [draftLoading, setDraftLoading] = useState(false)
+  const [draftError, setDraftError] = useState(null)
+  const [draftResult, setDraftResult] = useState(null)
+
+  const handleBuildScreenshotDoc = async () => {
+    setDocLoading(true)
+    setDocError(null)
+    setDraftResult(null)
+    try {
+      const [docRes, secRes] = await Promise.all([
+        fetch('/api/release-notes/build-screenshot-doc', { method: 'POST', credentials: 'include' }),
+        fetch('/api/release-notes/zendesk-sections', { credentials: 'include' }),
+      ])
+      const docData = await docRes.json()
+      if (!docData.success) throw new Error(docData.error || 'Failed to build screenshot doc')
+      const secData = await secRes.json().catch(() => ({ sections: [] }))
+
+      // mark every screenshot as included by default
+      const sections = (docData.sections || []).map(s => ({
+        ...s,
+        screenshots: (s.screenshots || []).map(sh => ({ ...sh, included: true })),
+      }))
+      setDocSections(sections)
+      setDocTitle(docData.title || `Release ${releaseTitle || ''} — What's New`)
+      setDocStats(docData.stats || null)
+      if (secData.success && Array.isArray(secData.sections)) {
+        setZendeskSections(secData.sections)
+      }
+    } catch (err) {
+      setDocError(err.message)
+    } finally {
+      setDocLoading(false)
+    }
+  }
+
+  const toggleDocShot = (si, shi) => {
+    setDocSections(prev => prev.map((sec, i) => {
+      if (i !== si) return sec
+      return {
+        ...sec,
+        screenshots: sec.screenshots.map((sh, j) => j === shi ? { ...sh, included: !sh.included } : sh),
+      }
+    }))
+  }
+
+  const handleCreateScreenshotDraft = async () => {
+    if (!selectedSectionId) { setDraftError('Please choose a target section first.'); return }
+    if (!docTitle.trim()) { setDraftError('Please enter an article title.'); return }
+    setDraftLoading(true)
+    setDraftError(null)
+    try {
+      const payloadSections = docSections.map(sec => ({
+        feature: sec.feature,
+        description: sec.description,
+        content: sec.content,
+        screenshots: sec.screenshots.filter(sh => sh.included).map(sh => ({ file: sh.file, page: sh.page, width: sh.width, height: sh.height })),
+      }))
+      const res = await fetch('/api/release-notes/create-screenshot-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ sectionId: selectedSectionId, title: docTitle.trim(), sections: payloadSections }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Failed to create draft')
+      setDraftResult(data)
+    } catch (err) {
+      setDraftError(err.message)
+    } finally {
+      setDraftLoading(false)
+    }
+  }
+
   // ── Convert plain proposedText to Zendesk-ready HTML ─────────────────────
   function textToZendeskHtml(text) {
     if (!text) return ''
@@ -126,6 +208,10 @@ function ReleasesTab({ user }) {
     autoSearchRef.current = false
     setFlaggedArticles([])
     setAnalysis(analysisData)
+    setScreenshotCount(analysisData.screenshotCount || 0)
+    setDocSections(null)
+    setDraftResult(null)
+    setDocError(null)
     const id = `release_${Date.now()}`
     setReleaseId(id)
     if (analysisData.version) {
@@ -134,10 +220,14 @@ function ReleasesTab({ user }) {
   }
 
   // Manual mode: called after notes are saved (skip AI call)
-  const handleManualSaveComplete = async ({ version }) => {
+  const handleManualSaveComplete = async ({ version, screenshotCount: sc }) => {
     const id = `release_${Date.now()}`
     setReleaseId(id)
     setFlaggedArticles([])
+    setScreenshotCount(sc || 0)
+    setDocSections(null)
+    setDraftResult(null)
+    setDocError(null)
     if (version) setReleaseTitle(`Release ${version}`)
     setManualLoading(true)
     setManualError(null)
@@ -605,6 +695,105 @@ function ReleasesTab({ user }) {
         analysis={analysis}
       />
 
+      {/* ── Build Release Notes Doc with Screenshots → Zendesk Draft ──────── */}
+      {/* Shows in: (1) Auto mode after analysis completes, OR (2) Manual Mode Step 1 as optional feature */}
+      {(analysis || (manualMode && manualStep === 1)) && screenshotCount > 0 && (
+        <div className="screenshot-doc-panel">
+          <div className="sdoc-header">
+            <h3>📸 Build Release Notes Doc with Screenshots</h3>
+            <p className="sdoc-subtitle">
+              {manualMode && manualStep === 1 && '✨ Optional: '}
+              {screenshotCount} screenshot{screenshotCount !== 1 ? 's' : ''} were extracted from the deck.
+              {manualMode && manualStep === 1 ? ' Create a draft Help Center article with screenshots embedded' : ' Match them to the customer-facing features in this release and create a draft Help Center article — screenshots embedded — for review'}.
+              {manualMode && manualStep === 1 && ' Or continue to Step 2 for traditional article analysis.'}
+            </p>
+          </div>
+
+          {!docSections && (
+            <button className="btn btn-primary" onClick={handleBuildScreenshotDoc} disabled={docLoading}>
+              {docLoading ? 'Building preview…' : '🔍 Build Preview'}
+            </button>
+          )}
+          {docError && <p className="sdoc-error">⚠️ {docError}</p>}
+
+          {docSections && (
+            <>
+              {docStats && (
+                <p className="sdoc-stats">
+                  {docStats.features} feature section{docStats.features !== 1 ? 's' : ''} ·
+                  {' '}{docStats.matched} of {docStats.extracted} screenshots matched to a customer-facing feature
+                  {' '}(unmatched/internal slides excluded).
+                </p>
+              )}
+
+              <div className="sdoc-sections">
+                {docSections.map((sec, si) => (
+                  <div key={si} className="sdoc-section">
+                    <h4 className="sdoc-feature">{sec.feature}</h4>
+                    {sec.description && <p className="sdoc-desc">{sec.description}</p>}
+                    {sec.screenshots.length === 0 ? (
+                      <p className="sdoc-noshot">No screenshot matched — this section will be text only.</p>
+                    ) : (
+                      <div className="sdoc-shots">
+                        {sec.screenshots.map((sh, shi) => (
+                          <label key={shi} className={`sdoc-shot ${sh.included ? 'included' : 'excluded'}`}>
+                            <input type="checkbox" checked={sh.included} onChange={() => toggleDocShot(si, shi)} />
+                            <img src={sh.url} alt={`${sec.feature} screenshot`} loading="lazy" />
+                            <span className="sdoc-shot-meta">p{sh.page} · {sh.width}×{sh.height}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="sdoc-create">
+                <div className="sdoc-field">
+                  <label htmlFor="sdoc-title">Article title</label>
+                  <input
+                    id="sdoc-title"
+                    type="text"
+                    value={docTitle}
+                    onChange={e => setDocTitle(e.target.value)}
+                    placeholder="Release 2.86 — What's New"
+                  />
+                </div>
+                <div className="sdoc-field">
+                  <label htmlFor="sdoc-section">Target Help Center section</label>
+                  <select id="sdoc-section" value={selectedSectionId} onChange={e => setSelectedSectionId(e.target.value)}>
+                    <option value="">Choose a section…</option>
+                    {zendeskSections.map(s => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleCreateScreenshotDraft}
+                  disabled={draftLoading || !selectedSectionId}
+                >
+                  {draftLoading ? 'Creating draft in Zendesk…' : '📝 Create Draft in Zendesk'}
+                </button>
+                <button className="btn btn-ghost" onClick={handleBuildScreenshotDoc} disabled={docLoading}>
+                  ↻ Rebuild Preview
+                </button>
+              </div>
+
+              {draftError && <p className="sdoc-error">⚠️ {draftError}</p>}
+              {draftResult && (
+                <div className="sdoc-success">
+                  ✅ Draft created in <strong>{draftResult.brand}</strong> with {draftResult.uploadedImages} embedded screenshot{draftResult.uploadedImages !== 1 ? 's' : ''}.
+                  {draftResult.editUrl && (
+                    <> <a href={draftResult.editUrl} target="_blank" rel="noopener noreferrer">Open draft in Zendesk →</a></>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {/* Manual Step 1: Copy analyze-impact prompt to ChatGPT */}
       {manualMode && manualStep === 1 && (
         <div className="manual-step-panel">
@@ -612,7 +801,7 @@ function ReleasesTab({ user }) {
             <span className="manual-step-badge">Step 1 of 2</span>
             <h3>Identify Affected Articles</h3>
           </div>
-          <p className="manual-step-desc">Copy this prompt and paste it into your <a href="https://chatgpt.com/g/g-p-69e7c1e796988191b20675b622f6a535-help-center-article-writer/project" target="_blank" rel="noopener noreferrer">Hi Marley ChatGPT project</a>. ChatGPT will return a JSON object — paste it back below.</p>
+          <p className="manual-step-desc">📌 <strong>Use the <a href="https://chatgpt.com/g/g-p-69e7c1e796988191b20675b622f6a535-help-center-article-writer/project" target="_blank" rel="noopener noreferrer">Article Writer ChatGPT project</a> for this prompt only.</strong> Do not use this project for Step 2. Alternatively, you can copy and paste into plain ChatGPT.com if you prefer. ChatGPT will return a JSON object — paste it back below.</p>
           <button className="btn btn-primary manual-copy-btn" onClick={() => handleManualCopy('step1', manualPromptText)} disabled={!manualPromptText}>
             {manualCopied === 'step1' ? '✓ Copied!' : '📋 Copy Prompt for ChatGPT'}
           </button>
@@ -659,8 +848,8 @@ function ReleasesTab({ user }) {
           )}
           <p className="manual-step-desc">This prompt includes all {manualArticleCount} article(s). ChatGPT will return a JSON array — paste it back below.</p>
           <div className="scan-warnings-box">
-            <strong>⚠ Start a new ChatGPT conversation for this step.</strong>
-            <p className="scan-warnings-desc">Don't continue from the Step 1 thread — that context will cause ChatGPT to write articles instead of returning JSON.</p>
+            <strong>✅ Do NOT use the Article Writer project for this step. Start a new conversation in plain ChatGPT.com instead.</strong>
+            <p className="scan-warnings-desc">The article analysis context will cause the ChatGPT project to misinterpret the request and write full articles instead of returning JSON. Always use plain ChatGPT for Step 2 analysis.</p>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <button className="btn btn-primary manual-copy-btn" onClick={() => handleManualCopy('full', manualPromptText)} disabled={!manualPromptText}>
@@ -703,10 +892,10 @@ function ReleasesTab({ user }) {
               {missingArticles.map(a => <li key={a.id}>{a.title}</li>)}
             </ul>
           </div>
-          <p className="manual-step-desc">A follow-up prompt has been prepared for just these {missingArticles.length} article{missingArticles.length !== 1 ? 's' : ''}. Start a new ChatGPT conversation, paste this prompt, and paste the response back below.</p>
+          <p className="manual-step-desc">A follow-up prompt has been generated for {missingArticles.length} article{missingArticles.length !== 1 ? 's' : ''}. Paste it into <strong>the same ChatGPT conversation as Step 2</strong> (not a new conversation). ChatGPT will maintain context about which articles are missing and analyze them correctly.</p>
           <div className="scan-warnings-box">
-            <strong>⚠ Start a new ChatGPT conversation for this follow-up.</strong>
-            <p className="scan-warnings-desc">Don't continue from the Step 2 thread.</p>
+            <strong>📌 Paste into the same Step 2 conversation.</strong>
+            <p className="scan-warnings-desc">Do NOT start a new conversation. The context from Step 2 helps ChatGPT focus only on the missing articles.</p>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             <button className="btn btn-primary manual-copy-btn" onClick={() => handleManualCopy('followup-full', manualFollowupPromptText)} disabled={!manualFollowupPromptText}>

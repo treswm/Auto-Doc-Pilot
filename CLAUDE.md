@@ -193,6 +193,62 @@ The PDF/CSV export endpoints (`/api/scanners/export-full-pdf`, `/api/scanners/ex
 - `api/scanners.js` `search-and-flag` fetches section + category names from Zendesk at the start of each scan and passes them to `analyze-article-impact` as `articleSectionName` / `articleCategoryName`. This gives the AI explicit context (e.g. "Integrations > Contact API Actions") to make accurate relevance decisions without needing a hard-coded exclusion list.
 - Two AI knowledge files accumulate learning over time — see **AI Learning & Context** section below.
 
+### Translation Tab
+
+**Auto Mode** (when OpenAI quota available):
+1. Select a section from the dropdown
+2. Click **"🚀 Translate All Articles"**
+3. App fetches all articles in that section and translates them via OpenAI API in one batch
+4. Articles are truncated to 8000 characters to avoid context window overflow
+5. Articles over 25,000 characters are chunked (headings, paragraphs, lists as boundaries) and translated in multiple passes
+6. Results display translated article titles and counts
+7. Click **"Upload Results"** to write all translations to Zendesk (fr-ca locale)
+8. If you hit OpenAI quota mid-batch: app returns partial results + `quotaExceeded` flag; switch to Manual Mode to finish
+
+**Manual Mode** (OpenAI quota exceeded or API unavailable):
+1. Toggle **"Manual Mode: ON"** in header
+2. Select a section and click **"📝 Generate ChatGPT Prompt"**
+3. App fetches all articles and builds a batch translation prompt with glossary reference
+4. Copy the prompt (or "Copy Full Prompt" if not using Hi Marley ChatGPT project)
+5. Open [Hi Marley ChatGPT project](https://chatgpt.com/g/g-p-69e7c1e796988191b20675b622f6a535-help-center-article-writer/project) or ChatGPT.com in a new conversation
+6. **Start a fresh conversation** (critical — do not reuse old threads)
+7. Paste the prompt and wait for ChatGPT's JSON array response
+8. Copy the entire JSON response (starts with `[`, ends with `]`)
+9. Paste into **"Paste ChatGPT Response"** textarea in the app
+10. Click **"Continue"** to validate and import the translations
+11. Results display like auto mode; click **"Upload Results"** to write to Zendesk
+
+**Key Notes**:
+- Both modes produce identical results — user can switch between them at any point
+- Glossary (145+ Hi Marley platform terms) is loaded automatically from `config/glossary.json`
+- All translations use French-Canadian (fr-ca) conventions: "vous" (formal), space for thousands separator, comma for decimal
+- Session state persists across API calls: articles are cached, results accumulate
+- All endpoints require authentication via `requireAuth` middleware
+- Manual mode JSON response is validated: checks for articleId, title, body in each object
+
+**Endpoints**:
+- `GET /api/translations/sections` — list all Help Center sections
+- `GET /api/translations/auto-translate?sectionId=XXX` — translate articles via OpenAI
+- `GET /api/translations/manual-prompt?sectionId=XXX` — generate ChatGPT prompt
+- `POST /api/translations/manual-import` — parse ChatGPT response
+- `POST /api/translations/upload-results` — upload translated articles to Zendesk
+
+**Expected ChatGPT Response Format**:
+```json
+[
+  {
+    "articleId": 12345,
+    "title": "Configuration de la boîte de réception",
+    "body": "<p>Vous pouvez configurer votre boîte de réception...</p>"
+  },
+  {
+    "articleId": 67890,
+    "title": "Bases de la messagerie",
+    "body": "<p>La messagerie dans Hi Marley...</p>"
+  }
+]
+```
+
 ### Translation Notes
 
 - `run_next_5_sections.js` still uses a simple single-call path for normal-sized articles.

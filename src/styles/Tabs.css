@@ -2288,3 +2288,176 @@
   font-weight: 500;
   margin: 8px 0 0;
 }
+
+/* ── Screenshot Doc → Zendesk Draft panel ─────────────────────────────────── */
+.screenshot-doc-panel {
+  background: white;
+  border: 1.5px solid #93c5fd;
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.sdoc-header h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.sdoc-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.sdoc-stats {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-radius);
+  padding: 8px 12px;
+}
+
+.sdoc-error {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #b91c1c;
+  font-weight: 500;
+}
+
+.sdoc-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.sdoc-section {
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-4);
+  background: var(--color-gray-50);
+}
+
+.sdoc-feature {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.sdoc-desc {
+  margin: 0 0 12px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.sdoc-noshot {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.sdoc-shots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-3);
+}
+
+.sdoc-shot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 200px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: var(--border-radius);
+  padding: 6px;
+  background: white;
+  transition: border-color 0.15s, opacity 0.15s;
+}
+
+.sdoc-shot.included {
+  border-color: #3b82f6;
+}
+
+.sdoc-shot.excluded {
+  opacity: 0.45;
+}
+
+.sdoc-shot input[type="checkbox"] {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 18px;
+  height: 18px;
+  z-index: 2;
+}
+
+.sdoc-shot img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  border: 1px solid var(--color-gray-200);
+  display: block;
+}
+
+.sdoc-shot-meta {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.sdoc-create {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--spacing-3);
+  border-top: 1px solid var(--color-gray-200);
+  padding-top: var(--spacing-4);
+}
+
+.sdoc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 220px;
+}
+
+.sdoc-field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.sdoc-field input,
+.sdoc-field select {
+  padding: 8px 10px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+}
+
+.sdoc-success {
+  font-size: 0.875rem;
+  color: #059669;
+  font-weight: 500;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: var(--border-radius);
+  padding: 10px 12px;
+}
+
+.sdoc-success a {
+  color: #047857;
+  font-weight: 600;
+}
