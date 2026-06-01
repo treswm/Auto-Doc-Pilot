@@ -108,7 +108,8 @@
 }
 
 .drns-input,
-.drns-textarea {
+.drns-textarea,
+select.drns-input {
   width: 100%;
   border: 1px solid #d1d5db;
   border-radius: 6px;
@@ -184,4 +185,46 @@
   font-size: 0.8125rem;
   color: #047857;
   font-weight: 500;
+}
+
+.drns-success-box {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 1rem;
+  font-size: 0.875rem;
+  color: #065f46;
+  line-height: 1.6;
+}
+
+.drns-success-box strong {
+  color: #047857;
+}
+
+.drns-success-box p {
+  margin: 0.5rem 0 0;
+}
+
+.drns-draft-link {
+  display: inline-block;
+  color: #047857;
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid #a7f3d0;
+  padding-bottom: 2px;
+  transition: color 0.15s;
+}
+
+.drns-draft-link:hover {
+  color: #065f46;
+  border-bottom-color: #6ee7b7;
+}
+
+.drns-next-step {
+  background: #f0fdf4;
+  border-left: 3px solid #86efac;
+  padding: 0.625rem 0.75rem;
+  margin: 0.75rem 0 0 !important;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.8125rem;
 }

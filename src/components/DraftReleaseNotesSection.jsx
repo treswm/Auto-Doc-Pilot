@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import '../styles/DraftReleaseNotesSection.css'
 
 /**
@@ -17,14 +17,19 @@ function DraftReleaseNotesSection({ onUploadComplete, hasScreenshots, children }
   const [version, setVersion] = useState('')
   const [releaseNotes, setReleaseNotes] = useState('')
   const [pdfFile, setPdfFile] = useState(null)
+  const [articleTitle, setArticleTitle] = useState('')
+  const [selectedSectionId, setSelectedSectionId] = useState('')
+  const [zendeskSections, setZendeskSections] = useState([])
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState('')
   const [error, setError] = useState(null)
-  const [uploadedSummary, setUploadedSummary] = useState(null)
+  const [draftResult, setDraftResult] = useState(null)
 
   const handleProcess = async () => {
     setError(null)
+    setDraftResult(null)
 
+    // Validation
     if (!version.trim()) {
       setError('Please enter a version / release label (e.g. "Release 2.86").')
       return
@@ -33,12 +38,20 @@ function DraftReleaseNotesSection({ onUploadComplete, hasScreenshots, children }
       setError('Provide release notes text and/or a Train the Trainer PDF before processing.')
       return
     }
+    if (!articleTitle.trim()) {
+      setError('Please enter an article title for the Zendesk draft.')
+      return
+    }
+    if (!selectedSectionId) {
+      setError('Please select a target Help Center section.')
+      return
+    }
 
     setUploading(true)
-    setProgress(pdfFile ? 'Uploading PDF and extracting screenshots…' : 'Saving release notes…')
+    setProgress('Uploading PDF and extracting screenshots…')
 
     try {
-      let pdfResult = null
+      let screenshotCount = 0
 
       // Step 1 — If a PDF was provided, upload it (extracts text + screenshots)
       if (pdfFile) {
@@ -50,15 +63,14 @@ function DraftReleaseNotesSection({ onUploadComplete, hasScreenshots, children }
           credentials: 'include',
           body: fd,
         })
-        pdfResult = await res.json()
+        const pdfResult = await res.json()
         if (!pdfResult.success) {
           throw new Error(pdfResult.error || 'Failed to process PDF')
         }
+        screenshotCount = pdfResult.screenshotCount || 0
       }
 
-      // Step 2 — If user pasted text, override session text with their pasted version
-      // (the user's pasted text is the source of truth for what shipped; PDF text may
-      // include internal marketing slides we don't want in the draft).
+      // Step 2 — Save release notes text (user's pasted text is source of truth)
       if (releaseNotes.trim()) {
         setProgress('Saving release notes text…')
         const saveRes = await fetch('/api/release-notes/input', {
@@ -73,32 +85,88 @@ function DraftReleaseNotesSection({ onUploadComplete, hasScreenshots, children }
         }
       }
 
-      // Summarize what was processed
-      const screenshotCount = pdfResult?.screenshotCount || 0
-      setUploadedSummary({
-        version,
-        hasText: !!releaseNotes.trim(),
-        hasPdf: !!pdfFile,
-        screenshotCount,
-        pdfFileName: pdfFile?.name || null,
-      })
-
-      // Notify parent so it can render the screenshot doc panel
-      if (onUploadComplete) {
-        onUploadComplete({
-          version,
-          releaseNotes: releaseNotes.trim() || pdfResult?.text || '',
-          screenshotCount,
+      // Step 3 — Build screenshot doc (matches screenshots to features)
+      if (screenshotCount > 0) {
+        setProgress('Building screenshot document preview…')
+        const docRes = await fetch('/api/release-notes/build-screenshot-doc', {
+          method: 'POST',
+          credentials: 'include',
         })
+        const docData = await docRes.json()
+        if (!docData.success) {
+          throw new Error(docData.error || 'Failed to build screenshot document')
+        }
+
+        // Step 4 — Create draft in Zendesk with all screenshots included
+        setProgress('Creating draft in Zendesk with embedded screenshots…')
+        const payloadSections = (docData.sections || []).map(sec => ({
+          feature: sec.feature,
+          description: sec.description,
+          content: sec.content,
+          // Include all screenshots by default
+          screenshots: (sec.screenshots || []).map(sh => ({
+            file: sh.file,
+            page: sh.page,
+            width: sh.width,
+            height: sh.height,
+          })),
+        }))
+
+        const draftRes = await fetch('/api/release-notes/create-screenshot-draft', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            sectionId: selectedSectionId,
+            title: articleTitle.trim(),
+            sections: payloadSections,
+          }),
+        })
+        const draftData = await draftRes.json()
+        if (!draftData.success) {
+          throw new Error(draftData.error || 'Failed to create draft in Zendesk')
+        }
+
+        setDraftResult(draftData)
+        setProgress('')
+      } else {
+        // No screenshots — just save and notify parent
+        if (onUploadComplete) {
+          onUploadComplete({
+            version,
+            releaseNotes: releaseNotes.trim(),
+            screenshotCount: 0,
+          })
+        }
       }
     } catch (err) {
-      console.error('Draft release notes upload error:', err)
+      console.error('Draft release notes error:', err)
       setError(err.message)
     } finally {
       setUploading(false)
       setProgress('')
     }
   }
+
+  // Load available Help Center sections
+  const loadSections = async () => {
+    try {
+      const res = await fetch('/api/release-notes/zendesk-sections', {
+        credentials: 'include',
+      })
+      const data = await res.json()
+      if (data.success && Array.isArray(data.sections)) {
+        setZendeskSections(data.sections)
+      }
+    } catch (err) {
+      console.error('Failed to load Zendesk sections:', err)
+    }
+  }
+
+  // Load sections on mount
+  useEffect(() => {
+    loadSections()
+  }, [])
 
   return (
     <details className="drns-section">
@@ -176,6 +244,47 @@ function DraftReleaseNotesSection({ onUploadComplete, hasScreenshots, children }
           </small>
         </div>
 
+        {/* Article title */}
+        <div className="drns-field">
+          <label htmlFor="drns-title">
+            <strong>Article Title</strong>
+            <span className="drns-required">*</span>
+          </label>
+          <input
+            id="drns-title"
+            type="text"
+            className="drns-input"
+            value={articleTitle}
+            onChange={(e) => setArticleTitle(e.target.value)}
+            placeholder="e.g., Release 2.86 — What's New"
+          />
+          <small className="drns-help">
+            This will be the title of the draft article created in Zendesk.
+          </small>
+        </div>
+
+        {/* Target Help Center section */}
+        <div className="drns-field">
+          <label htmlFor="drns-section">
+            <strong>Target Help Center Section</strong>
+            <span className="drns-required">*</span>
+          </label>
+          <select
+            id="drns-section"
+            className="drns-input"
+            value={selectedSectionId}
+            onChange={(e) => setSelectedSectionId(e.target.value)}
+          >
+            <option value="">Choose a section…</option>
+            {zendeskSections.map(s => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+          <small className="drns-help">
+            Where should the draft article be created in Help Center?
+          </small>
+        </div>
+
         {error && <div className="drns-error">❌ {error}</div>}
 
         <div className="drns-actions">
@@ -187,23 +296,27 @@ function DraftReleaseNotesSection({ onUploadComplete, hasScreenshots, children }
             {uploading ? (
               <><span className="loading-spinner"></span> {progress || 'Processing…'}</>
             ) : (
-              '🚀 Process & Build Draft'
+              '🚀 Process & Create Draft in Zendesk'
             )}
           </button>
         </div>
 
-        {uploadedSummary && (
-          <div className="drns-summary-box">
-            ✅ Processed for <strong>{uploadedSummary.version}</strong>
-            {uploadedSummary.hasText && ' · release notes text saved'}
-            {uploadedSummary.hasPdf && (
-              <> · PDF <em>{uploadedSummary.pdfFileName}</em> ({uploadedSummary.screenshotCount} screenshot{uploadedSummary.screenshotCount !== 1 ? 's' : ''} extracted)</>
-            )}
-            {hasScreenshots && (
-              <p className="drns-summary-next">
-                ↓ Use the panel below to preview matches and create the draft in Zendesk.
+        {draftResult && (
+          <div className="drns-success-box">
+            ✅ <strong>Draft created successfully!</strong>
+            <p>
+              📄 <strong>{draftResult.brand}</strong> with {draftResult.uploadedImages} embedded screenshot{draftResult.uploadedImages !== 1 ? 's' : ''}.
+            </p>
+            {draftResult.editUrl && (
+              <p>
+                <a href={draftResult.editUrl} target="_blank" rel="noopener noreferrer" className="drns-draft-link">
+                  → Open draft in Zendesk
+                </a>
               </p>
             )}
+            <p className="drns-next-step">
+              Now copy the draft URL and paste it into the <strong>"Release Notes Input"</strong> section below to analyze which Help Center articles need updating.
+            </p>
           </div>
         )}
 
