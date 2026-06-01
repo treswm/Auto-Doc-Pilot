@@ -85,7 +85,20 @@ function DraftReleaseNotesSection({ onUploadComplete, hasScreenshots, children }
         }
       }
 
-      // Step 3 — Build screenshot doc (matches screenshots to features)
+      // Step 3 — Analyze release notes to extract features (required for screenshot matching)
+      setProgress('Analyzing release notes to identify features…')
+      const analyzeRes = await fetch('/api/release-notes/analyze-impact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ releaseNotes: releaseNotes.trim() }),
+      })
+      const analyzeData = await analyzeRes.json()
+      if (!analyzeData.success) {
+        throw new Error(analyzeData.error || 'Failed to analyze release notes')
+      }
+
+      // Step 4 — Build screenshot doc (matches screenshots to features)
       if (screenshotCount > 0) {
         setProgress('Building screenshot document preview…')
         const docRes = await fetch('/api/release-notes/build-screenshot-doc', {
@@ -97,7 +110,7 @@ function DraftReleaseNotesSection({ onUploadComplete, hasScreenshots, children }
           throw new Error(docData.error || 'Failed to build screenshot document')
         }
 
-        // Step 4 — Create draft in Zendesk with all screenshots included
+        // Step 5 — Create draft in Zendesk with all screenshots included
         setProgress('Creating draft in Zendesk with embedded screenshots…')
         const payloadSections = (docData.sections || []).map(sec => ({
           feature: sec.feature,
