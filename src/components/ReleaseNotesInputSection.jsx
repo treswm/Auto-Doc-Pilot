@@ -16,9 +16,7 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete, onM
   const [isLoading, setIsLoading] = useState(true)
   const [isSavingAndAnalyzing, setIsSavingAndAnalyzing] = useState(false)
   const [error, setError] = useState(null)
-  const [pdfFile, setPdfFile] = useState(null)
   const [pdfImageData, setPdfImageData] = useState(null)
-  const [inputMode, setInputMode] = useState('text') // 'text', 'pdf', or 'url'
   const [articleUrl, setArticleUrl] = useState('')
   const [successMessage, setSuccessMessage] = useState(null)
   const [progressStatus, setProgressStatus] = useState('')
@@ -145,9 +143,7 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete, onM
     loadReleaseNotes()
     setIsAdding(false)
     setError(null)
-    setPdfFile(null)
     setArticleUrl('')
-    setInputMode('text')
   }
 
   const handleUrlFetchAndAnalyze = async () => {
@@ -375,7 +371,7 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete, onM
       <div className="section-header">
         <h3>📝 Release Notes Input</h3>
         <p className="section-subtitle">
-          Paste release notes and extract keywords to find articles needing updates
+          Paste the URL of your draft release notes article to find Help Center articles needing updates
         </p>
       </div>
 
@@ -449,107 +445,39 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete, onM
             <small>Used for auditability and tracking documentation changes</small>
           </div>
 
-          <div className="input-mode-toggle">
-            <button
-              className={`toggle-btn ${inputMode === 'text' ? 'active' : ''}`}
-              onClick={() => setInputMode('text')}
-            >
-              📝 Paste Text
-            </button>
-            <button
-              className={`toggle-btn ${inputMode === 'pdf' ? 'active' : ''}`}
-              onClick={() => setInputMode('pdf')}
-            >
-              📄 Upload PDF
-            </button>
-            <button
-              className={`toggle-btn ${inputMode === 'url' ? 'active' : ''}`}
-              onClick={() => setInputMode('url')}
-            >
-              🔗 Article Link
-            </button>
+          <div className="url-input-area">
+            <label htmlFor="article-url-input">
+              <strong>Zendesk Article URL</strong>
+            </label>
+            <p className="help-text" style={{ marginTop: '4px', marginBottom: '12px' }}>
+              🔗 Paste the URL of your <strong>draft Help Center article</strong>. If you don't have one yet,
+              expand the <em>"Draft release notes in Help Center"</em> section above to create one with screenshots.
+              <br />
+              📸 Images in the article will automatically flag sections that may need screenshot updates in affected articles.
+            </p>
+            <input
+              id="article-url-input"
+              type="url"
+              className="url-input"
+              value={articleUrl}
+              onChange={(e) => setArticleUrl(e.target.value)}
+              placeholder="https://himarley.zendesk.com/hc/en-us/articles/..."
+            />
+            <small>Paste the URL of the release notes article in your Zendesk Help Center</small>
           </div>
-
-          {inputMode === 'url' ? (
-            <div className="url-input-area">
-              <label htmlFor="article-url-input">
-                <strong>Zendesk Article URL</strong>
-              </label>
-              <p className="help-text" style={{ marginTop: '4px', marginBottom: '12px' }}>
-                📸 Images in the article will automatically flag sections that may need screenshot updates in affected articles
-              </p>
-              <input
-                id="article-url-input"
-                type="url"
-                className="url-input"
-                value={articleUrl}
-                onChange={(e) => setArticleUrl(e.target.value)}
-                placeholder="https://himarley.zendesk.com/hc/en-us/articles/..."
-              />
-              <small>Paste the URL of the release notes article in your Zendesk Help Center</small>
-            </div>
-          ) : inputMode === 'text' ? (
-            <>
-              <label htmlFor="notes-textarea">
-                <strong>Release Notes</strong>
-              </label>
-              <textarea
-                id="notes-textarea"
-                className="notes-textarea"
-                value={releaseNotes}
-                onChange={(e) => setReleaseNotes(e.target.value)}
-                placeholder="Paste your release notes here (from Jira, GitHub, release notes doc, etc.)..."
-              />
-            </>
-          ) : (
-            <div className="pdf-upload-area">
-              <label htmlFor="pdf-input">
-                <strong>Upload Release Notes PDF</strong>
-              </label>
-              <p className="help-text" style={{ marginTop: '4px', marginBottom: '12px' }}>
-                📸 PDFs with screenshots will automatically flag articles that may need screenshot updates
-              </p>
-              <input
-                id="pdf-input"
-                type="file"
-                accept=".pdf"
-                className="pdf-file-input"
-                onChange={(e) => setPdfFile(e.target.files[0])}
-              />
-              {pdfFile && (
-                <div className="pdf-selected">
-                  <span>📄 {pdfFile.name}</span>
-                  <small>({(pdfFile.size / 1024).toFixed(1)} KB)</small>
-                </div>
-              )}
-            </div>
-          )}
 
           <div className="edit-actions">
             <button
               className="btn btn-success"
-              onClick={
-                inputMode === 'pdf' ? handlePdfUploadAndAnalyze :
-                inputMode === 'url' ? handleUrlFetchAndAnalyze :
-                handleSaveAndAnalyze
-              }
+              onClick={handleUrlFetchAndAnalyze}
               disabled={isSavingAndAnalyzing}
             >
               {isSavingAndAnalyzing ? (
-                <>
-                  <span className="loading-spinner"></span>
-                  {inputMode === 'pdf' ? 'Processing PDF...' :
-                   inputMode === 'url' ? 'Fetching Article...' :
-                   'Saving...'}
-                </>
+                <><span className="loading-spinner"></span> Fetching Article...</>
               ) : manualMode ? (
-                inputMode === 'pdf' ? '📄 Upload PDF & Get Prompt' :
-                inputMode === 'url' ? '🔗 Fetch Article & Get Prompt' :
-                '💾 Save & Get ChatGPT Prompt'
+                '🔗 Fetch Article & Get Prompt'
               ) : (
-                inputMode === 'pdf' ? '📄 Upload & Analyze with AI' :
-                inputMode === 'url' ? '🔗 Fetch & Analyze with AI' :
-                '💾 Save & Analyze with AI'
+                '🔗 Fetch & Analyze with AI'
               )}
             </button>
             <button
@@ -569,12 +497,8 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete, onM
           )}
 
           <p className="help-text">
-            {inputMode === 'pdf'
-              ? '💡 Upload a PDF of your release notes. The system will extract text, detect screenshots, and analyze which articles need updates.'
-              : inputMode === 'url'
-              ? '💡 Paste the URL of your Zendesk release notes article. The system fetches the content directly via the Help Center API — clean text with no formatting issues, plus automatic image detection.'
-              : '💡 Paste your release notes and click "Save & Analyze" to identify affected features and recommend Help Center articles for review.'
-            }
+            💡 Paste the URL of your Zendesk release notes article. The system fetches the content directly
+            via the Help Center API — clean text with no formatting issues, plus automatic image detection.
           </p>
         </div>
       )}
@@ -589,8 +513,10 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete, onM
 
       <div className="info-box">
         <p>
-          <strong>📝 How this works:</strong> Enter your release notes (paste text, upload a PDF, or paste a Zendesk article URL), then click Analyze.
+          <strong>📝 How this works:</strong> Paste the URL of your draft Zendesk release notes article and click Fetch & Analyze.
           Auto Doc Pilot will identify affected features, find the relevant Help Center articles, and generate exact suggested edits — all in one step.
+          <br />
+          <em>Don't have a draft article yet?</em> Expand <strong>"Draft release notes in Help Center"</strong> above to generate one from release notes text + Train the Trainer PDF.
         </p>
       </div>
     </div>

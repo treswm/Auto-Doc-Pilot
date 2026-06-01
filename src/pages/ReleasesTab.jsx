@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import FeedbackForm from '../components/FeedbackForm'
 import ReleaseNotesInputSection from '../components/ReleaseNotesInputSection'
+import DraftReleaseNotesSection from '../components/DraftReleaseNotesSection'
 import ProductKnowledgePanel from '../components/ProductKnowledgePanel'
 import '../styles/Tabs.css'
 
@@ -217,6 +218,17 @@ function ReleasesTab({ user }) {
     if (analysisData.version) {
       setReleaseTitle(`Release ${analysisData.version}`)
     }
+  }
+
+  // Called after the user processes a PDF + release notes in the "Draft release notes
+  // in Help Center" section. Sets the screenshot count so the screenshot-doc panel
+  // (rendered inside that section) appears for previewing and creating the Zendesk draft.
+  const handleDraftUploadComplete = ({ version, screenshotCount: sc }) => {
+    setScreenshotCount(sc || 0)
+    setDocSections(null)
+    setDraftResult(null)
+    setDocError(null)
+    if (version) setReleaseTitle(`Release ${version}`)
   }
 
   // Manual mode: called after notes are saved (skip AI call)
@@ -686,26 +698,21 @@ function ReleasesTab({ user }) {
         </div>
       )}
 
-      <ReleaseNotesInputSection
-        onAnalysisComplete={handleAnalysisComplete}
-        onManualSaveComplete={handleManualSaveComplete}
-        manualMode={manualMode}
-        flaggedArticles={flaggedArticles}
-        releaseId={releaseId}
-        analysis={analysis}
-      />
-
-      {/* ── Build Release Notes Doc with Screenshots → Zendesk Draft ──────── */}
-      {/* Shows in: (1) Auto mode after analysis completes, OR (2) Manual Mode Step 1 as optional feature */}
-      {(analysis || (manualMode && manualStep === 1)) && screenshotCount > 0 && (
+      {/* ── Draft release notes in Help Center (collapsible, optional first step) ─ */}
+      {/* Renders the screenshot-doc panel inside (as children) once a PDF is processed,
+          so users can preview screenshot matches and create the Zendesk draft without
+          leaving this section. */}
+      <DraftReleaseNotesSection
+        onUploadComplete={handleDraftUploadComplete}
+        hasScreenshots={screenshotCount > 0}
+      >
+        {screenshotCount > 0 && (
         <div className="screenshot-doc-panel">
           <div className="sdoc-header">
             <h3>📸 Build Release Notes Doc with Screenshots</h3>
             <p className="sdoc-subtitle">
-              {manualMode && manualStep === 1 && '✨ Optional: '}
               {screenshotCount} screenshot{screenshotCount !== 1 ? 's' : ''} were extracted from the deck.
-              {manualMode && manualStep === 1 ? ' Create a draft Help Center article with screenshots embedded' : ' Match them to the customer-facing features in this release and create a draft Help Center article — screenshots embedded — for review'}.
-              {manualMode && manualStep === 1 && ' Or continue to Step 2 for traditional article analysis.'}
+              Match them to the customer-facing features and create a draft Help Center article — screenshots embedded — for review.
             </p>
           </div>
 
@@ -792,7 +799,17 @@ function ReleasesTab({ user }) {
             </>
           )}
         </div>
-      )}
+        )}
+      </DraftReleaseNotesSection>
+
+      <ReleaseNotesInputSection
+        onAnalysisComplete={handleAnalysisComplete}
+        onManualSaveComplete={handleManualSaveComplete}
+        manualMode={manualMode}
+        flaggedArticles={flaggedArticles}
+        releaseId={releaseId}
+        analysis={analysis}
+      />
 
       {/* Manual Step 1: Copy analyze-impact prompt to ChatGPT */}
       {manualMode && manualStep === 1 && (

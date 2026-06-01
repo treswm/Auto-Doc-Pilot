@@ -1,0 +1,187 @@
+/* ── Draft Release Notes in Help Center (collapsible) ────────────────────── */
+
+.drns-section {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  transition: box-shadow 0.15s ease;
+}
+
+.drns-section[open] {
+  border-color: #c4b5fd;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.06);
+}
+
+.drns-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  user-select: none;
+  background: linear-gradient(180deg, #faf5ff 0%, #f5f3ff 100%);
+  border-bottom: 1px solid transparent;
+}
+
+.drns-section[open] .drns-summary {
+  border-bottom-color: #ede9fe;
+}
+
+.drns-summary::-webkit-details-marker {
+  display: none;
+}
+
+.drns-summary::before {
+  content: "▶";
+  color: #7c3aed;
+  font-size: 0.75rem;
+  transition: transform 0.15s ease;
+  display: inline-block;
+}
+
+.drns-section[open] .drns-summary::before {
+  transform: rotate(90deg);
+}
+
+.drns-summary-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.drns-summary-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+}
+
+.drns-summary-text strong {
+  font-size: 1rem;
+  color: #111827;
+}
+
+.drns-summary-text small {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  font-weight: normal;
+}
+
+.drns-content {
+  padding: 1.25rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.drns-intro {
+  background: #f5f3ff;
+  border-left: 3px solid #7c3aed;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+  border-radius: 0 6px 6px 0;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.drns-intro strong {
+  color: #111827;
+}
+
+.drns-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.drns-field label {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.drns-required {
+  color: #dc2626;
+  margin-left: 0.2rem;
+}
+
+.drns-input,
+.drns-textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #111827;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+.drns-input:focus,
+.drns-textarea:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.drns-textarea {
+  min-height: 140px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.8125rem;
+  resize: vertical;
+}
+
+.drns-file {
+  font-size: 0.875rem;
+  padding: 0.4rem 0;
+}
+
+.drns-pdf-selected {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #065f46;
+}
+
+.drns-help {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  line-height: 1.45;
+}
+
+.drns-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  border-radius: 6px;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+}
+
+.drns-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.drns-summary-box {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+  font-size: 0.875rem;
+  color: #065f46;
+  line-height: 1.5;
+}
+
+.drns-summary-next {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: #047857;
+  font-weight: 500;
+}
