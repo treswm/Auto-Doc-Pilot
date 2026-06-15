@@ -1,13 +1,108 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import '../styles/TranslationTab.css'
+import '../styles/AdminTab.css'
+
+function getInitials(name) {
+  return name
+    .split(' ')
+    .map(p => p[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase()
+}
+
+function AddApproverDialog({ dialogRef, onSubmit, submitting, error }) {
+  const [formData, setFormData] = useState({ name: '', email: '', slack_user_id: '', role: 'reviewer' })
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const success = await onSubmit(formData)
+    if (success) setFormData({ name: '', email: '', slack_user_id: '', role: 'reviewer' })
+  }
+
+  const handleClose = () => {
+    setFormData({ name: '', email: '', slack_user_id: '', role: 'reviewer' })
+    dialogRef.current?.close()
+  }
+
+  return (
+    <dialog ref={dialogRef} className="admin-dialog" onClick={e => e.target === dialogRef.current && handleClose()}>
+      <div className="admin-dialog-inner">
+        <div className="admin-dialog-header">
+          <h3>Add Approver</h3>
+          <button type="button" className="admin-dialog-close" onClick={handleClose} aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M3 3l10 10M13 3L3 13"/>
+            </svg>
+          </button>
+        </div>
+
+        {error && <div className="alert alert-error" style={{ marginBottom: 'var(--spacing-4)' }}>{error}</div>}
+
+        <form onSubmit={handleSubmit} className="admin-dialog-form">
+          <div className="admin-form-grid">
+            <div className="form-field">
+              <label>Full Name</label>
+              <input
+                type="text"
+                placeholder="Jane Smith"
+                value={formData.name}
+                onChange={e => setFormData(f => ({ ...f, name: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label>Email Address</label>
+              <input
+                type="email"
+                placeholder="jane@company.com"
+                value={formData.email}
+                onChange={e => setFormData(f => ({ ...f, email: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label>Slack User ID</label>
+              <input
+                type="text"
+                placeholder="U0123ABCDEF"
+                value={formData.slack_user_id}
+                onChange={e => setFormData(f => ({ ...f, slack_user_id: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label>Role</label>
+              <select
+                value={formData.role}
+                onChange={e => setFormData(f => ({ ...f, role: e.target.value }))}
+              >
+                <option value="reviewer">Reviewer</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="admin-dialog-actions">
+            <button type="button" className="btn btn-ghost" onClick={handleClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
+              {submitting ? 'Adding...' : 'Add Approver'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+  )
+}
 
 function AdminTab({ user }) {
   const [approvers, setApprovers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [formData, setFormData] = useState({ name: '', email: '', slack_user_id: '', role: 'reviewer' })
+  const [dialogError, setDialogError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [removeConfirm, setRemoveConfirm] = useState(null)
+  const dialogRef = useRef(null)
 
   const fetchApprovers = useCallback(async () => {
     try {
@@ -25,9 +120,9 @@ function AdminTab({ user }) {
 
   useEffect(() => { fetchApprovers() }, [fetchApprovers])
 
-  const handleAdd = async (e) => {
-    e.preventDefault()
+  const handleAdd = async (formData) => {
     setSubmitting(true)
+    setDialogError(null)
     try {
       const res = await fetch('/api/approvers', {
         method: 'POST',
@@ -41,10 +136,11 @@ function AdminTab({ user }) {
       }
       const data = await res.json()
       setApprovers(data.approvers)
-      setFormData({ name: '', email: '', slack_user_id: '', role: 'reviewer' })
-      setShowAddForm(false)
+      dialogRef.current?.close()
+      return true
     } catch (err) {
-      setError(err.message)
+      setDialogError(err.message)
+      return false
     } finally {
       setSubmitting(false)
     }
@@ -76,8 +172,6 @@ function AdminTab({ user }) {
       setError('Cannot remove the last admin')
       return
     }
-    if (!window.confirm(`Remove ${approver.name} (${approver.email})?`)) return
-
     try {
       const res = await fetch(`/api/approvers/${approver.slack_user_id}`, { method: 'DELETE' })
       if (res.status === 403) throw new Error('Admin access required')
@@ -87,66 +181,61 @@ function AdminTab({ user }) {
       }
       const data = await res.json()
       setApprovers(data.approvers)
+      setRemoveConfirm(null)
       setError(null)
     } catch (err) {
       setError(err.message)
     }
   }
 
-  if (loading) return <div className="loading-container"><div className="spinner"></div><p>Loading approvers...</p></div>
+  if (loading) return (
+    <div className="loading-container">
+      <div className="spinner"></div>
+      <p>Loading approvers...</p>
+    </div>
+  )
+
+  const adminCount = approvers.filter(a => a.role === 'admin').length
+  const reviewerCount = approvers.filter(a => a.role === 'reviewer').length
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-6)' }}>
-        <h2 className="section-title" style={{ margin: 0 }}>Admin Panel</h2>
-        <button className="btn btn-primary" onClick={() => setShowAddForm(!showAddForm)}>
-          {showAddForm ? 'Cancel' : '+ Add Approver'}
+    <div className="admin-panel">
+      <div className="admin-header">
+        <div>
+          <h2 className="admin-title">Team Members</h2>
+          <p className="admin-subtitle">
+            {adminCount} admin{adminCount !== 1 ? 's' : ''} · {reviewerCount} reviewer{reviewerCount !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <button className="btn btn-primary" onClick={() => {
+          setDialogError(null)
+          dialogRef.current?.showModal()
+        }}>
+          + Add Approver
         </button>
       </div>
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      {showAddForm && (
-        <form onSubmit={handleAdd} style={{ background: 'var(--color-gray-50)', padding: 'var(--spacing-5)', borderRadius: 'var(--border-radius-lg)', marginBottom: 'var(--spacing-6)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-4)' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 'var(--spacing-1)' }}>Name</label>
-              <input className="input" value={formData.name} onChange={e => setFormData(f => ({ ...f, name: e.target.value }))} required />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 'var(--spacing-1)' }}>Email</label>
-              <input className="input" type="email" value={formData.email} onChange={e => setFormData(f => ({ ...f, email: e.target.value }))} required />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 'var(--spacing-1)' }}>Slack User ID</label>
-              <input className="input" value={formData.slack_user_id} onChange={e => setFormData(f => ({ ...f, slack_user_id: e.target.value }))} required />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: 'var(--spacing-1)' }}>Role</label>
-              <select className="input role-select" value={formData.role} onChange={e => setFormData(f => ({ ...f, role: e.target.value }))}>
-                <option value="reviewer">Reviewer</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 'var(--spacing-3)' }}>
-            <button className="btn btn-primary" type="submit" disabled={submitting}>{submitting ? 'Adding...' : 'Add Approver'}</button>
-            <button className="btn btn-ghost" type="button" onClick={() => setShowAddForm(false)}>Cancel</button>
-          </div>
-        </form>
-      )}
-
       <div className="approvers-list">
         {approvers.map(approver => {
           const isSelf = approver.email === user.email
           const isLastAdmin = approver.role === 'admin' && approvers.filter(a => a.role === 'admin').length <= 1
+          const isConfirming = removeConfirm === approver.slack_user_id
+
           return (
-            <div className="approver-row" key={approver.slack_user_id}>
-              <div>
-                <strong>{approver.name}</strong>
-                <span style={{ fontSize: '0.8125rem', color: 'var(--color-gray-500)' }}>{approver.email}</span>
+            <div className="approver-card" key={approver.slack_user_id}>
+              <div className="approver-avatar">
+                {getInitials(approver.name)}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
+              <div className="approver-info">
+                <div className="approver-name">
+                  {approver.name}
+                  {isSelf && <span className="approver-you-badge">you</span>}
+                </div>
+                <div className="approver-email">{approver.email}</div>
+              </div>
+              <div className="approver-controls">
                 <select
                   className="role-select"
                   value={approver.role || 'reviewer'}
@@ -157,21 +246,51 @@ function AdminTab({ user }) {
                   <option value="reviewer">Reviewer</option>
                   <option value="admin">Admin</option>
                 </select>
-                <button
-                  className="btn btn-sm btn-ghost"
-                  style={{ color: 'var(--color-danger)' }}
-                  onClick={() => handleRemove(approver)}
-                  disabled={isSelf || isLastAdmin}
-                  title={isSelf ? 'Cannot remove yourself' : isLastAdmin ? 'Cannot remove the last admin' : 'Remove approver'}
-                >
-                  Remove
-                </button>
+
+                {isConfirming ? (
+                  <div className="remove-confirm">
+                    <span className="remove-confirm-text">Remove?</span>
+                    <button
+                      className="btn btn-danger btn-sm"
+                      onClick={() => handleRemove(approver)}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => setRemoveConfirm(null)}
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="btn btn-ghost btn-sm admin-remove-btn"
+                    onClick={() => setRemoveConfirm(approver.slack_user_id)}
+                    disabled={isSelf || isLastAdmin}
+                    title={isSelf ? 'Cannot remove yourself' : isLastAdmin ? 'Cannot remove the last admin' : 'Remove approver'}
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
             </div>
           )
         })}
-        {approvers.length === 0 && <p style={{ color: 'var(--color-gray-500)', textAlign: 'center' }}>No approvers configured.</p>}
+        {approvers.length === 0 && (
+          <div className="content-placeholder">
+            <p>No approvers configured</p>
+            <p className="help-text">Add team members who can approve translation workflows.</p>
+          </div>
+        )}
       </div>
+
+      <AddApproverDialog
+        dialogRef={dialogRef}
+        onSubmit={handleAdd}
+        submitting={submitting}
+        error={dialogError}
+      />
     </div>
   )
 }
