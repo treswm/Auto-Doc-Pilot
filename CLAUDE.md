@@ -191,6 +191,9 @@ The PDF/CSV export endpoints (`/api/scanners/export-full-pdf`, `/api/scanners/ex
 - `POST /api/release-notes/analyze-article-impact` analyzes each article as full plain text. It returns `alreadyCovered` (filter out), `specificImpact` (article-specific reason), `affectedSections`, and `proposedCopy` (exact suggested edits in Hi Marley's voice).
 - After per-article analysis, `specificImpact` **overrides** the generic pre-match `reason` so every article in the results has a unique, accurate description rather than a copy of the same recommendation.
 - `api/scanners.js` `search-and-flag` fetches section + category names from Zendesk at the start of each scan and passes them to `analyze-article-impact` as `articleSectionName` / `articleCategoryName`. This gives the AI explicit context (e.g. "Integrations > Contact API Actions") to make accurate relevance decisions without needing a hard-coded exclusion list.
+- `analyze-article-impact` runs on `gpt-4o-mini` by default (set `RELEASE_ANALYSIS_MODEL=gpt-4o` to switch back). It is called once per candidate article, so it goes through `lib/openai-retry.js`, which waits out OpenAI rate limits (429) and transient 5xx errors instead of failing the article. Errors come back as `{ error, code, retryable, fatal }`; a `fatal` error (no quota, bad key) stops the scan early.
+- Articles that could not be analyzed are tracked as `analysisFailed`, **not** `alreadyCovered` — they appear in Scan Warnings (with OpenAI's actual error) and in the run log's `articlesFailedAnalysis`, and are never reported as "already covered".
+- Release notes (Web App Releases, Mobile App Releases, New and Notable) are excluded from the scan by `lib/release-notes-filter.js`. Zendesk search can't exclude a section, so `searchExcludingReleaseNotes()` in `api/scanners.js` over-fetches 100 results per query, drops release notes, then applies the per-query limit — otherwise release notes crowd real articles out of the top results. If those sections are ever recreated, update the IDs in that file (a name-based fallback catches most cases).
 - Two AI knowledge files accumulate learning over time — see **AI Learning & Context** section below.
 
 ### Translation Tab
@@ -313,6 +316,11 @@ SLACK_SIGNING_SECRET
 SLACK_CHANNEL_ID
 SCHEDULE_MODE                # "WEEKLY", "TEST_FREQUENT", or "MANUAL"
 SESSION_SECRET
+```
+
+Optional:
+```
+RELEASE_ANALYSIS_MODEL       # model for per-article release analysis (default "gpt-4o-mini")
 ```
 
 ### ES Modules

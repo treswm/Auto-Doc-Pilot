@@ -13,6 +13,7 @@ import { processReleasePDF, cleanupUpload } from "../lib/pdf-processor.js";
 import { extractScreenshots } from "../lib/screenshot-extractor.js";
 import { htmlToText, processArticleFromUrl } from "../lib/article-processor.js";
 import { sanitizeAndParseJson } from "../lib/json-sanitizer.js";
+import { chatCompletionWithRetry, OpenAIError } from "../lib/openai-retry.js";
 import {
   fetchSections,
   createArticle,
@@ -1467,11 +1468,6 @@ router.post("/analyze-article-impact", requireAuth, async (req, res) => {
       // product-context.json not yet created — continue without it
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error("Missing OPENAI_API_KEY in environment variables");
-    }
-
     const rawArticleText = htmlToText(articleContent);
     const articleText = rawArticleText.length > 8000
       ? rawArticleText.substring(0, 8000) + "\n[... content truncated ...]"
@@ -1579,14 +1575,16 @@ If alreadyCovered is true, return: { "alreadyCovered": true, "affectedSections":
     const contextBlock = locationContext || ageContext ? `${locationContext}${ageContext}\n` : "";
     const imagesSection = imageInventoryBlock ? `${imageInventoryBlock}\n` : "";
 
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
+    // One call per candidate article (often 80–100 per scan), so this uses the smaller model:
+    // far more tokens-per-minute headroom and much cheaper. Set RELEASE_ANALYSIS_MODEL=gpt-4o
+    // to go back to the larger model if recommendation quality needs it.
+    const analysisModel = process.env.RELEASE_ANALYSIS_MODEL || "gpt-4o-mini";
+
+    // Waits out OpenAI rate limits (429) and transient 5xx instead of failing the article.
+    const data = await chatCompletionWithRetry(
+      {
+        model: analysisModel,
+        response_format: { type: "json_object" },
         messages: [
           {
             role: "system",
@@ -1599,22 +1597,20 @@ If alreadyCovered is true, return: { "alreadyCovered": true, "affectedSections":
         ],
         temperature: 0.4,
         max_tokens: 2500,
-      }),
-    });
-
-    if (!openaiResponse.ok) {
-      const error = await openaiResponse.json();
-      throw new Error(`OpenAI API error: ${error.error?.message || "Unknown error"}`);
-    }
-
-    const data = await openaiResponse.json();
+      },
+      { label: `Analyzing "${articleTitle}"` }
+    );
     const cachedTokens = data.usage?.prompt_tokens_details?.cached_tokens ?? 0;
     if (cachedTokens > 0) {
       console.log(`   💾 Cache hit for "${articleTitle}": ${cachedTokens} prompt tokens served from cache`);
     }
-    const finishReason = data.choices[0].finish_reason;
+    const choice = data.choices?.[0];
+    if (!choice?.message?.content) {
+      throw new Error(`OpenAI returned an empty response (finish_reason: ${choice?.finish_reason ?? "none"})`);
+    }
+    const finishReason = choice.finish_reason;
     const truncated = finishReason === 'length';
-    let analysisText = data.choices[0].message.content.trim();
+    let analysisText = choice.message.content.trim();
 
     if (truncated) {
       console.warn(`⚠️  Token limit hit for "${articleTitle}" — response was truncated (finish_reason: length). Increase max_tokens if this persists.`);
@@ -1661,6 +1657,17 @@ If alreadyCovered is true, return: { "alreadyCovered": true, "affectedSections":
     });
   } catch (err) {
     console.error("Error analyzing article impact:", err.message);
+    if (err instanceof OpenAIError) {
+      // Pass the real cause through (429 rate limit / quota, 502 upstream) with flags the
+      // scanner uses to decide whether to keep going — never a bare 500.
+      return res.status(err.status === 429 ? 429 : err.status >= 500 ? 502 : 500).json({
+        success: false,
+        error: err.message,
+        code: err.code,
+        retryable: err.retryable,
+        fatal: err.fatal,
+      });
+    }
     res.status(500).json({ success: false, error: err.message });
   }
 });

@@ -15,6 +15,7 @@ import {
 import { extractImagesWithSections, htmlToText } from "../lib/article-processor.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { sanitizeAndParseJson } from "../lib/json-sanitizer.js";
+import { isReleaseNotesArticle } from "../lib/release-notes-filter.js";
 
 const router = express.Router();
 
@@ -55,6 +56,21 @@ async function buildSectionContextMap() {
     console.log(`⚠️  Could not load section context map: ${e.message}`);
     return new Map();
   }
+}
+
+// Zendesk can't exclude a section from a search, and release notes match nearly every
+// keyword — so with a plain top-N fetch they can take most of the slots (e.g. 20 of 25 hits
+// for "user management"), crowding out the real articles. Over-fetch (100 is Zendesk's page
+// max), drop release notes, then apply the per-query limit to what's left.
+const SEARCH_FETCH_SIZE = 100;
+async function searchExcludingReleaseNotes(query, limit, sectionContextMap, releaseNoteIds) {
+  const results = await fetchProductReleaseArticles([query], "en-us", SEARCH_FETCH_SIZE);
+  const kept = [];
+  for (const article of results) {
+    if (isReleaseNotesArticle(article, sectionContextMap)) releaseNoteIds.add(article.id);
+    else kept.push(article);
+  }
+  return kept.slice(0, limit);
 }
 
 // Helper: Build Help Center article URL
@@ -295,14 +311,19 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
     // Used to give the AI accurate context about what type of article it's analyzing.
     const sectionContextMap = await buildSectionContextMap();
 
-    // Step 3: Search for articles (single pass — build articlesFoundByQuery at the same time)
+    // Step 3: Search for articles (single pass — build articlesFoundByQuery at the same time).
+    // Release notes (Web App Releases, Mobile App Releases, New and Notable) are dropped at
+    // search time: they're historical records that never need doc updates, and each one would
+    // burn an AI analysis call. Integration/partner articles are NOT hard-excluded; the AI
+    // per-article analysis decides relevance based on release content and category context.
     const allArticles = [];
     const seenIds = new Set();
     const articlesFoundByQuery = new Map();
+    const releaseNoteIds = new Set();
 
     for (const query of searchQueries) {
       console.log(`   Searching for: "${query}"`);
-      const articles = await fetchProductReleaseArticles([query], "en-us", 25);
+      const articles = await searchExcludingReleaseNotes(query, 25, sectionContextMap, releaseNoteIds);
       articlesFoundByQuery.set(query, articles.map(a => a.id));
       articles.forEach((a) => {
         if (!seenIds.has(a.id)) {
@@ -312,25 +333,12 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
       });
     }
 
-    console.log(`✅ Found ${allArticles.length} unique articles`);
-
-    // Step 4: Pre-filter — only remove the release notes section itself.
-    // Integration/partner articles are NOT hard-excluded here; the AI per-article
-    // analysis decides relevance based on release content and article category context.
-    const RELEASE_NOTES_SECTION_ID = 1500000353602;
-    const filteredArticles = allArticles.filter(a => {
-      if (a.section_id === RELEASE_NOTES_SECTION_ID) {
-        console.log(`⏭️  Skipping "${a.title}" (release note itself)`);
-        return false;
-      }
-      return true;
-    });
-
-    console.log(`📋 After pre-filter: ${filteredArticles.length} articles (removed ${allArticles.length - filteredArticles.length} release notes)`);
+    const releaseNotesSkipped = releaseNoteIds.size;
+    console.log(`✅ Found ${allArticles.length} unique articles (skipped ${releaseNotesSkipped} release notes)`);
 
     // Step 5: Attach initial recommendation metadata (action, screenshot flag, related features)
     // These are placeholder values that will be OVERRIDDEN by per-article analysis below.
-    const enrichedArticles = filteredArticles.map((a) => {
+    const enrichedArticles = allArticles.map((a) => {
       // Find the best-matching recommendation by seeing which query found this article
       let recommendation = null;
       for (const rec of recommendedArticles) {
@@ -400,17 +408,28 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
     console.log(`✅ Content fetch complete. Analyzing ${enrichedArticles.length} article(s) with AI...`);
 
     // ── Phase 2: Analyze each article sequentially (respects OpenAI rate limits) ──
+    // An article that can't be analyzed is marked analysisFailed — NOT alreadyCovered.
+    // "Covered" means the AI looked and found nothing to change; "failed" means we never
+    // got an answer, and it must not be reported to the user as "no update needed".
+    const markFailed = (article, warnMsg) => {
+      console.warn(`⚠️  ${warnMsg}`);
+      scanWarnings.push(warnMsg);
+      article.analysisFailed = true;
+      article.alreadyCovered = false;
+      article.affectedSections = "";
+      article.specificImpact = "";
+      article.proposedCopy = [];
+    };
+    const briefly = (text) => {
+      const t = String(text || "").replace(/\s+/g, " ").trim();
+      return t.length > 220 ? `${t.slice(0, 220)}…` : t;
+    };
+
     for (let i = 0; i < contentResults.length; i++) {
       const { article, fullContent, articleImages, articleSectionName, articleCategoryName, fetchError } = contentResults[i];
 
       if (fetchError) {
-        const warnMsg = `Could not fetch article content for "${article.title}" (${fetchError}) — article skipped`;
-        console.log(`⚠️  ${warnMsg}`);
-        scanWarnings.push(warnMsg);
-        article.alreadyCovered = true;
-        article.affectedSections = "";
-        article.specificImpact = "";
-        article.proposedCopy = [];
+        markFailed(article, `Could not fetch article content for "${article.title}" (${fetchError}) — article skipped`);
         continue;
       }
 
@@ -422,7 +441,8 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
       }
 
       try {
-        // Analyze with OpenAI (internal HTTP call to reuse the endpoint logic)
+        // Analyze with OpenAI (internal HTTP call to reuse the endpoint logic).
+        // The endpoint waits out OpenAI rate limits itself, so this call can take a while.
         const analysisResponse = await fetch(`http://localhost:${process.env.PORT || 3001}/api/release-notes/analyze-article-impact`, {
           method: 'POST',
           headers: {
@@ -450,11 +470,10 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
             scanWarnings.push(warnMsg);
           }
 
-          // Surface JSON parse failures from the AI as warnings
+          // A response we couldn't parse is a failed analysis, not a "not relevant" verdict
           if (analysisData.parseError) {
-            const warnMsg = `Could not parse AI response for "${article.title}" — article excluded. (Parse error: ${analysisData.parseError})`;
-            console.warn(`⚠️  ${warnMsg}`);
-            scanWarnings.push(warnMsg);
+            markFailed(article, `Could not parse AI response for "${article.title}" — article excluded. (Parse error: ${analysisData.parseError})`);
+            continue;
           }
 
           article.alreadyCovered = analysisData.alreadyCovered || false;
@@ -485,23 +504,23 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
             console.log(`✅ "${article.title}" — ${article.proposedCopy.length} suggested edit(s)${article.screenshotsToUpdate.length > 0 ? `, ${article.screenshotsToUpdate.length} screenshot(s) flagged` : ''}`);
           }
         } else {
-          const errText = await analysisResponse.text().catch(() => '');
-          const warnMsg = `Analysis failed for "${article.title}" (HTTP ${analysisResponse.status}) — article excluded`;
-          console.log(`⚠️  ${warnMsg}: ${errText.slice(0,100)}`);
-          scanWarnings.push(warnMsg);
-          article.alreadyCovered = true;
-          article.affectedSections = "";
-          article.specificImpact = "";
-          article.proposedCopy = [];
+          // The endpoint returns the real cause ({ error, code, fatal }) — keep it in the warning.
+          const errBody = await analysisResponse.json().catch(() => ({}));
+          const detail = briefly(errBody.error) || analysisResponse.statusText || "no detail returned";
+          markFailed(article, `Analysis failed for "${article.title}" (HTTP ${analysisResponse.status}: ${detail}) — article excluded`);
+
+          if (errBody.fatal) {
+            // No quota left / bad API key: every remaining call would fail the same way.
+            // Stop now instead of recording one identical failure per remaining article.
+            const notAnalyzed = contentResults.slice(i + 1).map(r => r.article);
+            notAnalyzed.forEach(a => { a.analysisFailed = true; a.alreadyCovered = false; });
+            scanWarnings.push(`Scan stopped early — OpenAI returned a non-retryable error (${errBody.code || "unknown"}), so ${notAnalyzed.length} remaining article(s) were not analyzed. Fix it, then run the scan again.`);
+            console.error(`🛑 Aborting analysis loop: fatal OpenAI error (${errBody.code || "unknown"})`);
+            break;
+          }
         }
       } catch (err) {
-        const warnMsg = `Unexpected error analyzing "${article.title}" — article excluded: ${err.message}`;
-        console.error(`⚠️  ${warnMsg}`);
-        scanWarnings.push(warnMsg);
-        article.alreadyCovered = true;
-        article.affectedSections = "";
-        article.specificImpact = "";
-        article.proposedCopy = [];
+        markFailed(article, `Unexpected error analyzing "${article.title}" — article excluded: ${err.message}`);
       }
     }
 
@@ -513,11 +532,18 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
     - affectedFeatures: ${JSON.stringify(a.affectedFeatures)}`);
     });
 
-    // Filter out articles where content already covers the release changes
-    const actionableArticles = enrichedArticles.filter(a => !a.alreadyCovered);
-    const alreadyCoveredCount = enrichedArticles.length - actionableArticles.length;
+    // Filter out articles where content already covers the release changes.
+    // Articles that failed analysis are tracked separately — they were never assessed.
+    const failedCount = enrichedArticles.filter(a => a.analysisFailed).length;
+    const actionableArticles = enrichedArticles.filter(a => !a.alreadyCovered && !a.analysisFailed);
+    const alreadyCoveredCount = enrichedArticles.filter(a => a.alreadyCovered).length;
     if (alreadyCoveredCount > 0) {
       console.log(`✓ Filtered out ${alreadyCoveredCount} already-covered article(s)`);
+    }
+    if (failedCount > 0) {
+      console.warn(`⚠️  ${failedCount} of ${enrichedArticles.length} article(s) could not be analyzed`);
+      // Lead with the headline so a mostly-failed scan can't be mistaken for "nothing to update".
+      scanWarnings.unshift(`${failedCount} of ${enrichedArticles.length} articles could not be analyzed, so these results are incomplete. Re-run the scan once the errors below are resolved.`);
     }
 
     // Compute confidence scores and sort actionable articles (highest confidence first)
@@ -562,7 +588,9 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
       releaseTitle,
       featuresDetected: affectedFeatures || [],
       searchQueriesUsed: searchQueries || [],
-      articlesAnalyzed: enrichedArticles.length,
+      articlesAnalyzed: enrichedArticles.length - failedCount,
+      articlesFailedAnalysis: failedCount,
+      releaseNotesSkipped,
       alreadyCoveredFiltered: alreadyCoveredCount,
       articlesToUpdate: actionableArticles.map(a => ({
         id: a.id,
@@ -867,6 +895,13 @@ function computeUnflaggedFeatures({
       .flatMap(a => a.affectedFeatures || [])
   );
 
+  // Features whose matching articles could not be analyzed — no verdict either way
+  const unanalyzed = new Set(
+    (allAnalyzedArticles || [])
+      .filter(a => a.analysisFailed)
+      .flatMap(a => a.affectedFeatures || [])
+  );
+
   return (affectedFeatures || [])
     .filter(feature => !coveredByUpdate.has(feature) && !coveredByNew.has(feature))
     .map(feature => {
@@ -884,6 +919,9 @@ function computeUnflaggedFeatures({
       if (matchingRecs.length === 0) {
         // No recommendation at all — AI assessed this section as not needing docs
         noOutputReason = 'The AI found no documentation impact for this section — the change either doesn\'t introduce new user-facing behavior or is already covered by existing documentation.';
+      } else if (unanalyzed.has(feature)) {
+        // Matching articles exist but the AI never returned a verdict — don't claim they're covered
+        noOutputReason = 'Matching Help Center articles were found, but some could not be analyzed (see Scan Warnings). Re-run the scan to get a verdict for this section.';
       } else if (coveredButFiltered.has(feature)) {
         // Articles were found and analyzed but assessed as already covering this change
         noOutputReason = 'Existing Help Center articles were found and assessed as already covering this change — no updates are needed.';
@@ -1482,24 +1520,21 @@ router.get("/manual-article-prompt", requireAuth, async (req, res) => {
     // Build section context map (same as search-and-flag)
     const sectionContextMap = await buildSectionContextMap();
 
-    // Search Zendesk (same as search-and-flag)
+    // Search Zendesk (same as search-and-flag — release notes are dropped at search time)
     const allArticles = [];
     const seenIds = new Set();
     const articlesFoundByQuery = new Map();
+    const releaseNoteIds = new Set();
     for (const query of searchQueries) {
-      const articles = await fetchProductReleaseArticles([query], "en-us", 25);
+      const articles = await searchExcludingReleaseNotes(query, 25, sectionContextMap, releaseNoteIds);
       articlesFoundByQuery.set(query, articles.map(a => a.id));
       articles.forEach(a => {
         if (!seenIds.has(a.id)) { seenIds.add(a.id); allArticles.push(a); }
       });
     }
 
-    // Pre-filter release-notes section
-    const RELEASE_NOTES_SECTION_ID = 1500000353602;
-    const filteredArticles = allArticles.filter(a => a.section_id !== RELEASE_NOTES_SECTION_ID);
-
     // Enrich with initial metadata
-    const enrichedArticles = filteredArticles.map(a => {
+    const enrichedArticles = allArticles.map(a => {
       let recommendation = null;
       for (const rec of recommendedArticles) {
         if (typeof rec !== "object") continue;
