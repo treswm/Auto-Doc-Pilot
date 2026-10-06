@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import FeedbackForm from '../components/FeedbackForm'
 import TranslationInputSection from '../components/TranslationInputSection'
 import TranslationTrainingInput from '../components/TranslationTrainingInput'
+import ManualTranslationModal from '../components/ManualTranslationModal'
 import '../styles/Tabs.css'
 import '../styles/TranslationTab.css'
 
@@ -457,6 +458,7 @@ function TranslationTab({ user }) {
     pending.approvalsReceived?.some(v => v.approver_id === user.id)
 
   const isAdmin = user?.role === 'admin'
+  const [showManualTranslation, setShowManualTranslation] = useState(false)
 
   return (
     <div className="tab-container">
@@ -500,6 +502,12 @@ function TranslationTab({ user }) {
             disabled={scanLoading}
           >
             {scanLoading ? 'Scanning...' : '🔍 Scan Recent'}
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={() => setShowManualTranslation(true)}
+          >
+            📝 Translate Sections
           </button>
           {/* Commented out for demo - Run Workflow Now button
           <button
@@ -963,6 +971,11 @@ function TranslationTab({ user }) {
         <div>
           <TranslationTrainingInput />
         </div>
+      )}
+
+      {/* ── Manual Translation Modal ── */}
+      {showManualTranslation && (
+        <ManualTranslationModal onClose={() => setShowManualTranslation(false)} user={user} />
       )}
     </div>
   )

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import FeedbackForm from '../components/FeedbackForm'
 import ReleaseNotesInputSection from '../components/ReleaseNotesInputSection'
 import DraftReleaseNotesSection from '../components/DraftReleaseNotesSection'
+import RelatedArticleLinks from '../components/RelatedArticleLinks'
 import ProductKnowledgePanel from '../components/ProductKnowledgePanel'
 import '../styles/Tabs.css'
 
@@ -811,6 +812,9 @@ function ReleasesTab({ user }) {
         analysis={analysis}
       />
 
+      {/* Suggest published Help Center articles to link inside the release notes */}
+      <RelatedArticleLinks analysis={analysis} />
+
       {/* Manual Step 1: Copy analyze-impact prompt to ChatGPT */}
       {manualMode && manualStep === 1 && (
         <div className="manual-step-panel">
@@ -865,12 +869,15 @@ function ReleasesTab({ user }) {
           )}
           <p className="manual-step-desc">This prompt includes all {manualArticleCount} article(s). ChatGPT will return a JSON array — paste it back below.</p>
           <div className="scan-warnings-box">
-            <strong>✅ Do NOT use the Article Writer project for this step. Start a new conversation in plain ChatGPT.com instead.</strong>
-            <p className="scan-warnings-desc">The article analysis context will cause the ChatGPT project to misinterpret the request and write full articles instead of returning JSON. Always use plain ChatGPT for Step 2 analysis.</p>
+            <strong>📌 Use the <a href="https://chatgpt.com/g/g-p-6a1ef67380908191b84204c463f8fd0d-json-creator-for-autodoc/project" target="_blank" rel="noopener noreferrer">JSON Creator for AutoDoc</a> project for this step.</strong>
+            <p className="scan-warnings-desc">The project has the system instructions pre-loaded — paste only your message (shorter). Alternatively, use "Copy Full Prompt" for plain ChatGPT.com without a project.</p>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <button className="btn btn-primary manual-copy-btn" onClick={() => handleManualCopy('full', manualPromptText)} disabled={!manualPromptText}>
-              {manualCopied === 'full' ? '✓ Copied!' : '📋 Copy Full Prompt for ChatGPT'}
+            <button className="btn btn-primary manual-copy-btn" onClick={() => handleManualCopy('step2-project', manualUserMessage)} disabled={!manualUserMessage}>
+              {manualCopied === 'step2-project' ? '✓ Copied!' : '📋 Copy Message for AutoDoc Project'}
+            </button>
+            <button className="btn btn-secondary manual-copy-btn" onClick={() => handleManualCopy('full', manualPromptText)} disabled={!manualPromptText}>
+              {manualCopied === 'full' ? '✓ Copied!' : '📋 Copy Full Prompt (no project)'}
             </button>
           </div>
           {manualPromptText && (

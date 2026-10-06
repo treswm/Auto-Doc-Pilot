@@ -13,11 +13,13 @@ import { processReleasePDF, cleanupUpload } from "../lib/pdf-processor.js";
 import { extractScreenshots } from "../lib/screenshot-extractor.js";
 import { htmlToText, processArticleFromUrl } from "../lib/article-processor.js";
 import { sanitizeAndParseJson } from "../lib/json-sanitizer.js";
+import { chatCompletionWithRetry, OpenAIError } from "../lib/openai-retry.js";
 import {
   fetchSections,
   createArticle,
   uploadInlineArticleImage,
   updateArticleBody,
+  searchArticles,
 } from "../lib/zendesk-api.js";
 import { getCurrentBrand } from "../config/zendesk.js";
 
@@ -1431,6 +1433,248 @@ router.post("/create-screenshot-draft", requireAuth, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/release-notes/suggest-related-links
+ * Search the Zendesk Help Center for published articles that should be linked
+ * inside the release notes, and return governed link suggestions (inline +
+ * "Related articles" section).
+ *
+ * Body: { releaseNotes?: string }
+ *   - If releaseNotes is omitted, falls back to the notes saved in the session.
+ *   - Seeds its Help Center search with the searchQueries from a prior
+ *     /analyze-impact run (req.session.releaseImpactAnalysis) when available.
+ *
+ * Returns: {
+ *   success, inlineLinks: [...], relatedArticles: [...],
+ *   candidatesSearched, queriesUsed: [...], tokens
+ * }
+ */
+router.post("/suggest-related-links", requireAuth, async (req, res) => {
+  try {
+    const releaseNotes =
+      (req.body && typeof req.body.releaseNotes === "string" && req.body.releaseNotes.trim())
+        ? req.body.releaseNotes
+        : req.session.releaseNotes;
+
+    if (!releaseNotes || typeof releaseNotes !== "string") {
+      return res.status(400).json({
+        success: false,
+        error: "No release notes available. Save or paste release notes first.",
+      });
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error("Missing OPENAI_API_KEY in environment variables");
+    }
+
+    // Seed search queries from the prior impact analysis when present; otherwise
+    // fall back to the affected-feature names. These are 1–3 word terms already
+    // tuned to find the right articles without flooding results.
+    const priorAnalysis = req.session.releaseImpactAnalysis || {};
+    let queries = Array.isArray(priorAnalysis.searchQueries) ? [...priorAnalysis.searchQueries] : [];
+    if (queries.length === 0 && Array.isArray(priorAnalysis.affectedFeatures)) {
+      // Use the feature name after any "Section Header: " prefix as a coarse query.
+      queries = priorAnalysis.affectedFeatures.map((f) => {
+        const name = String(f).includes(":") ? String(f).split(":").pop() : String(f);
+        return name.trim();
+      });
+    }
+    // Dedupe (case-insensitive) and cap to keep Zendesk calls bounded.
+    const seenQ = new Set();
+    queries = queries
+      .map((q) => String(q || "").trim())
+      .filter((q) => {
+        const k = q.toLowerCase();
+        if (!q || seenQ.has(k)) return false;
+        seenQ.add(k);
+        return true;
+      })
+      .slice(0, 18);
+
+    if (queries.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "No search queries available. Run \"Analyze Impact\" first so Auto Doc Pilot knows which features to find related articles for.",
+      });
+    }
+
+    console.log(`🔗 Searching Help Center for related links across ${queries.length} queries...`);
+
+    // Run searches, dedupe by article id, and keep only stable PUBLISHED articles
+    // (governance: never suggest draft/internal articles).
+    const candidatesById = new Map();
+    for (const query of queries) {
+      let articles = [];
+      try {
+        articles = await searchArticles(query);
+      } catch (err) {
+        console.warn(`   ⚠️  Search failed for "${query}": ${err.message}`);
+        continue;
+      }
+      for (const a of articles) {
+        if (!a || !a.id) continue;
+        if (a.draft === true) continue; // published only
+        if (candidatesById.has(a.id)) continue;
+        const bodyText = a.body ? htmlToText(a.body) : "";
+        candidatesById.set(a.id, {
+          id: a.id,
+          title: a.title,
+          url: a.html_url,
+          updated_at: a.updated_at,
+          snippet: bodyText.replace(/\s+/g, " ").trim().slice(0, 300),
+        });
+      }
+    }
+
+    const candidates = Array.from(candidatesById.values()).slice(0, 40);
+
+    if (candidates.length === 0) {
+      req.session.releaseRelatedLinks = {
+        inlineLinks: [],
+        relatedArticles: [],
+        analyzedAt: new Date().toISOString(),
+      };
+      return res.json({
+        success: true,
+        inlineLinks: [],
+        relatedArticles: [],
+        candidatesSearched: 0,
+        queriesUsed: queries,
+        tokens: 0,
+        message: "No published Help Center articles matched the release features.",
+      });
+    }
+
+    // Load editable governance rules
+    let governanceText = "";
+    try {
+      const gov = JSON.parse(
+        fs.readFileSync(path.join(process.cwd(), "config", "link-governance.json"), "utf-8")
+      );
+      const rules = gov.linkingRules || [];
+      if (rules.length > 0) {
+        governanceText = "\n\nLINK GOVERNANCE RULES — follow these EXACTLY when deciding what to link and how:\n";
+        for (const rule of rules) governanceText += `- ${rule}\n`;
+      }
+    } catch (e) {
+      // governance file missing — continue with built-in guidance only
+    }
+
+    const systemPrompt = `You are a Help Center content strategist for Hi Marley's Zendesk Help Center. Hi Marley is an insurance communication platform.
+
+Your job: given release notes and a list of PUBLISHED Help Center articles found by searching for the release's features, decide which articles should be linked from the release notes — and where.
+${governanceText}
+You will receive a numbered list of candidate articles (title, URL, last-updated date, and a content snippet). Only link to articles from this candidate list — never invent a URL or title.
+
+Produce two kinds of links:
+1. inlineLinks — contextual links placed inside a specific release-note section to support a required next step ("How do I use this?" / "Where do I configure this?"). Each must name the release-note section/feature it belongs to and give descriptive anchor text.
+2. relatedArticles — broader discovery links for the Zendesk "Related articles" section (adjacent features, previous release notes, setup guides). These are optional reading, not required next steps.
+
+Be selective. It is correct to return few links. Do not link every product term. If a candidate is only weakly related, leave it out.
+
+Return ONLY a valid JSON object (no markdown, no code fences) with exactly these fields:
+{
+  "inlineLinks": [
+    {
+      "releaseSection": "The release-note feature/section this link supports (match the wording used in the release notes)",
+      "anchorText": "Descriptive anchor text, e.g. Manage your Personal Settings",
+      "articleTitle": "Exact title from the candidate list",
+      "url": "Exact URL from the candidate list",
+      "placement": "Short note on where to place it, e.g. 'in the How It Works sentence'",
+      "reason": "Why this link helps the reader take the next action"
+    }
+  ],
+  "relatedArticles": [
+    {
+      "articleTitle": "Exact title from the candidate list",
+      "url": "Exact URL from the candidate list",
+      "reason": "Why this is useful as broader related reading"
+    }
+  ]
+}
+
+If nothing should be linked, return empty arrays. Never duplicate the same URL across inlineLinks and relatedArticles — if it supports a required next step, put it in inlineLinks only.`;
+
+    const candidateList = candidates
+      .map(
+        (c, i) =>
+          `${i + 1}. "${c.title}"\n   URL: ${c.url}\n   Last updated: ${c.updated_at || "unknown"}\n   Snippet: ${c.snippet || "(no preview)"}`
+      )
+      .join("\n\n");
+
+    const userContent = `RELEASE NOTES:\n${releaseNotes}\n\nCANDIDATE PUBLISHED ARTICLES (link only to these):\n${candidateList}`;
+
+    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+        temperature: 0.3,
+        max_tokens: 1800,
+      }),
+    });
+
+    if (!openaiResponse.ok) {
+      const error = await openaiResponse.json();
+      throw new Error(`OpenAI API error: ${error.error?.message || "Unknown error"}`);
+    }
+
+    const data = await openaiResponse.json();
+    let text = data.choices[0].message.content.trim();
+    text = text.replace(/^```json\n?/, "").replace(/\n?```$/, "");
+
+    let result;
+    try {
+      result = sanitizeAndParseJson(text);
+    } catch (parseErr) {
+      console.error("Failed to parse related-links response:", text);
+      throw new Error("Failed to parse related-link suggestions from OpenAI");
+    }
+
+    // Validate against the candidate set — only keep links whose URL is a real,
+    // published candidate. This is the final guardrail against hallucinated links.
+    const validUrls = new Set(candidates.map((c) => c.url));
+    const inlineLinks = (Array.isArray(result.inlineLinks) ? result.inlineLinks : []).filter(
+      (l) => l && validUrls.has(l.url)
+    );
+    const usedUrls = new Set(inlineLinks.map((l) => l.url));
+    const relatedArticles = (Array.isArray(result.relatedArticles) ? result.relatedArticles : []).filter(
+      (l) => l && validUrls.has(l.url) && !usedUrls.has(l.url)
+    );
+
+    req.session.releaseRelatedLinks = {
+      inlineLinks,
+      relatedArticles,
+      analyzedAt: new Date().toISOString(),
+    };
+
+    console.log(
+      `✅ Related links suggested: ${inlineLinks.length} inline, ${relatedArticles.length} related (from ${candidates.length} candidates)`
+    );
+
+    res.json({
+      success: true,
+      inlineLinks,
+      relatedArticles,
+      candidatesSearched: candidates.length,
+      queriesUsed: queries,
+      tokens: data.usage?.total_tokens || 0,
+    });
+  } catch (err) {
+    console.error("suggest-related-links error:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;
 
 /**
@@ -1465,11 +1709,6 @@ router.post("/analyze-article-impact", requireAuth, async (req, res) => {
       }
     } catch (e) {
       // product-context.json not yet created — continue without it
-    }
-
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error("Missing OPENAI_API_KEY in environment variables");
     }
 
     const rawArticleText = htmlToText(articleContent);
@@ -1579,14 +1818,16 @@ If alreadyCovered is true, return: { "alreadyCovered": true, "affectedSections":
     const contextBlock = locationContext || ageContext ? `${locationContext}${ageContext}\n` : "";
     const imagesSection = imageInventoryBlock ? `${imageInventoryBlock}\n` : "";
 
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
+    // One call per candidate article (often 80–100 per scan), so this uses the smaller model:
+    // far more tokens-per-minute headroom and much cheaper. Set RELEASE_ANALYSIS_MODEL=gpt-4o
+    // to go back to the larger model if recommendation quality needs it.
+    const analysisModel = process.env.RELEASE_ANALYSIS_MODEL || "gpt-4o-mini";
+
+    // Waits out OpenAI rate limits (429) and transient 5xx instead of failing the article.
+    const data = await chatCompletionWithRetry(
+      {
+        model: analysisModel,
+        response_format: { type: "json_object" },
         messages: [
           {
             role: "system",
@@ -1599,22 +1840,20 @@ If alreadyCovered is true, return: { "alreadyCovered": true, "affectedSections":
         ],
         temperature: 0.4,
         max_tokens: 2500,
-      }),
-    });
-
-    if (!openaiResponse.ok) {
-      const error = await openaiResponse.json();
-      throw new Error(`OpenAI API error: ${error.error?.message || "Unknown error"}`);
-    }
-
-    const data = await openaiResponse.json();
+      },
+      { label: `Analyzing "${articleTitle}"` }
+    );
     const cachedTokens = data.usage?.prompt_tokens_details?.cached_tokens ?? 0;
     if (cachedTokens > 0) {
       console.log(`   💾 Cache hit for "${articleTitle}": ${cachedTokens} prompt tokens served from cache`);
     }
-    const finishReason = data.choices[0].finish_reason;
+    const choice = data.choices?.[0];
+    if (!choice?.message?.content) {
+      throw new Error(`OpenAI returned an empty response (finish_reason: ${choice?.finish_reason ?? "none"})`);
+    }
+    const finishReason = choice.finish_reason;
     const truncated = finishReason === 'length';
-    let analysisText = data.choices[0].message.content.trim();
+    let analysisText = choice.message.content.trim();
 
     if (truncated) {
       console.warn(`⚠️  Token limit hit for "${articleTitle}" — response was truncated (finish_reason: length). Increase max_tokens if this persists.`);
@@ -1661,6 +1900,17 @@ If alreadyCovered is true, return: { "alreadyCovered": true, "affectedSections":
     });
   } catch (err) {
     console.error("Error analyzing article impact:", err.message);
+    if (err instanceof OpenAIError) {
+      // Pass the real cause through (429 rate limit / quota, 502 upstream) with flags the
+      // scanner uses to decide whether to keep going — never a bare 500.
+      return res.status(err.status === 429 ? 429 : err.status >= 500 ? 502 : 500).json({
+        success: false,
+        error: err.message,
+        code: err.code,
+        retryable: err.retryable,
+        fatal: err.fatal,
+      });
+    }
     res.status(500).json({ success: false, error: err.message });
   }
 });

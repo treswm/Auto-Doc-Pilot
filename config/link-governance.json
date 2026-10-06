@@ -1,0 +1,12 @@
+{
+  "_description": "Governance rules for suggesting related Help Center article links inside release notes. Loaded by POST /api/release-notes/suggest-related-links. Edit these rules directly — no code change or server restart needed.",
+  "linkingRules": [
+    "Link only when it helps the reader take action. Add links for setup steps, deeper how-to guidance, admin configuration, API docs, or feature reference articles. Example: a release note about Personal Settings or inbox behavior should link to the full Personal Settings article where users manage those preferences.",
+    "Use contextual links near the relevant feature. Place each link inside the specific release note section it supports, not only at the bottom. If a feature mentions Address Case, link to the Address Case article within that feature's 'How It Works' or follow-up sentence.",
+    "Avoid over-linking. Do not link every product term. Prioritize the article that answers the reader's likely next question: 'How do I use this?' or 'Where do I configure this?'",
+    "Use clear, descriptive anchor text. Prefer 'Learn more about Auto Replies' or 'Manage your Personal Settings' over 'click here'. This improves readability and accessibility.",
+    "Link to stable, published articles only. Never suggest a draft, internal, outdated, or soon-to-be-replaced article unless the release note itself is internal.",
+    "Keep related links current. Release notes often point to feature articles, previous release notes, or setup guides. Prefer links that will stay valid after launch — do not point users at beta or soon-to-be-replaced content.",
+    "Separate 'related articles' from required reading. In-line links should support required next steps for the feature. The Zendesk 'Related articles' section can include broader discovery links, such as previous release notes or adjacent feature articles."
+  ]
+}

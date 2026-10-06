@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd '/Users/tres.moore/Work/Translation work/Help_Center_Edit_Automation' && npm run dev"],
+      "port": 3000,
+      "autoPort": false
+    }
+  ]
+}

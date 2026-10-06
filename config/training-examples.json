@@ -1,6 +1,6 @@
 {
   "description": "Human-reviewed examples of how release features map to Help Center article updates. Used as few-shot examples to improve AI accuracy when analyzing release impact.",
-  "lastUpdated": "2026-04-20",
+  "lastUpdated": "2026-08-07",
   "releaseExamples": [
     {
       "releaseVersion": "2.84",
@@ -185,6 +185,14 @@
       "incorrectIncidentDescription": "Analysis recommended updating the 'Features Configurations (Settings)' article to add Manual Case Creation and Auto-Resend Welcome Message, but these features were already documented in the article's features table.",
       "whyItWasWrong": "The article impact analysis did not check whether the specific features mentioned in the release notes (Manual Case Creation, Auto-Resend Welcome Message) were already listed in the article's features table. It assumed the article needed updating without verifying current content.",
       "lesson": "When recommending an update to a features list or reference table article, verify that the specific items from the release notes are not already present in the article content. If the article already documents the feature (e.g., Manual Case Creation is already in the features table), do NOT flag it as needing an update — mark it as already covered."
+    },
+    {
+      "releaseVersion": "TBD — set to the release version that introduced the inbound/outbound welcome message split",
+      "releaseFeature": "Separate Inbound and Outbound Welcome Messaging for Service Case Types",
+      "incorrectlyFlaggedArticle": "Brands & Lines of Business (Settings)",
+      "incorrectlyFlaggedArticleId": "47616234621459",
+      "whyItWasWrong": "The inbound vs. outbound welcome message distinction is an ORGANIZATION-level change (Admin > Organization > Case types > Service > Welcome Messages). 'Brands & Lines of Business (Settings)' documents welcome message configuration at the BRAND and LINE OF BUSINESS level, which did not change: it remains one welcome message per case type in two variants ('Not opted in' and 'Opted in'), plus a separate Assignment message and Auto Close Cases card. The AI matched the two because both are Admin/Settings articles that discuss welcome messages per case type, but they document DIFFERENT SCOPES of the configuration hierarchy. Product confirmed a brand cannot configure its own inbound welcome message, because an organization has exactly one inbound vanity phone number — so there is no way to even trigger a brand-specific inbound welcome. The analysis also incorrectly flagged a brand-level screenshot for replacement, even though the changed UI is on a different page at a different scope.",
+      "lesson": "Matching on feature name is not enough — the CONFIGURATION SCOPE must match too. Hi Marley configuration is nested (organization → brand → line of business → case type, plus individual user), and two different articles can legitimately document the same feature at different scopes. Before flagging an admin/settings article, confirm from its breadcrumb and content that it documents the same scope the release changed: 'Admin > Organization > ...' is organization scope, 'Admin > Operational > Brands > ...' is brand/LOB scope. An organization-level change never affects a brand/LOB-level article (and vice versa) unless the release notes explicitly say the setting is configurable at more than one scope. This applies to screenshots as well — do not flag a screenshot of a different scope's page just because it shows the same named feature."
     }
   ],
   "patterns": {
@@ -224,7 +232,9 @@
         "Do NOT use broad search queries like 'notification', 'settings', 'admin', or 'configuration' without a more specific qualifier — these will match unrelated integration and API articles",
         "A feature that changes the inbox badge appearance only affects the Inbox article (and possibly the personal settings article) — it does NOT affect ClaimCenter guides, webhook docs, API references, or any integration article",
         "Do NOT classify 'Managing Your Personal Settings' as an Admin/Settings article — it is an OPERATOR/ADJUSTER UI article documenting personal profile and status settings for operators. Any operator-facing UI change to the personal settings dropdown, away status, or notification preferences must check this article.",
-        "Do NOT miss the Auto Replies article when a release changes away message / Out of Office behavior — the Auto Replies article documents when and how auto-reply messages are sent, and any change to mandatory/optional status, defaults, or configuration of that feature requires updating it."
+        "Do NOT miss the Auto Replies article when a release changes away message / Out of Office behavior — the Auto Replies article documents when and how auto-reply messages are sent, and any change to mandatory/optional status, defaults, or configuration of that feature requires updating it.",
+        "Do NOT flag a brand-level or line-of-business-level configuration article for a change that exists only at the organization level, or vice versa — confirm from the article's breadcrumb and content which scope of the configuration hierarchy it documents before matching. Two articles can document the same feature at different scopes, so the feature name matching is not sufficient.",
+        "Do NOT flag 'Brands & Lines of Business (Settings)' for the inbound-vs-outbound welcome message distinction — that split exists only at the organization level, because an organization has exactly one inbound vanity phone number and a brand-specific inbound welcome cannot be triggered."
       ]
     }
   }
