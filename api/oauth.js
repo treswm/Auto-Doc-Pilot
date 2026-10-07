@@ -104,7 +104,9 @@ router.get('/callback', async (req, res) => {
   }
 
   if (!code) {
-    return res.status(400).json({ error: 'No authorization code received' });
+    return res.status(400).json({
+      error: 'No authorization code received. Do not open the callback URL directly. Start at /api/oauth/authorize so Zendesk can create and return an authorization code.',
+    });
   }
 
   const expectedState = readCookie(req, 'zendesk_oauth_state');
