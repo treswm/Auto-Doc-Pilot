@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-07T00:33:23.140Z",
+  "timestamp": "2026-10-07T01:32:46.427Z",
   "releaseVersion": "2.90",
   "releaseTitle": "Release 2.90",
   "featuresDetected": [
@@ -14,66 +14,196 @@
   ],
   "searchQueriesUsed": [
     "claims queues",
-    "user deactivation",
-    "language settings",
-    "xactimate estimates",
+    "deactivate user",
+    "french canadian",
+    "xactimate",
     "allowed case types",
     "myorg insights",
     "public API",
     "sign-in page"
   ],
-  "articlesAnalyzed": 102,
+  "articlesAnalyzed": 125,
   "articlesFailedAnalysis": 0,
-  "releaseNotesSkipped": 66,
-  "alreadyCoveredFiltered": 96,
+  "releaseNotesSkipped": 75,
+  "alreadyCoveredFiltered": 106,
   "articlesToUpdate": [
-    {
-      "id": 22273132191251,
-      "title": "ClaimCenter Guidewire Cloud OOTB Guide",
-      "confidence": 0.85,
-      "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints that allow streaming of media and transcripts directly, which affects how transcripts are downloaded and managed in the Hi Marley Case Details section.",
-      "sectionToUpdate": "Hi Marley Case Details, Hi Marley Case Details Buttons",
-      "proposedEditCount": 1,
-      "screenshotsFlagged": 1
-    },
-    {
-      "id": 13657776764947,
-      "title": "ClaimCenter 9 Accelerator OOTB Guide",
-      "confidence": 0.85,
-      "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects how media and transcripts are handled in integrations. The article should reflect these changes in the relevant sections.",
-      "sectionToUpdate": "Introduction, Table of Functionality, Automated Functionality, Admin Configuration Guide",
-      "proposedEditCount": 3,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 360026613773,
-      "title": "Case Creation",
-      "confidence": 0.85,
-      "action": "update_existing",
-      "reason": "The release notes introduce the 'Allowed Case Types' feature, which affects case creation by controlling which case types a user can access. This impacts the instructions for selecting a case type during case creation.",
-      "sectionToUpdate": "How to Create a Case in Hi Marley",
-      "proposedEditCount": 1,
-      "screenshotsFlagged": 1
-    },
     {
       "id": 53557618485523,
       "title": "Quiet Hours",
+      "confidence": 0.9,
+      "action": "update_existing",
+      "reason": "The release notes indicate that Quiet Hours will now be based on the policyholder's own time zone if their zip or postal code is available, which affects how the timezone is selected and the behavior of messages affected by Quiet Hours.",
+      "sectionToUpdate": "How the timezone is selected, Messages affected by Quiet Hours",
+      "proposedEditCount": 2,
+      "screenshotsFlagged": 1
+    },
+    {
+      "id": 360062596733,
+      "title": "Users (Settings)",
       "confidence": 0.85,
       "action": "update_existing",
-      "reason": "The release notes introduce a change where Quiet Hours are now based on the policyholder's own time zone using their zip or postal code, which is not fully captured in the current article.",
-      "sectionToUpdate": "How the timezone is selected",
+      "reason": "The release notes introduce a new step for case reassignment when deactivating a user, which is not currently documented in the article. The 'Deactivate a User' section needs updating to reflect this new workflow.",
+      "sectionToUpdate": "Deactivate a User",
       "proposedEditCount": 1,
       "screenshotsFlagged": 1
     },
     {
-      "id": 17393050033811,
-      "title": "Opt-in & Opt-Out Workflow for Texting",
+      "id": 34179419104787,
+      "title": "Update Contact",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release notes indicate that new Public API endpoints allow streaming media and transcripts directly, which likely affects the Contact API Actions by adding new fields or endpoints related to media handling. The current article does not include any mention of media or transcript fields in the request or response payloads.",
+      "sectionToUpdate": "API Request, Request Field Breakdown, Response Payload Example, Response Fields Breakdown",
+      "proposedEditCount": 2,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 34178536763923,
+      "title": "Create Contact",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release notes mention new Public API endpoints for streaming media and transcripts, which suggests changes to the API that should be reflected in the Contact API Actions article. The current article does not include these new endpoints, which are relevant to the integration domain.",
+      "sectionToUpdate": "API Request, Request Field Breakdown",
+      "proposedEditCount": 2,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 6378816301075,
+      "title": "Case Creation API",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release notes indicate new Public API endpoints that return media and transcripts directly in the response, replacing the need for a temporary storage link. The article's Request and Response Fields Breakdown sections need to include these new endpoints and their behaviors.",
+      "sectionToUpdate": "Request Fields Breakdown, Response Fields Breakdown",
+      "proposedEditCount": 2,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 43263201099923,
+      "title": "Invite Participant",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release notes mention new Public API endpoints that return inbound media and case transcript PDFs directly in the response, which implies a change in the API behavior that could affect the Multi Party Texting API Actions documentation.",
+      "sectionToUpdate": "API Request, Request Field Breakdown, Response Fields Breakdown",
+      "proposedEditCount": 2,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 7414651805587,
+      "title": "Integrating Group Management",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which should be documented in the API Overview and System of Record Integration sections to ensure users are aware of these new capabilities.",
+      "sectionToUpdate": "API Overview, System of Record Integration",
+      "proposedEditCount": 2,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 360054591054,
+      "title": "API Overview",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects the API Overview article by requiring updates to the API Endpoint Specific Articles and Transcript Actions sections to include these new capabilities.",
+      "sectionToUpdate": "API Endpoint Specific Articles, Transcript Actions",
+      "proposedEditCount": 2,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 33225152012435,
+      "title": "Hi Marley Public API - Postman Collection",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release notes mention new Public API endpoints that return inbound media and case transcript PDFs directly in the response. This change needs to be reflected in the article to ensure users are aware of these new capabilities when using the API through Postman.",
+      "sectionToUpdate": "Introduction, Using our Public API on Postman",
+      "proposedEditCount": 2,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 10370871898259,
+      "title": "Close Case API",
       "confidence": 0.8,
       "action": "update_existing",
-      "reason": "The release notes mention that French affirmative replies such as 'OUI' automatically update the policyholder's language preference to French. This affects the opt-in keywords listed in the article.",
-      "sectionToUpdate": "Step 1: Getting Consent",
+      "reason": "The release notes introduce new Public API endpoints that return media and transcripts directly in the response, which affects the API response structure described in the article.",
+      "sectionToUpdate": "API Response",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 11972448584723,
+      "title": "Get User by ID",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes introduce new Public API endpoints that return inbound media and case transcript PDFs directly in the response. This change affects the API response payloads, which should be documented in the 'Response Fields Breakdown' section.",
+      "sectionToUpdate": "Response Fields Breakdown",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 11971233360787,
+      "title": "Get User by Email",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes indicate that new Public API endpoints can return media and transcripts directly in the response, which implies additional fields may be present in the API response payload. The current article does not include these new fields.",
+      "sectionToUpdate": "Response Fields Breakdown",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 55002731891859,
+      "title": "Hi Marley Whitelist Information: Canada",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects the API Base URLs/Domains section by adding new endpoints.",
+      "sectionToUpdate": "APIs",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 34179779310611,
+      "title": "Query Contacts",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes indicate that new Public API endpoints return inbound media and case transcript PDFs directly in the response. This change affects the API documentation by introducing new fields related to media and transcript handling, which are not currently documented in the 'Response Fields Breakdown' section.",
+      "sectionToUpdate": "Response Fields Breakdown",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 34177934405139,
+      "title": "Get Contact",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes mention new Public API endpoints for streaming media and transcripts, which implies potential changes to the API documentation. However, the 'Get Contact' article specifically needs updating to include any new fields added to the Contact data model, such as 'contactPrefix', which is not currently listed in the response fields.",
+      "sectionToUpdate": "Response Fields Breakdown",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 15431418808595,
+      "title": "Integrating Line of Business & Brands",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects the API example section by adding new functionality that should be documented.",
+      "sectionToUpdate": "Case Creation via API Example",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 28487542098835,
+      "title": "Hi Marley Case Transcript & Media Options",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes introduce new Public API endpoints that allow direct streaming of media and transcript PDFs, which changes the current workflow described in the article.",
+      "sectionToUpdate": "Download Transcript API",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 13657099258259,
+      "title": "Common API Structures",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects the 'Common API Structures' article by adding new response capabilities.",
+      "sectionToUpdate": "Stream Media and Transcripts Directly from the Public API",
       "proposedEditCount": 1,
       "screenshotsFlagged": 0
     },
@@ -82,7 +212,7 @@
       "title": "Query All Operators",
       "confidence": 0.8,
       "action": "update_existing",
-      "reason": "The release notes mention new Public API endpoints for streaming media and transcripts, which may affect the API response fields documented in this article.",
+      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which may affect the API response structure. However, the 'Query All Operators' article does not document these new endpoints or their payload changes. Therefore, no specific text in this article needs to change, but the 'Response Fields Breakdown' should be checked for completeness against new API capabilities.",
       "sectionToUpdate": "Response Fields Breakdown",
       "proposedEditCount": 1,
       "screenshotsFlagged": 0
@@ -90,11 +220,7 @@
   ],
   "newArticlesToCreate": [],
   "unflaggedFeatures": [
-    "Reassign Cases When Deactivating a User",
-    "Expanded French-Canadian Support",
-    "Share Xactimate Estimates Right from Hi Marley",
-    "Enhanced MyOrg Insights",
-    "Refreshed Sign-In Page"
+    "Share Xactimate Estimates Right from Hi Marley"
   ],
   "warnings": []
 }
