@@ -44,6 +44,21 @@ function ReleasesTab({ user }) {
   const [draftLoading, setDraftLoading] = useState(false)
   const [draftError, setDraftError] = useState(null)
   const [draftResult, setDraftResult] = useState(null)
+  const [articleDrafts, setArticleDrafts] = useState({})
+  const [articleDraftLoading, setArticleDraftLoading] = useState({})
+  const [newArticleSectionId, setNewArticleSectionId] = useState('')
+  const [newArticleDrafts, setNewArticleDrafts] = useState({})
+  const [newArticleDraftLoading, setNewArticleDraftLoading] = useState({})
+  const [bulkDraftLoading, setBulkDraftLoading] = useState(false)
+  const [bulkDraftResult, setBulkDraftResult] = useState(null)
+
+  useEffect(() => {
+    if (!createNewArticles.length || zendeskSections.length) return
+    fetch('/api/release-notes/zendesk-sections', { credentials: 'include' })
+      .then(res => res.json())
+      .then(data => { if (data.success && Array.isArray(data.sections)) setZendeskSections(data.sections) })
+      .catch(() => {})
+  }, [createNewArticles.length, zendeskSections.length])
 
   const handleBuildScreenshotDoc = async () => {
     setDocLoading(true)
@@ -111,6 +126,97 @@ function ReleasesTab({ user }) {
       setDraftError(err.message)
     } finally {
       setDraftLoading(false)
+    }
+  }
+
+  const handleCreateArticleUpdateDraft = async (article) => {
+    if (!article?.id || !Array.isArray(article.proposedCopy) || article.proposedCopy.length === 0) return
+    if (!window.confirm(`Update the published Zendesk article "${article.title}" now?\n\nThis replaces its live content immediately. It does not create a Team Publishing work-in-progress version.`)) return
+    setArticleDraftLoading(prev => ({ ...prev, [article.id]: true }))
+    try {
+      const res = await fetch('/api/release-notes/apply-existing-update', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ articleId: article.id, specificImpact: article.specificImpact || article.reason, proposedCopy: article.proposedCopy, screenshotsToUpdate: article.screenshotsToUpdate || [] }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Failed to update the Zendesk article')
+      setArticleDrafts(prev => ({ ...prev, [article.id]: data }))
+    } catch (err) {
+      window.alert(`Could not update the article: ${err.message}`)
+    } finally {
+      setArticleDraftLoading(prev => ({ ...prev, [article.id]: false }))
+    }
+  }
+
+  const handleCreateAllDrafts = async () => {
+    const updateCandidates = flaggedArticles.filter(article => article.proposedCopy?.length > 0 && !articleDrafts[article.id])
+    const canIncludeNew = createNewArticles.length > 0 && createNewArticles.length < 10
+    if (canIncludeNew && !newArticleSectionId) {
+      window.alert('Choose a Zendesk section for the new article drafts first.')
+      return
+    }
+    const newCount = canIncludeNew ? createNewArticles.length : 0
+    if (!updateCandidates.length && !newCount) return
+    const scope = `${updateCandidates.length} live article update${updateCandidates.length === 1 ? '' : 's'}${newCount ? ` and ${newCount} new article draft${newCount === 1 ? '' : 's'}` : ''}`
+    if (!window.confirm(`Apply ${scope}?\n\nExisting articles will be changed immediately. New articles, if any, remain unpublished drafts.`)) return
+
+    setBulkDraftLoading(true)
+    setBulkDraftResult(null)
+    const created = []
+    const failures = []
+    try {
+      for (const article of updateCandidates) {
+        try {
+          const res = await fetch('/api/release-notes/apply-existing-update', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({ articleId: article.id, specificImpact: article.specificImpact || article.reason, proposedCopy: article.proposedCopy, screenshotsToUpdate: article.screenshotsToUpdate || [] }),
+          })
+          const data = await res.json()
+          if (!data.success) throw new Error(data.error || 'Update failed')
+          setArticleDrafts(prev => ({ ...prev, [article.id]: data }))
+          created.push(data)
+        } catch (err) { failures.push(`${article.title}: ${err.message}`) }
+      }
+      for (const rec of canIncludeNew ? createNewArticles : []) {
+        try {
+          const res = await fetch('/api/release-notes/create-new-article-draft', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+            body: JSON.stringify({ sectionId: newArticleSectionId, title: rec.title, reason: rec.reason, suggestedPlacement: rec.suggestedPlacement, relatedFeatures: rec.relatedFeatures || [] }),
+          })
+          const data = await res.json()
+          if (!data.success) throw new Error(data.error || 'Draft failed')
+          created.push(data)
+        } catch (err) { failures.push(`${rec.title}: ${err.message}`) }
+      }
+    } finally {
+      setBulkDraftResult({ created, failures, skippedNew: createNewArticles.length >= 10 })
+      setBulkDraftLoading(false)
+    }
+  }
+
+  const handleCreateNewArticleDraft = async (rec) => {
+    if (createNewArticles.length >= 10) {
+      window.alert('New-article drafting is limited to scans with fewer than 10 new article recommendations.')
+      return
+    }
+    if (!newArticleSectionId) {
+      window.alert('Choose a Zendesk section for new article drafts first.')
+      return
+    }
+    if (!window.confirm(`Create an unpublished Zendesk draft for "${rec.title}"?`)) return
+    setNewArticleDraftLoading(prev => ({ ...prev, [rec.title]: true }))
+    try {
+      const res = await fetch('/api/release-notes/create-new-article-draft', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+        body: JSON.stringify({ sectionId: newArticleSectionId, title: rec.title, reason: rec.reason, suggestedPlacement: rec.suggestedPlacement, relatedFeatures: rec.relatedFeatures || [] }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Failed to create Zendesk draft')
+      setNewArticleDrafts(prev => ({ ...prev, [rec.title]: data }))
+    } catch (err) {
+      window.alert(`Could not create the draft: ${err.message}`)
+    } finally {
+      setNewArticleDraftLoading(prev => ({ ...prev, [rec.title]: false }))
     }
   }
 
@@ -989,7 +1095,38 @@ function ReleasesTab({ user }) {
             >
               📥 Download CSV (All Results)
             </button>
+            <button
+              className="btn btn-success"
+              onClick={handleCreateAllDrafts}
+              disabled={bulkDraftLoading || (!flaggedArticles.some(article => article.proposedCopy?.length > 0 && !articleDrafts[article.id]) && !(createNewArticles.length > 0 && createNewArticles.length < 10))}
+              title="Creates unpublished Zendesk drafts only"
+            >
+              {bulkDraftLoading ? 'Applying updates…' : '⚡ Apply all updates now'}
+            </button>
           </div>
+          {createNewArticles.length > 0 && (
+            <div className="scan-info" style={{ marginTop: '0.75rem' }}>
+              {createNewArticles.length < 10 ? (
+                <>
+                  <label htmlFor="new-article-draft-section"><strong>New article draft destination:</strong>{' '}</label>
+                  <select id="new-article-draft-section" value={newArticleSectionId} onChange={e => setNewArticleSectionId(e.target.value)} disabled={bulkDraftLoading}>
+                    <option value="">Choose a Zendesk section…</option>
+                    {zendeskSections.map(section => <option key={section.id} value={section.id}>{section.name}</option>)}
+                  </select>
+                  <p>Because there are {createNewArticles.length} new recommendation{createNewArticles.length === 1 ? '' : 's'}, the bulk action can create their unpublished drafts too.</p>
+                </>
+              ) : (
+                <p>There are {createNewArticles.length} new article recommendations. New-article drafting is disabled at 10 or more; review and narrow them first. Existing article drafts can still be created in bulk.</p>
+              )}
+            </div>
+          )}
+          {bulkDraftResult && (
+            <div className="scan-info" style={{ marginTop: '0.75rem' }}>
+              <p><strong>Update run complete:</strong> {bulkDraftResult.created.length} article action{bulkDraftResult.created.length === 1 ? '' : 's'} completed{bulkDraftResult.failures.length ? `; ${bulkDraftResult.failures.length} failed.` : '.'}</p>
+              {bulkDraftResult.created.map(draft => <p key={draft.articleId}><a href={draft.editUrl} target="_blank" rel="noopener noreferrer">Open {draft.title} ↗</a></p>)}
+              {bulkDraftResult.failures.map((failure, index) => <p key={index}>⚠️ {failure}</p>)}
+            </div>
+          )}
           {/* ── New Articles to Create (shown above articles-to-update) ──── */}
           {createNewArticles.length > 0 && (
             <div className="create-new-section">
@@ -1145,6 +1282,13 @@ function ReleasesTab({ user }) {
                       /* ── Normal state: actions + dismiss ── */
                       <>
                         <div className="create-new-actions">
+                          {newArticleDrafts[rec.title] ? (
+                            <a href={newArticleDrafts[rec.title].editUrl} target="_blank" rel="noopener noreferrer" className="btn btn-success btn-sm">✓ Open unpublished draft ↗</a>
+                          ) : createNewArticles.length < 10 ? (
+                            <button className="btn btn-success btn-sm" onClick={() => handleCreateNewArticleDraft(rec)} disabled={newArticleDraftLoading[rec.title]}>
+                              {newArticleDraftLoading[rec.title] ? 'Creating draft…' : '📝 Create unpublished draft'}
+                            </button>
+                          ) : null}
                           <button
                             className="btn btn-success btn-sm"
                             onClick={() => setAddedCreateNew(prev => ({ ...prev, [rec.title]: true }))}
@@ -1451,6 +1595,25 @@ function ReleasesTab({ user }) {
                     >
                       Review Article ↗
                     </a>
+                    {articleDrafts[article.id] ? (
+                      <a
+                        href={articleDrafts[article.id].editUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-success btn-sm"
+                      >
+                        ✓ Open updated article ↗
+                      </a>
+                    ) : article.proposedCopy?.length > 0 ? (
+                      <button
+                        className="btn btn-success btn-sm"
+                        onClick={() => handleCreateArticleUpdateDraft(article)}
+                        disabled={articleDraftLoading[article.id]}
+                        title="Updates the published Zendesk article immediately"
+                      >
+                        {articleDraftLoading[article.id] ? 'Updating article…' : '⚡ Update live article now'}
+                      </button>
+                    ) : null}
                     <button
                       className="btn btn-primary btn-sm"
                       onClick={() => updateArticleStatus(article.id, 'updated')}

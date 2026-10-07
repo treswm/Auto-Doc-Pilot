@@ -1,0 +1,32 @@
+{
+  "release": {
+    "version": "2.90",
+    "title": "Release 2.90",
+    "notes": "Paste the release notes here."
+  },
+  "updates": [
+    {
+      "articleId": 123456789,
+      "title": "Existing Help Center article",
+      "specificImpact": "Describe the release impact.",
+      "proposedCopy": [
+        {
+          "section": "Relevant section",
+          "changeType": "update_text",
+          "instruction": "Replace the outdated explanation.",
+          "proposedText": "The reviewed replacement copy."
+        }
+      ],
+      "screenshotsToUpdate": []
+    }
+  ],
+  "newArticles": [
+    {
+      "title": "A new Help Center article",
+      "reason": "No existing article covers this release feature.",
+      "suggestedPlacement": "Product area > section",
+      "relatedFeatures": ["Release feature"],
+      "sectionId": 123456789
+    }
+  ]
+}

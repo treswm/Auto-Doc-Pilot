@@ -5,7 +5,12 @@
  * Usage: node server.js
  */
 
-import "dotenv/config";
+import dotenv from "dotenv";
+
+// Local development should use this project's .env credentials, even when the
+// editor or shell inherits an unrelated OPENAI_API_KEY. Production deployments
+// continue to use their explicitly configured environment variables.
+dotenv.config({ override: process.env.NODE_ENV !== "production" });
 
 
 import express from "express";

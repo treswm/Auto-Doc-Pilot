@@ -351,18 +351,24 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
     // Step 5: Attach initial recommendation metadata (action, screenshot flag, related features)
     // These are placeholder values that will be OVERRIDDEN by per-article analysis below.
     const enrichedArticles = allArticles.map((a) => {
-      // Find the best-matching recommendation by seeing which query found this article
-      let recommendation = null;
-      for (const rec of recommendedArticles) {
-        if (typeof rec !== 'object') continue;
-        for (const query of searchQueries) {
-          if ((articlesFoundByQuery.get(query) || []).includes(a.id)) {
-            recommendation = rec;
-            break;
-          }
-        }
-        if (recommendation) break;
-      }
+      // Match an article only to recommendations that named one of the queries
+      // which actually returned it. The former nested loop chose the first
+      // recommendation for nearly every result, incorrectly assigning one feature
+      // (for example, Claims Queues) to unrelated articles.
+      const matchedQueries = searchQueries.filter((query) =>
+        (articlesFoundByQuery.get(query) || []).includes(a.id)
+      );
+      const candidates = recommendedArticles
+        .filter((rec) => typeof rec === 'object' && rec.action !== 'create_new')
+        .map((rec) => {
+          const recQueries = Array.isArray(rec.searchQueries) ? rec.searchQueries : [];
+          const queryMatches = recQueries.filter((query) => matchedQueries.includes(query)).length;
+          const exactTitleMatch = String(rec.title || '').trim().toLowerCase() === String(a.title || '').trim().toLowerCase();
+          return { rec, score: queryMatches + (exactTitleMatch ? 10 : 0) };
+        })
+        .filter(({ score }) => score > 0)
+        .sort((left, right) => right.score - left.score);
+      const recommendation = candidates[0]?.rec || null;
 
       return {
         ...a,
@@ -625,6 +631,32 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
       warnings: scanWarnings,
     });
 
+    await writeReleaseDraftPlan({
+      generatedAt: new Date().toISOString(),
+      release: {
+        version: req.session?.releaseVersion || releaseId,
+        title: releaseTitle,
+        notes: releaseNotesText,
+      },
+      // Existing articles are copied into new Zendesk drafts. Originals are never edited.
+      updates: actionableArticles.map(a => ({
+        articleId: a.id,
+        title: a.title,
+        specificImpact: a.specificImpact || a.reason || "",
+        proposedCopy: a.proposedCopy || [],
+        screenshotsToUpdate: a.screenshotsToUpdate || [],
+      })),
+      // Set sectionId for each item before applying, or pass --default-section=<id>
+      // to the drafting script if all new articles share the same destination.
+      newArticles: createNewArticles.map(r => ({
+        title: r.title,
+        reason: r.reason || "",
+        suggestedPlacement: r.suggestedPlacement || "",
+        relatedFeatures: r.relatedFeatures || [],
+        sectionId: null,
+      })),
+    });
+
     // Return actionable articles only
     const totalFound = actionableArticles.length;
 
@@ -827,6 +859,21 @@ async function writeRunLog(logData) {
     console.log(`📋 Run log written → config/run_log.json`);
   } catch (e) {
     console.warn(`⚠️  Could not write run log: ${e.message}`);
+  }
+}
+
+// Save the full, machine-readable recommendations separately from the concise
+// run log. `output/` is ignored by Git because it can include Help Center content.
+// The drafting script consumes this file by default.
+async function writeReleaseDraftPlan(plan) {
+  try {
+    const outputDir = path.join(process.cwd(), "output");
+    fs.mkdirSync(outputDir, { recursive: true });
+    const planPath = path.join(outputDir, "release-draft-plan.json");
+    fs.writeFileSync(planPath, JSON.stringify(plan, null, 2), "utf-8");
+    console.log(`📝 Release draft plan written → ${planPath}`);
+  } catch (e) {
+    console.warn(`⚠️  Could not write release draft plan: ${e.message}`);
   }
 }
 

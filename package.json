@@ -9,6 +9,7 @@
     "start:test": "node scheduler.js --test",
     "run:now": "node scheduler.js --now",
     "sync:sections": "node sync-sections-from-zendesk.js",
+    "draft:release": "node scripts/draft-release-recommendations.js",
     "server": "node server.js",
     "dev": "concurrently \"npm run server\" \"vite\"",
     "restart": "pkill -f 'node server.js'; pkill -f 'vite'; npm run dev",

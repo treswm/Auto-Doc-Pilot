@@ -16,6 +16,8 @@ import { sanitizeAndParseJson } from "../lib/json-sanitizer.js";
 import { chatCompletionWithRetry, OpenAIError } from "../lib/openai-retry.js";
 import {
   fetchSections,
+  fetchArticlesBySection,
+  fetchArticle,
   createArticle,
   uploadInlineArticleImage,
   updateArticleBody,
@@ -24,6 +26,64 @@ import {
 import { getCurrentBrand } from "../config/zendesk.js";
 
 const router = express.Router();
+
+function normalizeEvidenceText(value) {
+  return String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+// A recommendation is useful only when it can point to both the existing text
+// that is wrong/incomplete and the release-note statement that changes it.
+// This blocks generic rewrites such as replacing a section with the same content
+// plus vague wording about "enhanced AI capabilities".
+function hasTraceableChangeEvidence(analysis, articleText, releaseNotes) {
+  const entries = Array.isArray(analysis?.proposedCopy) ? analysis.proposedCopy : [];
+  if (entries.length === 0) return false;
+
+  const article = normalizeEvidenceText(articleText);
+  const release = normalizeEvidenceText(releaseNotes);
+  return entries.every((entry) => {
+    const sourceQuote = normalizeEvidenceText(entry?.sourceQuote);
+    const releaseEvidence = normalizeEvidenceText(entry?.releaseEvidence);
+    return sourceQuote.length >= 12 && releaseEvidence.length >= 12
+      && article.includes(sourceQuote)
+      && release.includes(releaseEvidence);
+  });
+}
+
+function loadArticleWriterProfile() {
+  const profilePath = path.join(process.cwd(), "config", "article-writer-context.json");
+  try {
+    return JSON.parse(fs.readFileSync(profilePath, "utf8"));
+  } catch (err) {
+    throw new Error(`Could not load the Article Writer profile: ${err.message}`);
+  }
+}
+
+function draftCopyTitle(title, version) {
+  return `${title}${version ? ` — ${version} draft` : " — Draft"}`.slice(0, 120);
+}
+
+function extractHtmlResponse(content) {
+  let html = String(content || "").trim()
+    .replace(/^```(?:html)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
+  if (!html) throw new Error("OpenAI returned no article HTML.");
+  return html;
+}
+
+async function permissionGroupForSection(sectionId) {
+  const articles = await fetchArticlesBySection(sectionId);
+  const permissionGroupId = articles.find((article) => article.permission_group_id)?.permission_group_id;
+  if (!permissionGroupId) {
+    throw new Error("Could not determine a permission group for this Zendesk section. Choose a section that already contains an article or configure ZENDESK_PERMISSION_GROUP_ID.");
+  }
+  return permissionGroupId;
+}
 
 // Builds the system prompt + user message for release impact analysis.
 // Used by both /analyze-impact (API call) and /manual-prompt (export for ChatGPT).
@@ -1434,6 +1494,83 @@ router.post("/create-screenshot-draft", requireAuth, async (req, res) => {
 });
 
 /**
+ * POST /api/release-notes/apply-existing-update
+ * Applies a recommended update directly to the existing article's live translation.
+ */
+router.post("/apply-existing-update", requireAuth, async (req, res) => {
+  try {
+    const { articleId, specificImpact, proposedCopy, screenshotsToUpdate } = req.body || {};
+    if (!articleId) return res.status(400).json({ success: false, error: "articleId is required" });
+    if (!Array.isArray(proposedCopy) || proposedCopy.length === 0) {
+      return res.status(400).json({ success: false, error: "This recommendation has no proposed edits to draft." });
+    }
+    const releaseNotes = req.session?.releaseNotes;
+    if (!releaseNotes) return res.status(400).json({ success: false, error: "No release notes are available for this session." });
+
+    const original = await fetchArticle(articleId);
+    const profile = loadArticleWriterProfile();
+    const completion = await chatCompletionWithRetry({
+      model: process.env.RELEASE_DRAFT_MODEL || "gpt-4o",
+      temperature: 0.2,
+      max_tokens: 12000,
+      messages: [
+        { role: "system", content: `You are the Hi Marley Help Center article writer. Return only the complete revised HTML, with no JSON and no Markdown code fence. Preserve all correct current content, links, tables, and structure. Apply only the release-supported edits below. Do not mention drafts, releases, or unsupported product behavior. Follow this writer profile captured from the linked ChatGPT project:\n${JSON.stringify(profile, null, 2)}` },
+        { role: "user", content: `Release notes:\n${releaseNotes}\n\nArticle title: ${original.title}\n\nSpecific impact:\n${specificImpact || "Not supplied"}\n\nRequested edits:\n${JSON.stringify(proposedCopy, null, 2)}\n\nScreenshots to review (do not invent replacements):\n${JSON.stringify(screenshotsToUpdate || [], null, 2)}\n\nCurrent Zendesk HTML:\n${original.body || ""}` },
+      ],
+    }, { label: `Drafting update for "${original.title}"`, maxTotalWaitMs: 240_000 });
+
+    if (completion.choices?.[0]?.finish_reason === "length") throw new Error("The generated update was too long to complete. Try this article individually after reducing its scope.");
+    const body = extractHtmlResponse(completion.choices?.[0]?.message?.content);
+    await updateArticleBody(original.id, body, "en-us");
+    const subdomain = process.env.ZENDESK_SUBDOMAIN || "himarley";
+    const brand = getCurrentBrand();
+    const editUrl = `https://${subdomain}.zendesk.com/knowledge/articles/${original.id}?brand_id=${brand.id}`;
+    console.log(`✅ Updated published article ${original.id}`);
+    res.json({ success: true, published: true, articleId: original.id, title: original.title, editUrl, htmlUrl: original.html_url || null });
+  } catch (err) {
+    console.error("apply-existing-update error:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/release-notes/create-new-article-draft
+ * Creates an unpublished draft for a recommended new Help Center article.
+ */
+router.post("/create-new-article-draft", requireAuth, async (req, res) => {
+  try {
+    const { sectionId, title, reason, suggestedPlacement, relatedFeatures } = req.body || {};
+    if (!sectionId) return res.status(400).json({ success: false, error: "sectionId is required" });
+    if (!title || !String(title).trim()) return res.status(400).json({ success: false, error: "title is required" });
+    const releaseNotes = req.session?.releaseNotes;
+    if (!releaseNotes) return res.status(400).json({ success: false, error: "No release notes are available for this session." });
+
+    const profile = loadArticleWriterProfile();
+    const completion = await chatCompletionWithRetry({
+      model: process.env.RELEASE_DRAFT_MODEL || "gpt-4o",
+      temperature: 0.3,
+      max_tokens: 12000,
+      messages: [
+        { role: "system", content: `You are the Hi Marley Help Center article writer. Return only complete HTML, with no JSON and no Markdown code fence. Write accurate customer-facing Zendesk HTML. Do not include the title as an HTML heading, mention a release, or invent product behavior, UI labels, or configuration steps. Follow this writer profile captured from the linked ChatGPT project:\n${JSON.stringify(profile, null, 2)}` },
+        { role: "user", content: `Article title: ${title}\n\nWhy this article is needed:\n${reason || "Not supplied"}\n\nSuggested placement:\n${suggestedPlacement || "Not supplied"}\n\nRelated features:\n${Array.isArray(relatedFeatures) ? relatedFeatures.join(", ") : "Not supplied"}\n\nRelease notes:\n${releaseNotes}` },
+      ],
+    }, { label: `Drafting new article "${title}"`, maxTotalWaitMs: 240_000 });
+    if (completion.choices?.[0]?.finish_reason === "length") throw new Error("The generated article was too long to complete. Try a narrower article scope.");
+    const body = extractHtmlResponse(completion.choices?.[0]?.message?.content);
+    const permissionGroupId = await permissionGroupForSection(sectionId);
+    const article = await createArticle({ sectionId, title: String(title).trim(), body, draft: true, permissionGroupId });
+    const subdomain = process.env.ZENDESK_SUBDOMAIN || "himarley";
+    const brand = getCurrentBrand();
+    const editUrl = `https://${subdomain}.zendesk.com/knowledge/articles/${article.id}?brand_id=${brand.id}`;
+    console.log(`✅ Created unpublished new-article draft ${article.id}`);
+    res.json({ success: true, draft: true, articleId: article.id, title: article.title, editUrl, htmlUrl: article.html_url || null });
+  } catch (err) {
+    console.error("create-new-article-draft error:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * POST /api/release-notes/suggest-related-links
  * Search the Zendesk Help Center for published articles that should be linked
  * inside the release notes, and return governed link suggestions (inline +
@@ -1752,6 +1889,9 @@ For each release feature you identified as potentially relevant in Step 1:
 - If you CANNOT point to specific existing text that would need to change, this article does not need updating. Return alreadyCovered: true.
 - A vague topic overlap is NOT enough. The article must ACTUALLY DOCUMENT the specific thing the release changes.
 - ARTICLE AGE SIGNAL: The user message includes "Article Last Updated" when available. An article not updated in 12+ months is more likely to contain stale or incomplete descriptions of a feature — apply a slightly lower threshold when deciding if content is outdated. An article updated 2+ years ago that documents a feature area being changed should generally be flagged unless the specific text is clearly still accurate.
+- NO-OP RULE: Return alreadyCovered: true when the article already states the same behavior, even if you could make the wording sound newer. Never replace text merely to say "enhanced", "new", "improved", or "more effectively" unless the release notes name a concrete new behavior, option, field, workflow, or limitation that is absent or contradicted in the article.
+- NO REGRESSION RULE: Never replace a specific existing statement with a vaguer restatement. A proposed edit must add or correct a factual detail supported by the release notes.
+- SCREENSHOT RULE: Do not flag a screenshot based only on a feature's name or a generic claim that the UI may have changed. Flag it only when the release notes describe a visual, label, navigation, control, or workflow change that the screenshot is likely to show.
 
 ━━━ STEP 3: WRITE THE UPDATE (only if both gates pass) ━━━
 Only reach this step if you found: (a) a matching feature domain AND (b) specific article text that needs changing.
@@ -1790,7 +1930,9 @@ Return ONLY a valid JSON object (no markdown, no code blocks):
       "section": "The section heading or area where this change belongs",
       "changeType": "update_text | add_to_list | new_section | add_paragraph",
       "instruction": "One sentence: exactly what to do",
-      "proposedText": "Exact replacement or addition text in Hi Marley's style. Use \\n for line breaks. Use **double asterisks** for bold text (e.g., **Q:** and **A:** for FAQ entries, **Term:** for defined terms, or any bold label matching the article's existing formatting)."
+      "proposedText": "Exact replacement or addition text in Hi Marley's style. Use \\n for line breaks. Use **double asterisks** for bold text (e.g., **Q:** and **A:** for FAQ entries, **Term:** for defined terms, or any bold label matching the article's existing formatting).",
+      "sourceQuote": "An exact quote from the current article that is inaccurate or incomplete. Do not paraphrase.",
+      "releaseEvidence": "An exact quote from the release notes proving the changed behavior. Do not paraphrase."
     }
   ],
   "screenshotsToUpdate": [
@@ -1818,10 +1960,9 @@ If alreadyCovered is true, return: { "alreadyCovered": true, "affectedSections":
     const contextBlock = locationContext || ageContext ? `${locationContext}${ageContext}\n` : "";
     const imagesSection = imageInventoryBlock ? `${imageInventoryBlock}\n` : "";
 
-    // One call per candidate article (often 80–100 per scan), so this uses the smaller model:
-    // far more tokens-per-minute headroom and much cheaper. Set RELEASE_ANALYSIS_MODEL=gpt-4o
-    // to go back to the larger model if recommendation quality needs it.
-    const analysisModel = process.env.RELEASE_ANALYSIS_MODEL || "gpt-4o-mini";
+    // gpt-4o provides the stronger article-to-release matching and copy recommendations
+    // this review workflow needs. It can be overridden for cost or throughput testing.
+    const analysisModel = process.env.RELEASE_ANALYSIS_MODEL || "gpt-4o";
 
     // Waits out OpenAI rate limits (429) and transient 5xx instead of failing the article.
     const data = await chatCompletionWithRetry(
@@ -1871,6 +2012,17 @@ If alreadyCovered is true, return: { "alreadyCovered": true, "affectedSections":
       parseError = parseErr.message;
       console.error(`Failed to parse OpenAI response for "${articleTitle}":`, analysisText.slice(0, 200));
       // Default to excluded on parse failure — safer than including unverified articles
+      analysis = {
+        alreadyCovered: true,
+        affectedSections: "",
+        specificImpact: "",
+        proposedCopy: [],
+        screenshotsToUpdate: [],
+      };
+    }
+
+    if (!analysis.alreadyCovered && !hasTraceableChangeEvidence(analysis, rawArticleText, releaseNotes)) {
+      console.warn(`⚠️  Ignoring unsupported recommendation for "${articleTitle}" — no traceable source and release-note evidence`);
       analysis = {
         alreadyCovered: true,
         affectedSections: "",
