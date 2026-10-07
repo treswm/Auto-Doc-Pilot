@@ -16,6 +16,9 @@ const router = express.Router();
 const ZENDESK_SUBDOMAIN = process.env.ZENDESK_SUBDOMAIN || 'himarley';
 const ZENDESK_CLIENT_ID = process.env.ZENDESK_CLIENT_ID;
 const ZENDESK_CLIENT_SECRET = process.env.ZENDESK_CLIENT_SECRET;
+// Zendesk public clients use PKCE and must not send a client secret. Set this
+// to "confidential" only when the OAuth client is explicitly registered that way.
+const ZENDESK_OAUTH_CLIENT_KIND = (process.env.ZENDESK_OAUTH_CLIENT_KIND || 'public').toLowerCase();
 const REDIRECT_URI = process.env.ZENDESK_REDIRECT_URI || 'http://localhost:3001/api/oauth/callback';
 const ZENDESK_OAUTH_SCOPES = process.env.ZENDESK_OAUTH_SCOPES || 'read,write';
 const OAUTH_SCOPE_STRING = ZENDESK_OAUTH_SCOPES
@@ -62,6 +65,9 @@ router.get('/authorize', (req, res) => {
   if (!OAUTH_SCOPE_STRING) {
     return res.status(500).json({ error: 'ZENDESK_OAUTH_SCOPES not configured' });
   }
+  if (!['public', 'confidential'].includes(ZENDESK_OAUTH_CLIENT_KIND)) {
+    return res.status(500).json({ error: 'ZENDESK_OAUTH_CLIENT_KIND must be "public" or "confidential"' });
+  }
 
   const state = crypto.randomBytes(24).toString('base64url');
   const { verifier, challenge } = createPkcePair();
@@ -82,9 +88,11 @@ router.get('/authorize', (req, res) => {
     redirect_uri: REDIRECT_URI,
     scope: OAUTH_SCOPE_STRING,
     state,
-    code_challenge: challenge,
-    code_challenge_method: 'S256',
   });
+  if (ZENDESK_OAUTH_CLIENT_KIND === 'public') {
+    params.set('code_challenge', challenge);
+    params.set('code_challenge_method', 'S256');
+  }
 
   const authUrl = `${AUTH_URL}?${params.toString()}`;
   console.log('🔐 Redirecting to Zendesk authorization...');
@@ -120,26 +128,31 @@ router.get('/callback', async (req, res) => {
   }
 
   try {
-    if (!ZENDESK_CLIENT_SECRET) {
+    if (ZENDESK_OAUTH_CLIENT_KIND === 'confidential' && !ZENDESK_CLIENT_SECRET) {
       throw new Error('ZENDESK_CLIENT_SECRET not configured');
     }
 
     console.log('🔄 Exchanging authorization code for access token...');
+
+    const tokenParams = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      client_id: ZENDESK_CLIENT_ID,
+      redirect_uri: REDIRECT_URI,
+      scope: OAUTH_SCOPE_STRING,
+    });
+    if (ZENDESK_OAUTH_CLIENT_KIND === 'public') {
+      tokenParams.set('code_verifier', verifier);
+    } else {
+      tokenParams.set('client_secret', ZENDESK_CLIENT_SECRET);
+    }
 
     const tokenRes = await fetch(TOKEN_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        client_id: ZENDESK_CLIENT_ID,
-        client_secret: ZENDESK_CLIENT_SECRET,
-        redirect_uri: REDIRECT_URI,
-        scope: OAUTH_SCOPE_STRING,
-        code_verifier: verifier,
-      }).toString(),
+      body: tokenParams.toString(),
     });
 
     if (!tokenRes.ok) {
