@@ -511,10 +511,10 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
             article.specificImpact = analysisData.specificImpact || "";
             article.proposedCopy = analysisData.proposedCopy || [];
             article.screenshotsToUpdate = (analysisData.screenshotsToUpdate || []).map(s => {
-              // If AI didn't return a type, cross-reference with the article image inventory
-              if (s.type) return s;
+              // Cross-reference the inventory to preserve the attachment URL for image
+              // previews and to correct media type when Zendesk URLs omit extensions.
               const inventoryMatch = articleImages.find(img => img.filename === s.filename);
-              return inventoryMatch ? { ...s, type: inventoryMatch.type } : s;
+              return inventoryMatch ? { ...s, type: inventoryMatch.type, src: inventoryMatch.src } : s;
             });
             // Per-article AI is the authoritative source for screenshots.
             // Override the initial recommendation's boolean flag so the UI is specific, not generic.

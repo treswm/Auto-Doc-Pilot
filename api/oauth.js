@@ -2,13 +2,20 @@
  * Zendesk OAuth 2.0 Authorization Code Flow handler
  */
 
+import dotenv from 'dotenv';
+import crypto from 'crypto';
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
+
+// ESM route modules load before server.js runs its dotenv setup. Load it here so
+// the OAuth client configuration is available while this module initializes.
+dotenv.config({ override: process.env.NODE_ENV !== 'production' });
 
 const router = express.Router();
 const ZENDESK_SUBDOMAIN = process.env.ZENDESK_SUBDOMAIN || 'himarley';
 const ZENDESK_CLIENT_ID = process.env.ZENDESK_CLIENT_ID;
 const ZENDESK_CLIENT_SECRET = process.env.ZENDESK_CLIENT_SECRET;
-const ZENDESK_OAUTH_ACCESS_TOKEN = process.env.ZENDESK_OAUTH_ACCESS_TOKEN;
 const REDIRECT_URI = process.env.ZENDESK_REDIRECT_URI || 'http://localhost:3001/api/oauth/callback';
 const ZENDESK_OAUTH_SCOPES = process.env.ZENDESK_OAUTH_SCOPES || 'read,write';
 const OAUTH_SCOPE_STRING = ZENDESK_OAUTH_SCOPES
@@ -19,6 +26,30 @@ const OAUTH_SCOPE_STRING = ZENDESK_OAUTH_SCOPES
 
 const AUTH_URL = `https://${ZENDESK_SUBDOMAIN}.zendesk.com/oauth/authorizations/new`;
 const TOKEN_URL = `https://${ZENDESK_SUBDOMAIN}.zendesk.com/oauth/tokens`;
+
+function readCookie(req, name) {
+  const cookies = req.headers.cookie || '';
+  const prefix = `${name}=`;
+  const cookie = cookies.split(';').map((part) => part.trim()).find((part) => part.startsWith(prefix));
+  return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : null;
+}
+
+function createPkcePair() {
+  const verifier = crypto.randomBytes(48).toString('base64url');
+  const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
+  return { verifier, challenge };
+}
+
+function saveAccessToken(accessToken) {
+  const envPath = path.join(process.cwd(), '.env');
+  const existing = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
+  const entry = `ZENDESK_OAUTH_ACCESS_TOKEN=${accessToken}`;
+  const next = /^ZENDESK_OAUTH_ACCESS_TOKEN=.*$/m.test(existing)
+    ? existing.replace(/^ZENDESK_OAUTH_ACCESS_TOKEN=.*$/m, entry)
+    : `${existing}${existing && !existing.endsWith('\n') ? '\n' : ''}${entry}\n`;
+  fs.writeFileSync(envPath, next, { mode: 0o600 });
+  process.env.ZENDESK_OAUTH_ACCESS_TOKEN = accessToken;
+}
 
 /**
  * GET /api/oauth/authorize
@@ -32,11 +63,27 @@ router.get('/authorize', (req, res) => {
     return res.status(500).json({ error: 'ZENDESK_OAUTH_SCOPES not configured' });
   }
 
+  const state = crypto.randomBytes(24).toString('base64url');
+  const { verifier, challenge } = createPkcePair();
+  const isProduction = process.env.NODE_ENV === 'production';
+  const cookieOptions = {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isProduction,
+    maxAge: 10 * 60 * 1000,
+    path: '/api/oauth',
+  };
+  res.cookie('zendesk_oauth_state', state, cookieOptions);
+  res.cookie('zendesk_oauth_verifier', verifier, cookieOptions);
+
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: ZENDESK_CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     scope: OAUTH_SCOPE_STRING,
+    state,
+    code_challenge: challenge,
+    code_challenge_method: 'S256',
   });
 
   const authUrl = `${AUTH_URL}?${params.toString()}`;
@@ -49,7 +96,7 @@ router.get('/authorize', (req, res) => {
  * Handles OAuth callback from Zendesk
  */
 router.get('/callback', async (req, res) => {
-  const { code, error } = req.query;
+  const { code, error, state } = req.query;
 
   if (error) {
     console.error('❌ OAuth error:', error);
@@ -58,6 +105,16 @@ router.get('/callback', async (req, res) => {
 
   if (!code) {
     return res.status(400).json({ error: 'No authorization code received' });
+  }
+
+  const expectedState = readCookie(req, 'zendesk_oauth_state');
+  const verifier = readCookie(req, 'zendesk_oauth_verifier');
+  if (!expectedState || !state || expectedState.length !== String(state).length
+    || !crypto.timingSafeEqual(Buffer.from(expectedState), Buffer.from(String(state)))) {
+    return res.status(400).json({ error: 'Authorization session expired or did not match. Start authorization again from the app.' });
+  }
+  if (!verifier) {
+    return res.status(400).json({ error: 'Authorization session expired. Start authorization again from the app.' });
   }
 
   try {
@@ -79,6 +136,7 @@ router.get('/callback', async (req, res) => {
         client_secret: ZENDESK_CLIENT_SECRET,
         redirect_uri: REDIRECT_URI,
         scope: OAUTH_SCOPE_STRING,
+        code_verifier: verifier,
       }).toString(),
     });
 
@@ -97,12 +155,15 @@ router.get('/callback', async (req, res) => {
       expires_at: new Date(Date.now() + (tokenData.expires_in || 3600) * 1000).toISOString(),
     };
 
+    saveAccessToken(tokenObj.access_token);
+    res.clearCookie('zendesk_oauth_state', { path: '/api/oauth' });
+    res.clearCookie('zendesk_oauth_verifier', { path: '/api/oauth' });
     console.log('✅ OAuth token obtained');
 
     res.json({ 
       success: true, 
-      message: 'Authorization successful. Copy token.access_token into ZENDESK_OAUTH_ACCESS_TOKEN in .env.',
-      token: tokenObj 
+      message: 'Authorization successful. The Zendesk access token was saved locally and is active now.',
+      expires_at: tokenObj.expires_at,
     });
   } catch (err) {
     console.error('❌ Token exchange error:', err.message);
@@ -128,9 +189,9 @@ router.get('/token', async (req, res) => {
  * @returns {Promise<string>} Valid access token
  */
 export async function getValidToken() {
-  if (ZENDESK_OAUTH_ACCESS_TOKEN) {
+  if (process.env.ZENDESK_OAUTH_ACCESS_TOKEN) {
     console.log('✓ Using token from .env');
-    return ZENDESK_OAUTH_ACCESS_TOKEN;
+    return process.env.ZENDESK_OAUTH_ACCESS_TOKEN;
   }
 
   throw new Error(

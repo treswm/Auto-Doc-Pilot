@@ -565,6 +565,12 @@
   font-weight: 500;
 }
 
+.progress-status-persistent {
+  margin: 0 0 var(--spacing-4);
+  border-width: 2px;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.12);
+}
+
 /* Screenshot badge */
 .screenshot-badge {
   display: inline-block;

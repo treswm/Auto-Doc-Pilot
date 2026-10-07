@@ -5,7 +5,7 @@ import '../styles/ReleaseNotesInputSection.css'
  * Release Notes Input Section
  * Paste release notes and auto-extract keywords for article scanning
  */
-function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete, onManualSaveComplete, manualMode, flaggedArticles, releaseId, analysis: analysisFromParent }) {
+function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete, onManualSaveComplete, manualMode, flaggedArticles, releaseId, analysis: analysisFromParent, isSearching = false }) {
   const [isAdding, setIsAdding] = useState(false)
   const [releaseNotes, setReleaseNotes] = useState('')
   const [version, setVersion] = useState('')
@@ -384,6 +384,15 @@ function ReleaseNotesInputSection({ onKeywordsExtracted, onAnalysisComplete, onM
       {successMessage && (
         <div className="success-message">
           <p>✅ {successMessage}</p>
+        </div>
+      )}
+
+      {/* Fetching hides the edit form before analysis finishes, so keep the active
+          status visible in the saved-release view as well. */}
+      {((isSavingAndAnalyzing && !isAdding) || isSearching) && (
+        <div className="progress-status progress-status-persistent" role="status" aria-live="polite">
+          <span className="loading-spinner"></span>
+          <p>{isSearching ? 'Searching Help Center and reviewing affected articles — results will appear below.' : progressStatus || 'Analyzing release impact with AI...'}</p>
         </div>
       )}
 

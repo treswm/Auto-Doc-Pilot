@@ -131,6 +131,11 @@ function ReleasesTab({ user }) {
 
   const handleCreateArticleUpdateDraft = async (article) => {
     if (!article?.id || !Array.isArray(article.proposedCopy) || article.proposedCopy.length === 0) return
+    const access = await fetch('/api/release-notes/zendesk-write-status', { credentials: 'include' }).then(res => res.json()).catch(() => null)
+    if (!access?.canWrite) {
+      window.alert(access?.error || 'Could not verify Zendesk write access. Re-authorize the Zendesk connection before updating articles.')
+      return
+    }
     if (!window.confirm(`Update the published Zendesk article "${article.title}" now?\n\nThis replaces its live content immediately. It does not create a Team Publishing work-in-progress version.`)) return
     setArticleDraftLoading(prev => ({ ...prev, [article.id]: true }))
     try {
@@ -157,6 +162,11 @@ function ReleasesTab({ user }) {
     }
     const newCount = canIncludeNew ? createNewArticles.length : 0
     if (!updateCandidates.length && !newCount) return
+    const access = await fetch('/api/release-notes/zendesk-write-status', { credentials: 'include' }).then(res => res.json()).catch(() => null)
+    if (!access?.canWrite) {
+      window.alert(access?.error || 'Could not verify Zendesk write access. Re-authorize the Zendesk connection before updating articles.')
+      return
+    }
     const scope = `${updateCandidates.length} live article update${updateCandidates.length === 1 ? '' : 's'}${newCount ? ` and ${newCount} new article draft${newCount === 1 ? '' : 's'}` : ''}`
     if (!window.confirm(`Apply ${scope}?\n\nExisting articles will be changed immediately. New articles, if any, remain unpublished drafts.`)) return
 
@@ -671,8 +681,12 @@ function ReleasesTab({ user }) {
         
         return {
           ...article,
-          reason: recommendation && typeof recommendation === 'object' ? recommendation.reason : null,
-          affectedFeatures: (recommendation && typeof recommendation === 'object' && recommendation.relatedFeatures) ? recommendation.relatedFeatures : article.affectedFeatures || []
+          // Per-article analysis has already verified the exact impact. Only use the
+          // broad release recommendation when that article-specific evidence is absent.
+          reason: article.reason || (recommendation && typeof recommendation === 'object' ? recommendation.reason : null),
+          affectedFeatures: article.affectedFeatures?.length
+            ? article.affectedFeatures
+            : ((recommendation && typeof recommendation === 'object' && recommendation.relatedFeatures) ? recommendation.relatedFeatures : [])
         }
       })
 
@@ -916,6 +930,7 @@ function ReleasesTab({ user }) {
         flaggedArticles={flaggedArticles}
         releaseId={releaseId}
         analysis={analysis}
+        isSearching={flaggingLoading}
       />
 
       {/* Suggest published Help Center articles to link inside the release notes */}
@@ -1403,6 +1418,12 @@ function ReleasesTab({ user }) {
                                   <span className="screenshot-section">📍 {g.section}</span>
                                   {g.filename && <span className="screenshot-filename">"{g.filename}"</span>}
                                   {g.reason && <span className="screenshot-reason">{g.reason}</span>}
+                                  {g.src && (
+                                    <a href={g.src} target="_blank" rel="noopener noreferrer" className="screenshot-preview-link">
+                                      <img src={g.src} alt={g.filename || `${g.section} animation`} className="screenshot-preview" loading="lazy" />
+                                      Open full GIF ↗
+                                    </a>
+                                  )}
                                 </li>
                               ))}
                             </ul>
@@ -1417,6 +1438,12 @@ function ReleasesTab({ user }) {
                                   <span className="screenshot-section">📍 {shot.section}</span>
                                   {shot.filename && <span className="screenshot-filename">"{shot.filename}"</span>}
                                   {shot.reason && <span className="screenshot-reason">{shot.reason}</span>}
+                                  {shot.src && (
+                                    <a href={shot.src} target="_blank" rel="noopener noreferrer" className="screenshot-preview-link">
+                                      <img src={shot.src} alt={shot.filename || `${shot.section} screenshot`} className="screenshot-preview" loading="lazy" />
+                                      Open full image ↗
+                                    </a>
+                                  )}
                                 </li>
                               ))}
                             </ul>

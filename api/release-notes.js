@@ -76,6 +76,60 @@ function extractHtmlResponse(content) {
   return html;
 }
 
+function textFromHtml(html) {
+  return String(html || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function sectionRange(html, sectionName) {
+  const safeName = String(sectionName || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+  if (!safeName) return null;
+  const heading = new RegExp(`<h([2-4])[^>]*>[\\s\\S]*?${safeName}[\\s\\S]*?<\\/h\\1>`, "i");
+  const match = heading.exec(html);
+  if (!match) return null;
+  const nextHeading = /<h[2-4][^>]*>/gi;
+  nextHeading.lastIndex = match.index + match[0].length;
+  const next = nextHeading.exec(html);
+  return { start: match.index, end: next ? next.index : html.length };
+}
+
+async function reviseArticleSections({ originalHtml, proposedCopy, releaseNotes, profile, articleTitle }) {
+  let revisedHtml = originalHtml;
+  const editsBySection = new Map();
+  for (const edit of proposedCopy) {
+    const section = String(edit?.section || "").trim();
+    if (!section) throw new Error("A proposed edit is missing its target section.");
+    if (!editsBySection.has(section)) editsBySection.set(section, []);
+    editsBySection.get(section).push(edit);
+  }
+
+  for (const [section, edits] of editsBySection) {
+    const range = sectionRange(revisedHtml, section);
+    if (!range) throw new Error(`Could not locate the "${section}" section in the current article. No live update was made.`);
+    const currentSectionHtml = revisedHtml.slice(range.start, range.end);
+    const completion = await chatCompletionWithRetry({
+      model: process.env.RELEASE_DRAFT_MODEL || "gpt-4o",
+      temperature: 0.2,
+      max_tokens: 8000,
+      messages: [
+        { role: "system", content: `You are the Hi Marley Help Center article writer. Return only the complete revised HTML for the supplied article section, including its original heading. Do not return JSON or a Markdown code fence. Preserve all correct HTML, links, tables, and formatting in this section. Apply only the supported edits. Follow this writer profile:\n${JSON.stringify(profile, null, 2)}` },
+        { role: "user", content: `Article: ${articleTitle}\n\nRelease notes:\n${releaseNotes}\n\nTarget section: ${section}\n\nRequested edits:\n${JSON.stringify(edits, null, 2)}\n\nCurrent section HTML:\n${currentSectionHtml}` },
+      ],
+    }, { label: `Revising "${section}" in "${articleTitle}"`, maxTotalWaitMs: 240_000 });
+    if (completion.choices?.[0]?.finish_reason === "length") throw new Error(`The "${section}" update was too long to complete. No live update was made.`);
+    const replacement = extractHtmlResponse(completion.choices?.[0]?.message?.content);
+    if (!/<h[2-4][^>]*>/i.test(replacement)) throw new Error(`The generated "${section}" update did not include its heading. No live update was made.`);
+    revisedHtml = `${revisedHtml.slice(0, range.start)}${replacement}${revisedHtml.slice(range.end)}`;
+  }
+  return revisedHtml;
+}
+
 async function permissionGroupForSection(sectionId) {
   const articles = await fetchArticlesBySection(sectionId);
   const permissionGroupId = articles.find((article) => article.permission_group_id)?.permission_group_id;
@@ -1206,6 +1260,31 @@ router.get("/zendesk-sections", requireAuth, async (req, res) => {
 });
 
 /**
+ * GET /api/release-notes/zendesk-write-status
+ * Verifies the token can access Guide permission groups, which is required for
+ * creating article drafts and is a useful early signal for article write access.
+ */
+router.get("/zendesk-write-status", requireAuth, async (req, res) => {
+  try {
+    const token = process.env.ZENDESK_OAUTH_ACCESS_TOKEN;
+    const subdomain = process.env.ZENDESK_SUBDOMAIN || "himarley";
+    const check = await fetch(`https://${subdomain}.zendesk.com/api/v2/guide/permission_groups.json`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    if (!check.ok) {
+      return res.json({
+        success: true,
+        canWrite: false,
+        error: "Zendesk accepted this token for Help Center reads but not Guide write permissions. Re-authorize the app with an OAuth token that has write scope and a Guide role allowed to edit these articles.",
+      });
+    }
+    res.json({ success: true, canWrite: true });
+  } catch (err) {
+    res.json({ success: true, canWrite: false, error: `Could not verify Zendesk write access: ${err.message}` });
+  }
+});
+
+/**
  * GET /api/release-notes/screenshot/:version/:file
  * Serve an extracted screenshot PNG for the preview UI.
  */
@@ -1509,18 +1588,13 @@ router.post("/apply-existing-update", requireAuth, async (req, res) => {
 
     const original = await fetchArticle(articleId);
     const profile = loadArticleWriterProfile();
-    const completion = await chatCompletionWithRetry({
-      model: process.env.RELEASE_DRAFT_MODEL || "gpt-4o",
-      temperature: 0.2,
-      max_tokens: 12000,
-      messages: [
-        { role: "system", content: `You are the Hi Marley Help Center article writer. Return only the complete revised HTML, with no JSON and no Markdown code fence. Preserve all correct current content, links, tables, and structure. Apply only the release-supported edits below. Do not mention drafts, releases, or unsupported product behavior. Follow this writer profile captured from the linked ChatGPT project:\n${JSON.stringify(profile, null, 2)}` },
-        { role: "user", content: `Release notes:\n${releaseNotes}\n\nArticle title: ${original.title}\n\nSpecific impact:\n${specificImpact || "Not supplied"}\n\nRequested edits:\n${JSON.stringify(proposedCopy, null, 2)}\n\nScreenshots to review (do not invent replacements):\n${JSON.stringify(screenshotsToUpdate || [], null, 2)}\n\nCurrent Zendesk HTML:\n${original.body || ""}` },
-      ],
-    }, { label: `Drafting update for "${original.title}"`, maxTotalWaitMs: 240_000 });
-
-    if (completion.choices?.[0]?.finish_reason === "length") throw new Error("The generated update was too long to complete. Try this article individually after reducing its scope.");
-    const body = extractHtmlResponse(completion.choices?.[0]?.message?.content);
+    const body = await reviseArticleSections({
+      originalHtml: original.body || "",
+      proposedCopy,
+      releaseNotes,
+      profile,
+      articleTitle: original.title,
+    });
     await updateArticleBody(original.id, body, "en-us");
     const subdomain = process.env.ZENDESK_SUBDOMAIN || "himarley";
     const brand = getCurrentBrand();

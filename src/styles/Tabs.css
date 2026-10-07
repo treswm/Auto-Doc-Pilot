@@ -1281,6 +1281,32 @@
   line-height: 1.4;
 }
 
+.screenshot-preview-link {
+  display: inline-flex;
+  width: fit-content;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 6px;
+  color: #9a3412;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.screenshot-preview-link:hover {
+  text-decoration: underline;
+}
+
+.screenshot-preview {
+  display: block;
+  max-width: min(100%, 360px);
+  max-height: 220px;
+  object-fit: contain;
+  object-position: left top;
+  border: 1px solid rgba(154, 52, 18, 0.25);
+  border-radius: 4px;
+  background: white;
+}
+
 /* ── Scan Warnings ── */
 .scan-warnings-box {
   margin: var(--spacing-4) 0;

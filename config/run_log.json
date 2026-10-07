@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-07T00:05:01.820Z",
+  "timestamp": "2026-10-07T00:33:23.140Z",
   "releaseVersion": "2.90",
   "releaseTitle": "Release 2.90",
   "featuresDetected": [
@@ -14,66 +14,76 @@
   ],
   "searchQueriesUsed": [
     "claims queues",
-    "deactivate user",
-    "french canadian",
+    "user deactivation",
+    "language settings",
     "xactimate estimates",
     "allowed case types",
     "myorg insights",
     "public API",
     "sign-in page"
   ],
-  "articlesAnalyzed": 94,
+  "articlesAnalyzed": 102,
   "articlesFailedAnalysis": 0,
-  "releaseNotesSkipped": 65,
-  "alreadyCoveredFiltered": 89,
+  "releaseNotesSkipped": 66,
+  "alreadyCoveredFiltered": 96,
   "articlesToUpdate": [
+    {
+      "id": 22273132191251,
+      "title": "ClaimCenter Guidewire Cloud OOTB Guide",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release notes introduce new Public API endpoints that allow streaming of media and transcripts directly, which affects how transcripts are downloaded and managed in the Hi Marley Case Details section.",
+      "sectionToUpdate": "Hi Marley Case Details, Hi Marley Case Details Buttons",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 1
+    },
+    {
+      "id": 13657776764947,
+      "title": "ClaimCenter 9 Accelerator OOTB Guide",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects how media and transcripts are handled in integrations. The article should reflect these changes in the relevant sections.",
+      "sectionToUpdate": "Introduction, Table of Functionality, Automated Functionality, Admin Configuration Guide",
+      "proposedEditCount": 3,
+      "screenshotsFlagged": 0
+    },
     {
       "id": 360026613773,
       "title": "Case Creation",
       "confidence": 0.85,
       "action": "update_existing",
-      "reason": "The release notes introduce the 'Allowed Case Types' feature, which affects case creation by limiting which case types a user can access. This needs to be reflected in the instructions for creating a case.",
+      "reason": "The release notes introduce the 'Allowed Case Types' feature, which affects case creation by controlling which case types a user can access. This impacts the instructions for selecting a case type during case creation.",
       "sectionToUpdate": "How to Create a Case in Hi Marley",
       "proposedEditCount": 1,
       "screenshotsFlagged": 1
     },
     {
-      "id": 55701292017043,
-      "title": "Auto Send Survey: Enable / Disable via Webhooks",
+      "id": 53557618485523,
+      "title": "Quiet Hours",
       "confidence": 0.85,
       "action": "update_existing",
-      "reason": "The article needs to update the 'Auto Send Survey' behavior to reflect that Auto Send Survey no longer fires when a Service case is resolved, which avoids survey fatigue on high-volume interactions.",
-      "sectionToUpdate": "Overview, Step 4: Enable (Re-Subscribe) Auto Send Survey",
-      "proposedEditCount": 2,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 10492482945299,
-      "title": "How to Login to the Mobile App",
-      "confidence": 0.85,
-      "action": "update_existing",
-      "reason": "The release notes indicate a more reliable sign-in for enterprise device management users and improvements to the workspace selection process, which should be reflected in the login instructions.",
-      "sectionToUpdate": "How to Login to the Mobile App",
+      "reason": "The release notes introduce a change where Quiet Hours are now based on the policyholder's own time zone using their zip or postal code, which is not fully captured in the current article.",
+      "sectionToUpdate": "How the timezone is selected",
       "proposedEditCount": 1,
-      "screenshotsFlagged": 2
+      "screenshotsFlagged": 1
     },
     {
-      "id": 24851991922451,
-      "title": "Sapiens P&C Coresuite Integration",
+      "id": 17393050033811,
+      "title": "Opt-in & Opt-Out Workflow for Texting",
       "confidence": 0.8,
       "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects the integration with Sapiens P&C Coresuite. The current article does not mention these new capabilities, which are relevant to the 'Store PDF Transcripts (on Claim Closure) and Media Files' feature.",
-      "sectionToUpdate": "Feature Breakdown",
+      "reason": "The release notes mention that French affirmative replies such as 'OUI' automatically update the policyholder's language preference to French. This affects the opt-in keywords listed in the article.",
+      "sectionToUpdate": "Step 1: Getting Consent",
       "proposedEditCount": 1,
       "screenshotsFlagged": 0
     },
     {
-      "id": 20033765020819,
-      "title": "Subscribe HTTP Webhook",
+      "id": 50182249464723,
+      "title": "Query All Operators",
       "confidence": 0.8,
       "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints for media and transcripts, which should be reflected in the webhook events table. The 'MEDIA_MESSAGE' event should now include a link to the new media endpoint.",
-      "sectionToUpdate": "Hi Marley Webhook Events Table",
+      "reason": "The release notes mention new Public API endpoints for streaming media and transcripts, which may affect the API response fields documented in this article.",
+      "sectionToUpdate": "Response Fields Breakdown",
       "proposedEditCount": 1,
       "screenshotsFlagged": 0
     }
@@ -81,8 +91,10 @@
   "newArticlesToCreate": [],
   "unflaggedFeatures": [
     "Reassign Cases When Deactivating a User",
+    "Expanded French-Canadian Support",
     "Share Xactimate Estimates Right from Hi Marley",
-    "Enhanced MyOrg Insights"
+    "Enhanced MyOrg Insights",
+    "Refreshed Sign-In Page"
   ],
   "warnings": []
 }
