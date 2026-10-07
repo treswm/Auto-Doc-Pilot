@@ -87,16 +87,74 @@ function textFromHtml(html) {
     .trim();
 }
 
+function normalizedHeading(value) {
+  return String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function articleHeadings(html) {
+  const headings = [];
+  const matcher = /<h([2-4])\b[^>]*>([\s\S]*?)<\/h\1>/gi;
+  let match;
+  while ((match = matcher.exec(String(html || "")))) {
+    headings.push({
+      start: match.index,
+      end: matcher.lastIndex,
+      level: Number(match[1]),
+      text: normalizedHeading(match[2]),
+    });
+  }
+  return headings;
+}
+
 function sectionRange(html, sectionName) {
-  const safeName = String(sectionName || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
-  if (!safeName) return null;
-  const heading = new RegExp(`<h([2-4])[^>]*>[\\s\\S]*?${safeName}[\\s\\S]*?<\\/h\\1>`, "i");
-  const match = heading.exec(html);
-  if (!match) return null;
-  const nextHeading = /<h[2-4][^>]*>/gi;
-  nextHeading.lastIndex = match.index + match[0].length;
-  const next = nextHeading.exec(html);
-  return { start: match.index, end: next ? next.index : html.length };
+  const target = normalizedHeading(sectionName);
+  if (!target) return null;
+  const headings = articleHeadings(html);
+  const index = headings.findIndex((heading) => heading.text === target);
+  if (index === -1) return null;
+  const heading = headings[index];
+  const next = headings.slice(index + 1).find((candidate) => candidate.level <= heading.level);
+  return { start: heading.start, end: next ? next.start : String(html || "").length };
+}
+
+function assertRevisionPreservesStructure(originalHtml, revisedHtml) {
+  const count = (headings) => headings.reduce((counts, heading) => {
+    counts.set(heading.text, (counts.get(heading.text) || 0) + 1);
+    return counts;
+  }, new Map());
+  const original = count(articleHeadings(originalHtml));
+  const revised = count(articleHeadings(revisedHtml));
+  for (const [heading, originalCount] of original) {
+    if ((revised.get(heading) || 0) < originalCount) {
+      throw new Error(`Safety check stopped the update because it would remove the existing "${heading}" heading.`);
+    }
+  }
+  const originalTextLength = textFromHtml(originalHtml).length;
+  const revisedTextLength = textFromHtml(revisedHtml).length;
+  if (originalTextLength && revisedTextLength < originalTextLength * 0.9) {
+    throw new Error("Safety check stopped the update because it would remove too much existing article content.");
+  }
+}
+
+function saveArticleBackup(article) {
+  const backupDir = path.join(process.cwd(), "local-data", "zendesk-backups");
+  fs.mkdirSync(backupDir, { recursive: true, mode: 0o700 });
+  const safeTimestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const backupPath = path.join(backupDir, `${article.id}-${safeTimestamp}.json`);
+  fs.writeFileSync(backupPath, JSON.stringify({
+    articleId: article.id,
+    title: article.title,
+    locale: article.locale || "en-us",
+    backedUpAt: new Date().toISOString(),
+    body: article.body || "",
+  }, null, 2), { mode: 0o600 });
+  return backupPath;
 }
 
 async function reviseArticleSections({ originalHtml, proposedCopy, releaseNotes, profile, articleTitle }) {
@@ -124,8 +182,12 @@ async function reviseArticleSections({ originalHtml, proposedCopy, releaseNotes,
     }, { label: `Revising "${section}" in "${articleTitle}"`, maxTotalWaitMs: 240_000 });
     if (completion.choices?.[0]?.finish_reason === "length") throw new Error(`The "${section}" update was too long to complete. No live update was made.`);
     const replacement = extractHtmlResponse(completion.choices?.[0]?.message?.content);
-    if (!/<h[2-4][^>]*>/i.test(replacement)) throw new Error(`The generated "${section}" update did not include its heading. No live update was made.`);
+    if (!sectionRange(replacement, section)) throw new Error(`The generated "${section}" update did not include its original heading. No live update was made.`);
+    if (textFromHtml(currentSectionHtml).length && textFromHtml(replacement).length < textFromHtml(currentSectionHtml).length * 0.6) {
+      throw new Error(`Safety check stopped the "${section}" update because it removed too much of that section.`);
+    }
     revisedHtml = `${revisedHtml.slice(0, range.start)}${replacement}${revisedHtml.slice(range.end)}`;
+    assertRevisionPreservesStructure(originalHtml, revisedHtml);
   }
   return revisedHtml;
 }
@@ -1595,6 +1657,7 @@ router.post("/apply-existing-update", requireAuth, async (req, res) => {
       profile,
       articleTitle: original.title,
     });
+    saveArticleBackup(original);
     await updateArticleBody(original.id, body, "en-us");
     const subdomain = process.env.ZENDESK_SUBDOMAIN || "himarley";
     const brand = getCurrentBrand();
