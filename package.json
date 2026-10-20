@@ -12,6 +12,7 @@
     "draft:release": "node scripts/draft-release-recommendations.js",
     "server": "node server.js",
     "dev": "concurrently \"npm run server\" \"vite\"",
+    "test": "node --test test/*.test.js",
     "restart": "pkill -f 'node server.js'; pkill -f 'vite'; npm run dev",
     "build": "vite build",
     "preview": "vite preview"

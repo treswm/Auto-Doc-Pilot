@@ -4,14 +4,15 @@
  */
 
 import express from "express";
+import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import multer from "multer";
 import PDFDocument from "pdfkit";
-import { requireAuth } from "../middleware/requireAuth.js";
+import { requireAuth, requireLocalAdmin } from "../middleware/requireAuth.js";
 import { processReleasePDF, cleanupUpload } from "../lib/pdf-processor.js";
 import { extractScreenshots } from "../lib/screenshot-extractor.js";
-import { htmlToText, processArticleFromUrl } from "../lib/article-processor.js";
+import { extractRelevantContent, htmlToText, processArticleFromUrl } from "../lib/article-processor.js";
 import { sanitizeAndParseJson } from "../lib/json-sanitizer.js";
 import { chatCompletionWithRetry, OpenAIError } from "../lib/openai-retry.js";
 import {
@@ -112,7 +113,7 @@ function articleHeadings(html) {
   return headings;
 }
 
-function sectionRange(html, sectionName) {
+export function sectionRange(html, sectionName) {
   const target = normalizedHeading(sectionName);
   if (!target) return null;
   const headings = articleHeadings(html);
@@ -123,7 +124,7 @@ function sectionRange(html, sectionName) {
   return { start: heading.start, end: next ? next.start : String(html || "").length };
 }
 
-function assertRevisionPreservesStructure(originalHtml, revisedHtml) {
+export function assertRevisionPreservesStructure(originalHtml, revisedHtml) {
   const count = (headings) => headings.reduce((counts, heading) => {
     counts.set(heading.text, (counts.get(heading.text) || 0) + 1);
     return counts;
@@ -157,6 +158,20 @@ function saveArticleBackup(article) {
   return backupPath;
 }
 
+function assertSafeHtml(html, label) {
+  const value = String(html || "");
+  if (/<(?:script|style|iframe|object|embed|form)\b/i.test(value)) {
+    throw new Error(`Safety check stopped the ${label}: generated HTML contains an unsupported element.`);
+  }
+  if (/\son\w+\s*=/i.test(value) || /javascript\s*:/i.test(value)) {
+    throw new Error(`Safety check stopped the ${label}: generated HTML contains an unsafe attribute.`);
+  }
+}
+
+function bodyHash(body) {
+  return crypto.createHash("sha256").update(String(body || "")).digest("hex");
+}
+
 async function reviseArticleSections({ originalHtml, proposedCopy, releaseNotes, profile, articleTitle }) {
   let revisedHtml = originalHtml;
   const editsBySection = new Map();
@@ -182,6 +197,7 @@ async function reviseArticleSections({ originalHtml, proposedCopy, releaseNotes,
     }, { label: `Revising "${section}" in "${articleTitle}"`, maxTotalWaitMs: 240_000 });
     if (completion.choices?.[0]?.finish_reason === "length") throw new Error(`The "${section}" update was too long to complete. No live update was made.`);
     const replacement = extractHtmlResponse(completion.choices?.[0]?.message?.content);
+    assertSafeHtml(replacement, `"${section}" update`);
     if (!sectionRange(replacement, section)) throw new Error(`The generated "${section}" update did not include its original heading. No live update was made.`);
     if (textFromHtml(currentSectionHtml).length && textFromHtml(replacement).length < textFromHtml(currentSectionHtml).length * 0.6) {
       throw new Error(`Safety check stopped the "${section}" update because it removed too much of that section.`);
@@ -1638,7 +1654,7 @@ router.post("/create-screenshot-draft", requireAuth, async (req, res) => {
  * POST /api/release-notes/apply-existing-update
  * Applies a recommended update directly to the existing article's live translation.
  */
-router.post("/apply-existing-update", requireAuth, async (req, res) => {
+router.post("/apply-existing-update", requireLocalAdmin, async (req, res) => {
   try {
     const { articleId, specificImpact, proposedCopy, screenshotsToUpdate } = req.body || {};
     if (!articleId) return res.status(400).json({ success: false, error: "articleId is required" });
@@ -1649,6 +1665,9 @@ router.post("/apply-existing-update", requireAuth, async (req, res) => {
     if (!releaseNotes) return res.status(400).json({ success: false, error: "No release notes are available for this session." });
 
     const original = await fetchArticle(articleId);
+    if (!hasTraceableChangeEvidence({ proposedCopy }, htmlToText(original.body || ""), releaseNotes)) {
+      return res.status(400).json({ success: false, error: "Safety check stopped the update because its article and release-note evidence could not be verified." });
+    }
     const profile = loadArticleWriterProfile();
     const body = await reviseArticleSections({
       originalHtml: original.body || "",
@@ -1658,7 +1677,18 @@ router.post("/apply-existing-update", requireAuth, async (req, res) => {
       articleTitle: original.title,
     });
     saveArticleBackup(original);
+    // Do not overwrite a colleague's edit that happened while the AI prepared
+    // the revision. Zendesk does not provide a compare-and-swap update here, so
+    // re-fetch immediately before publishing and compare the source body.
+    const current = await fetchArticle(original.id);
+    if (bodyHash(current.body) !== bodyHash(original.body)) {
+      return res.status(409).json({ success: false, error: "This article changed while the update was being prepared. Review the latest version and run the recommendation again." });
+    }
     await updateArticleBody(original.id, body, "en-us");
+    const published = await fetchArticle(original.id);
+    // Zendesk can normalize benign HTML on save, so validate preservation rather
+    // than comparing byte-for-byte markup after publishing.
+    assertRevisionPreservesStructure(original.body || "", published.body || "");
     const subdomain = process.env.ZENDESK_SUBDOMAIN || "himarley";
     const brand = getCurrentBrand();
     const editUrl = `https://${subdomain}.zendesk.com/knowledge/articles/${original.id}?brand_id=${brand.id}`;
@@ -1674,7 +1704,7 @@ router.post("/apply-existing-update", requireAuth, async (req, res) => {
  * POST /api/release-notes/create-new-article-draft
  * Creates an unpublished draft for a recommended new Help Center article.
  */
-router.post("/create-new-article-draft", requireAuth, async (req, res) => {
+router.post("/create-new-article-draft", requireLocalAdmin, async (req, res) => {
   try {
     const { sectionId, title, reason, suggestedPlacement, relatedFeatures } = req.body || {};
     if (!sectionId) return res.status(400).json({ success: false, error: "sectionId is required" });
@@ -1694,6 +1724,13 @@ router.post("/create-new-article-draft", requireAuth, async (req, res) => {
     }, { label: `Drafting new article "${title}"`, maxTotalWaitMs: 240_000 });
     if (completion.choices?.[0]?.finish_reason === "length") throw new Error("The generated article was too long to complete. Try a narrower article scope.");
     const body = extractHtmlResponse(completion.choices?.[0]?.message?.content);
+    assertSafeHtml(body, "new-article draft");
+    const existing = await searchArticles(String(title).trim(), "en-us", 20);
+    const normalizedTitle = normalizedHeading(title);
+    const duplicate = existing.find((candidate) => normalizedHeading(candidate.title) === normalizedTitle);
+    if (duplicate) {
+      return res.status(409).json({ success: false, error: `A Help Center article with this title already exists: "${duplicate.title}". Review that article instead of creating a duplicate.` });
+    }
     const permissionGroupId = await permissionGroupForSection(sectionId);
     const article = await createArticle({ sectionId, title: String(title).trim(), body, draft: true, permissionGroupId });
     const subdomain = process.env.ZENDESK_SUBDOMAIN || "himarley";
@@ -1959,7 +1996,7 @@ export default router;
  */
 router.post("/analyze-article-impact", requireAuth, async (req, res) => {
   try {
-    const { releaseNotes, articleTitle, articleContent, articleSectionName, articleCategoryName, articleImages, articleLastUpdated } = req.body;
+    const { releaseNotes, articleTitle, articleContent, articleSectionName, articleCategoryName, articleImages, articleLastUpdated, analysisHints } = req.body;
 
     if (!releaseNotes || !articleTitle || !articleContent) {
       return res.status(400).json({
@@ -1986,11 +2023,11 @@ router.post("/analyze-article-impact", requireAuth, async (req, res) => {
     }
 
     const rawArticleText = htmlToText(articleContent);
-    const articleText = rawArticleText.length > 8000
-      ? rawArticleText.substring(0, 8000) + "\n[... content truncated ...]"
-      : rawArticleText;
+    // Long articles must be analyzed around likely target sections, not simply
+    // from their first 8,000 characters where unrelated introductions dominate.
+    const articleText = extractRelevantContent(articleContent, analysisHints || [], 8000);
 
-    console.log(`🔍 Analyzing article: "${articleTitle}"${rawArticleText.length > 8000 ? ' (truncated to 8000 chars)' : ''}`);
+    console.log(`🔍 Analyzing article: "${articleTitle}"${rawArticleText.length > articleText.length ? ' (section-aware excerpt)' : ''}`);
 
     // Build image inventory block for user message (article-specific, so kept out of system prompt)
     let imageInventoryBlock = "";

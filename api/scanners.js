@@ -475,6 +475,10 @@ router.post("/search-and-flag", requireAuth, async (req, res) => {
             articleCategoryName,
             articleImages,
             articleLastUpdated: article.updated_at || null,
+            analysisHints: [
+              ...(article.affectedFeatures || []),
+              ...(Array.isArray(article.sectionToUpdate) ? article.sectionToUpdate : [article.sectionToUpdate]),
+            ].filter(Boolean),
           })
         });
 
@@ -856,6 +860,10 @@ async function writeRunLog(logData) {
   try {
     const logPath = path.join(process.cwd(), "config", "run_log.json");
     fs.writeFileSync(logPath, JSON.stringify(logData, null, 2), "utf-8");
+    const historyDir = path.join(process.cwd(), "local-data", "release-runs");
+    fs.mkdirSync(historyDir, { recursive: true, mode: 0o700 });
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    fs.writeFileSync(path.join(historyDir, `${stamp}-scan-summary.json`), JSON.stringify(logData, null, 2), { mode: 0o600 });
     console.log(`📋 Run log written → config/run_log.json`);
   } catch (e) {
     console.warn(`⚠️  Could not write run log: ${e.message}`);
@@ -871,6 +879,10 @@ async function writeReleaseDraftPlan(plan) {
     fs.mkdirSync(outputDir, { recursive: true });
     const planPath = path.join(outputDir, "release-draft-plan.json");
     fs.writeFileSync(planPath, JSON.stringify(plan, null, 2), "utf-8");
+    const historyDir = path.join(process.cwd(), "local-data", "release-runs");
+    fs.mkdirSync(historyDir, { recursive: true, mode: 0o700 });
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    fs.writeFileSync(path.join(historyDir, `${stamp}-draft-plan.json`), JSON.stringify(plan, null, 2), { mode: 0o600 });
     console.log(`📝 Release draft plan written → ${planPath}`);
   } catch (e) {
     console.warn(`⚠️  Could not write release draft plan: ${e.message}`);
