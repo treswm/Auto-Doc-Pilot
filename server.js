@@ -29,7 +29,7 @@ import approvalsRoutes from "./api/approvals.js";
 import approversRoutes from "./api/approvers.js";
 import feedbackRoutes from "./api/feedback.js";
 import articlesRoutes from "./api/articles.js";
-import oauthRoutes from "./api/oauth.js";
+import oauthRoutes, { refreshZendeskTokenIfNeeded } from "./api/oauth.js";
 import translationsRoutes from "./api/translations.js";
 import releaseNotesRoutes from "./api/release-notes.js";
 import scannersRoutes from "./api/scanners.js";
@@ -127,3 +127,9 @@ app.listen(PORT, () => {
   console.log(`🖥️  React UI: http://localhost:${process.env.REACT_PORT || 3000}`);
   console.log(`\n   npm run dev   → starts both servers together\n`);
 });
+
+// Keep the locally stored Zendesk access token fresh during long scan/review sessions.
+refreshZendeskTokenIfNeeded().catch((err) => console.warn(`⚠️  Zendesk token refresh skipped: ${err.message}`));
+setInterval(() => {
+  refreshZendeskTokenIfNeeded().catch((err) => console.warn(`⚠️  Zendesk token refresh failed: ${err.message}`));
+}, 5 * 60 * 1000).unref();

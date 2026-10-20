@@ -1,7 +1,6 @@
 /**
  * Auth middleware - protects API routes
- * Skips auth check if NODE_ENV=development and no session exists
- * (allows testing without logging in)
+ * Requires an authenticated local user for every protected route.
  */
 
 export function requireAuth(req, res, next) {
@@ -10,20 +9,29 @@ export function requireAuth(req, res, next) {
     return next();
   }
 
-  // Dev mode: allow through with a guest user
-  if (process.env.NODE_ENV === "development") {
-    req.user = { id: "dev", name: "Dev User", email: "dev@local", role: "admin" };
-    return next();
-  }
-
   res.status(401).json({ error: "Not authenticated" });
 }
 
 export function requireAdmin(req, res, next) {
   requireAuth(req, res, () => {
-    if (req.user?.role === "admin" || process.env.NODE_ENV === "development") {
+    if (req.user?.role === "admin") {
       return next();
     }
     res.status(403).json({ error: "Admin access required" });
+  });
+}
+
+// This installation is intentionally a local, single-administrator tool. Live
+// Zendesk writes must never be available to a viewer or another network device.
+export function requireLocalAdmin(req, res, next) {
+  requireAdmin(req, res, () => {
+    const remoteAddress = req.socket?.remoteAddress || "";
+    const isLocal = remoteAddress === "::1"
+      || remoteAddress === "127.0.0.1"
+      || remoteAddress === "::ffff:127.0.0.1";
+    if (!isLocal) {
+      return res.status(403).json({ error: "Live publishing is available only from this computer." });
+    }
+    next();
   });
 }

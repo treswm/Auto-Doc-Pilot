@@ -11,7 +11,7 @@ const router = express.Router();
 const APPROVERS_PATH = "config/approvers.json";
 
 // POST /api/auth/login
-// POC: accepts any email that matches an approver, or any email for dev mode
+// Local installation: only configured approvers may sign in.
 router.post("/login", (req, res) => {
   const { email } = req.body;
 
@@ -32,22 +32,17 @@ router.post("/login", (req, res) => {
     (a) => a.email?.toLowerCase() === email.toLowerCase()
   );
 
-  // Build user object
-  const user = knownApprover
-    ? {
-        id: knownApprover.slack_user_id || email,
-        name: knownApprover.name,
-        email: knownApprover.email,
-        role: knownApprover.role,
-        source: "approvers_list",
-      }
-    : {
-        id: email,
-        name: email.split("@")[0],
-        email,
-        role: "viewer",
-        source: "guest",
-      };
+  if (!knownApprover) {
+    return res.status(403).json({ error: "This email is not authorized for this local installation." });
+  }
+
+  const user = {
+    id: knownApprover.slack_user_id || email,
+    name: knownApprover.name,
+    email: knownApprover.email,
+    role: knownApprover.role,
+    source: "approvers_list",
+  };
 
   // Save to session
   req.session.user = user;

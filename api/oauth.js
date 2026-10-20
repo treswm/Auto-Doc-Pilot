@@ -43,15 +43,24 @@ function createPkcePair() {
   return { verifier, challenge };
 }
 
-function saveAccessToken(accessToken) {
+function saveAccessToken(tokenData) {
   const envPath = path.join(process.cwd(), '.env');
   const existing = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : '';
-  const entry = `ZENDESK_OAUTH_ACCESS_TOKEN=${accessToken}`;
-  const next = /^ZENDESK_OAUTH_ACCESS_TOKEN=.*$/m.test(existing)
-    ? existing.replace(/^ZENDESK_OAUTH_ACCESS_TOKEN=.*$/m, entry)
-    : `${existing}${existing && !existing.endsWith('\n') ? '\n' : ''}${entry}\n`;
+  const expiresAt = new Date(Date.now() + (tokenData.expires_in || 1800) * 1000).toISOString();
+  const entries = {
+    ZENDESK_OAUTH_ACCESS_TOKEN: tokenData.access_token,
+    ZENDESK_OAUTH_REFRESH_TOKEN: tokenData.refresh_token || process.env.ZENDESK_OAUTH_REFRESH_TOKEN || '',
+    ZENDESK_OAUTH_EXPIRES_AT: expiresAt,
+  };
+  let next = existing;
+  for (const [key, value] of Object.entries(entries)) {
+    const entry = `${key}=${value}`;
+    next = new RegExp(`^${key}=.*$`, 'm').test(next)
+      ? next.replace(new RegExp(`^${key}=.*$`, 'm'), entry)
+      : `${next}${next && !next.endsWith('\n') ? '\n' : ''}${entry}\n`;
+    process.env[key] = value;
+  }
   fs.writeFileSync(envPath, next, { mode: 0o600 });
-  process.env.ZENDESK_OAUTH_ACCESS_TOKEN = accessToken;
 }
 
 /**
@@ -162,15 +171,7 @@ router.get('/callback', async (req, res) => {
 
     const tokenData = await tokenRes.json();
 
-    const tokenObj = {
-      access_token: tokenData.access_token,
-      token_type: tokenData.token_type || 'Bearer',
-      expires_in: tokenData.expires_in || 3600,
-      obtained_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + (tokenData.expires_in || 3600) * 1000).toISOString(),
-    };
-
-    saveAccessToken(tokenObj.access_token);
+    saveAccessToken(tokenData);
     res.clearCookie('zendesk_oauth_state', { path: '/api/oauth' });
     res.clearCookie('zendesk_oauth_verifier', { path: '/api/oauth' });
     console.log('✅ OAuth token obtained');
@@ -178,7 +179,7 @@ router.get('/callback', async (req, res) => {
     res.json({ 
       success: true, 
       message: 'Authorization successful. The Zendesk access token was saved locally and is active now.',
-      expires_at: tokenObj.expires_at,
+      expires_at: process.env.ZENDESK_OAUTH_EXPIRES_AT,
     });
   } catch (err) {
     console.error('❌ Token exchange error:', err.message);
@@ -187,23 +188,11 @@ router.get('/callback', async (req, res) => {
 });
 
 /**
- * GET /api/oauth/token
- * Returns current valid token (refreshes if needed)
- */
-router.get('/token', async (req, res) => {
-  try {
-    const token = await getValidToken();
-    res.json({ access_token: token });
-  } catch (err) {
-    res.status(401).json({ error: err.message });
-  }
-});
-
-/**
  * Get the configured access token from .env
  * @returns {Promise<string>} Valid access token
  */
 export async function getValidToken() {
+  await refreshZendeskTokenIfNeeded();
   if (process.env.ZENDESK_OAUTH_ACCESS_TOKEN) {
     console.log('✓ Using token from .env');
     return process.env.ZENDESK_OAUTH_ACCESS_TOKEN;
@@ -212,6 +201,37 @@ export async function getValidToken() {
   throw new Error(
     'No Zendesk OAuth token configured. Set ZENDESK_OAUTH_ACCESS_TOKEN in .env or use /api/oauth/authorize to generate one.'
   );
+}
+
+// Refresh proactively so scan and publish workflows do not fail halfway through
+// a long run. Zendesk rotates refresh tokens, so persist the returned replacement.
+export async function refreshZendeskTokenIfNeeded() {
+  const expiresAt = Date.parse(process.env.ZENDESK_OAUTH_EXPIRES_AT || '');
+  if (Number.isFinite(expiresAt) && expiresAt > Date.now() + 2 * 60 * 1000) return false;
+  const refreshToken = process.env.ZENDESK_OAUTH_REFRESH_TOKEN;
+  if (!refreshToken) return false;
+
+  const params = new URLSearchParams({
+    grant_type: 'refresh_token',
+    refresh_token: refreshToken,
+    client_id: ZENDESK_CLIENT_ID,
+  });
+  if (ZENDESK_OAUTH_CLIENT_KIND === 'confidential') {
+    if (!ZENDESK_CLIENT_SECRET) throw new Error('ZENDESK_CLIENT_SECRET not configured');
+    params.set('client_secret', ZENDESK_CLIENT_SECRET);
+  }
+  const response = await fetch(TOKEN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => 'Unknown OAuth refresh error');
+    throw new Error(`Zendesk token refresh failed: ${detail}`);
+  }
+  saveAccessToken(await response.json());
+  console.log('✅ Zendesk access token refreshed');
+  return true;
 }
 
 export default router;
