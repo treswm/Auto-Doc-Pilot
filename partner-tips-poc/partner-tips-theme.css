@@ -1,0 +1,152 @@
+/* ==============================================================
+   PARTNER TIPS — Theme CSS
+   Add this to the bottom of your theme's style.css
+   ============================================================== */
+
+/* --- Selector bar --- */
+.pt-fieldset {
+  border: 1px solid #e2e6ed;
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin: 0 0 16px;
+  background: #fff;
+}
+.pt-legend {
+  font-size: 16px;
+  font-weight: 700;
+  color: #263456;
+  padding: 0 4px;
+}
+.pt-hint {
+  font-size: 13px;
+  color: #5a6a84;
+  margin: 4px 0 16px;
+}
+
+.pt-lob-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pt-lob-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5a6a84;
+  margin-bottom: 6px;
+}
+.pt-lob-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pt-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px 6px 8px;
+  border: 1px solid #e2e6ed;
+  border-radius: 999px;
+  background: #f5f7fa;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #415271;
+  user-select: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.pt-toggle:hover {
+  border-color: #65c9c9;
+}
+.pt-toggle input[type="checkbox"] {
+  accent-color: #F9685D;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+.pt-toggle.pt-checked {
+  background: #fde7df;
+  border-color: #F9685D;
+  color: #263456;
+}
+
+.pt-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e6ed;
+}
+.pt-btn {
+  background: #fff;
+  border: 1px solid #e2e6ed;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #415271;
+  cursor: pointer;
+}
+.pt-btn:hover {
+  background: #f5f7fa;
+}
+
+/* --- Status line --- */
+#partner-status {
+  font-size: 13px;
+  color: #5a6a84;
+  margin: 0 0 20px;
+  min-height: 1.6em;
+}
+
+/* --- Partner sections: hidden by default when JS is active --- */
+.article-body.pt-active .partner-tips {
+  display: none;
+  border: 1px solid #e2e6ed;
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  background: #fff;
+}
+.article-body.pt-active .partner-tips.pt-visible {
+  display: block;
+}
+
+/* No-JS fallback: all sections visible with basic styling */
+.article-body:not(.pt-active) .partner-tips {
+  border: 1px solid #e2e6ed;
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  background: #fff;
+}
+
+/* Partner section headings */
+.partner-tips h3 {
+  margin-top: 0;
+  color: #263456;
+}
+.partner-tips h4 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #5a6a84;
+  margin: 16px 0 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pt-fieldset {
+    padding: 16px;
+  }
+  .pt-lob-options {
+    gap: 6px;
+  }
+  .pt-toggle {
+    font-size: 13px;
+    padding: 5px 10px 5px 6px;
+  }
+}

@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unite Self-Serve Quick Reference</title>
+<style>
+  :root {
+    --hm-coral: #F9685D;
+    --hm-navy: #263456;
+    --hm-teal: #65C9C9;
+    --hm-slate: #415271;
+    --hm-orange: #FCA463;
+    --hm-bg: #F5F7FA;
+    --hm-surface: #FFFFFF;
+    --hm-line: #E2E6ED;
+    --hm-text: #263456;
+    --hm-text-soft: #5A6A84;
+    --hm-good: #1E7A4E;
+    --hm-good-tint: #E1F3E9;
+    --hm-accent-tint: #FDE7DF;
+    --radius: 8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--hm-bg);
+    color: var(--hm-text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page-header {
+    background: var(--hm-navy);
+    color: #fff;
+    padding: 32px 16px;
+    text-align: center;
+  }
+  .page-header h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    font-weight: 700;
+  }
+  .page-header p {
+    margin: 0;
+    font-size: 15px;
+    opacity: 0.85;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  /* --- Partner selector bar --- */
+  .partner-selector {
+    background: var(--hm-surface);
+    border: 1px solid var(--hm-line);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin: 24px auto;
+    max-width: 900px;
+  }
+  .partner-selector fieldset {
+    border: none;
+    margin: 0;
+    padding: 0;
+  }
+  .partner-selector legend {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--hm-navy);
+    margin-bottom: 4px;
+    padding: 0;
+  }
+  .selector-hint {
+    font-size: 13px;
+    color: var(--hm-text-soft);
+    margin-bottom: 16px;
+  }
+
+  .lob-group {
+    margin-bottom: 14px;
+  }
+  .lob-group:last-child { margin-bottom: 0; }
+  .lob-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--hm-text-soft);
+    margin-bottom: 8px;
+  }
+  .lob-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .partner-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px 6px 8px;
+    border: 1px solid var(--hm-line);
+    border-radius: 999px;
+    background: var(--hm-bg);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--hm-slate);
+    user-select: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .partner-toggle:hover {
+    border-color: var(--hm-teal);
+  }
+  .partner-toggle input[type="checkbox"] {
+    accent-color: var(--hm-coral);
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    cursor: pointer;
+  }
+  .partner-toggle.checked {
+    background: var(--hm-accent-tint);
+    border-color: var(--hm-coral);
+    color: var(--hm-navy);
+  }
+
+  .selector-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--hm-line);
+  }
+  .selector-controls button {
+    background: none;
+    border: 1px solid var(--hm-line);
+    border-radius: var(--radius);
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--hm-slate);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .selector-controls button:hover {
+    background: var(--hm-bg);
+  }
+  .status-text {
+    font-size: 13px;
+    color: var(--hm-text-soft);
+    margin-left: auto;
+  }
+
+  /* --- Partner tips content --- */
+  .tips-container {
+    max-width: 900px;
+    margin: 0 auto 40px;
+  }
+
+  .placeholder-message {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--hm-text-soft);
+    font-size: 15px;
+  }
+  .placeholder-message .icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .partner-tips {
+    display: none;
+    background: var(--hm-surface);
+    border: 1px solid var(--hm-line);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease;
+  }
+  .partner-tips.visible {
+    display: block;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .partner-tips { animation: none; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .partner-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    background: var(--hm-navy);
+    color: #fff;
+  }
+  .partner-name {
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .partner-use-case {
+    font-size: 13px;
+    opacity: 0.8;
+    margin-top: 2px;
+  }
+  .partner-lob {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: rgba(255,255,255,0.15);
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .partner-tagline {
+    padding: 12px 20px;
+    font-size: 14px;
+    color: var(--hm-text-soft);
+    font-style: italic;
+    border-bottom: 1px solid var(--hm-line);
+  }
+
+  .partner-body {
+    padding: 20px;
+  }
+
+  .events-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 600px) {
+    .events-grid { grid-template-columns: 1fr; }
+  }
+
+  .events-col {
+    background: var(--hm-bg);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .events-col-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+  }
+  .events-col.ph .events-col-label { color: var(--hm-good); }
+  .events-col.adj .events-col-label { color: var(--hm-coral); }
+  .events-col ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+    color: var(--hm-text-soft);
+  }
+  .events-col li { margin-bottom: 6px; }
+  .events-col li:last-child { margin-bottom: 0; }
+  .event-count {
+    font-size: 11px;
+    color: var(--hm-text-soft);
+    font-weight: 400;
+    margin-left: 4px;
+  }
+
+  .simple-event {
+    background: var(--hm-bg);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  .simple-event strong { color: var(--hm-navy); }
+  .token {
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 0.9em;
+    background: var(--hm-accent-tint);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--hm-coral);
+  }
+
+  .partner-note {
+    font-size: 13px;
+    color: var(--hm-text-soft);
+    padding: 12px 16px;
+    background: var(--hm-bg);
+    border-radius: var(--radius);
+    border-left: 3px solid var(--hm-teal);
+  }
+
+  .confirm-flag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #96650F;
+    background: #FBEEDA;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+
+  /* --- Shared sections (always visible) --- */
+  .shared-content {
+    max-width: 900px;
+    margin: 0 auto 40px;
+  }
+  .shared-section {
+    background: var(--hm-surface);
+    border: 1px solid var(--hm-line);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .shared-section-header {
+    padding: 16px 20px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--hm-navy);
+    border-bottom: 1px solid var(--hm-line);
+    background: var(--hm-bg);
+  }
+  .shared-section-body {
+    padding: 20px;
+  }
+
+  .framework-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 600px) {
+    .framework-strip { grid-template-columns: 1fr; }
+  }
+  .fw-card {
+    border: 1px solid var(--hm-line);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+  }
+  .fw-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--hm-accent-tint);
+    color: var(--hm-coral);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 15px;
+    margin: 0 auto 10px;
+  }
+  .fw-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .fw-sub { font-size: 12px; color: var(--hm-text-soft); }
+
+  .do-dont {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 600px) {
+    .do-dont { grid-template-columns: 1fr; }
+  }
+  .dd-card {
+    border: 1px solid var(--hm-line);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .dd-card.do { border-top: 3px solid var(--hm-good); }
+  .dd-card.dont { border-top: 3px solid var(--hm-coral); }
+  .dd-card h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 10px;
+  }
+  .dd-card.do h3 { color: var(--hm-good); }
+  .dd-card.dont h3 { color: var(--hm-coral); }
+  .dd-card ul { margin: 0; padding-left: 18px; font-size: 14px; }
+  .dd-card li { margin-bottom: 8px; }
+  .dd-card li:last-child { margin-bottom: 0; }
+
+  .faq { display: flex; flex-direction: column; gap: 1px; background: var(--hm-line); border: 1px solid var(--hm-line); border-radius: var(--radius); overflow: hidden; }
+  .faq-item { background: var(--hm-surface); padding: 14px 18px; }
+  .faq-q { font-weight: 600; font-size: 14px; margin: 0 0 6px; }
+  .faq-q::before { content: "Q: "; color: var(--hm-coral); font-weight: 700; }
+  .faq-a { font-size: 14px; color: var(--hm-text-soft); margin: 0; }
+
+  .page-footer {
+    text-align: center;
+    padding: 24px 16px 40px;
+    font-size: 13px;
+    color: var(--hm-text-soft);
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="container">
+    <h1>Unite Self-Serve Quick Reference</h1>
+    <p>Select the partners your carrier has live to see setup tips and event details specific to each integration.</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Partner selector -->
+  <div class="partner-selector" role="region" aria-label="Partner selection">
+    <fieldset>
+      <legend>Select your partners</legend>
+      <p class="selector-hint">Toggle the partners this carrier has live — the reference below updates automatically.</p>
+
+      <div class="lob-group">
+        <div class="lob-label">Auto</div>
+        <div class="lob-options" id="lob-auto"></div>
+      </div>
+      <div class="lob-group">
+        <div class="lob-label">Property</div>
+        <div class="lob-options" id="lob-property"></div>
+      </div>
+      <div class="lob-group">
+        <div class="lob-label">Workers' Comp</div>
+        <div class="lob-options" id="lob-wc"></div>
+      </div>
+    </fieldset>
+
+    <div class="selector-controls">
+      <button type="button" id="btn-select-all">Select all</button>
+      <button type="button" id="btn-clear">Clear</button>
+      <div class="status-text" id="status" aria-live="polite" aria-atomic="true"></div>
+    </div>
+  </div>
+
+  <!-- Dynamic partner tips -->
+  <div class="tips-container" id="tips-container">
+
+    <div class="placeholder-message" id="placeholder">
+      <span class="icon" aria-hidden="true">&#9898;</span>
+      Select a partner above to see tips and event details.
+    </div>
+
+    <!-- Agero -->
+    <section class="partner-tips" data-partner="agero">
+      <div class="partner-header">
+        <div>
+          <div class="partner-name">Agero</div>
+          <div class="partner-use-case">Secondary Tow</div>
+        </div>
+        <span class="partner-lob">Auto</span>
+      </div>
+      <div class="partner-tagline">Roadside assistance and accident management at scale</div>
+      <div class="partner-body">
+        <div class="events-grid">
+          <div class="events-col ph">
+            <div class="events-col-label">Policyholder events <span class="event-count">(4)</span></div>
+            <ul>
+              <li>Vehicle Release Required</li>
+              <li>Missing Car Keys</li>
+              <li>Advising Case Cancellation</li>
+              <li>Delivery Confirmation</li>
+            </ul>
+          </div>
+          <div class="events-col adj">
+            <div class="events-col-label">Adjuster-only events <span class="event-count">(9)</span></div>
+            <ul>
+              <li>Case Created in Agero</li>
+              <li>Vehicle Release Required — Review Details</li>
+              <li>Missing Damage Information</li>
+              <li>Missing VIN/License Plate</li>
+              <li>Advise Body Shop Refused Vehicle</li>
+              <li>Need Tow-To Destination</li>
+              <li>Approval of Charges Needed</li>
+              <li>Long Distance Tow</li>
+              <li>SLM Specialty Tow</li>
+            </ul>
+          </div>
+        </div>
+        <div class="partner-note">13 events across both categories are already mapped — the safest default for the first live demo.</div>
+      </div>
+    </section>
+
+    <!-- Copart -->
+    <section class="partner-tips" data-partner="copart">
+      <div class="partner-header">
+        <div>
+          <div class="partner-name">Copart</div>
+        </div>
+        <span class="partner-lob">Auto</span>
+      </div>
+      <div class="partner-body">
+        <div class="simple-event">
+          <strong>Example event:</strong> Personal Items Reminder<br>
+          <strong>Tokens:</strong> <span class="token">&lt;Salvage Yard Location&gt;</span>
+        </div>
+        <div class="partner-note">Total-loss / salvage reminder messaging. <span class="confirm-flag">Confirm details</span></div>
+      </div>
+    </section>
+
+    <!-- Sedgwick -->
+    <section class="partner-tips" data-partner="sedgwick">
+      <div class="partner-header">
+        <div>
+          <div class="partner-name">Sedgwick</div>
+          <div class="partner-use-case">Field Appraisal + Direct Repair</div>
+        </div>
+        <span class="partner-lob">Auto</span>
+      </div>
+      <div class="partner-tagline">Two workflows: independent adjusters appraising on-location, and status updates as a vehicle moves through direct repair</div>
+      <div class="partner-body">
+        <div class="events-grid">
+          <div class="events-col ph">
+            <div class="events-col-label">Policyholder events <span class="event-count">(9)</span></div>
+            <ul>
+              <li>Appraisal — Dispatch to Appraisal</li>
+              <li>Appraisal — Claim Completed</li>
+              <li>Appraisal — Supplement Opened</li>
+              <li>Appraisal — Client Revision Opened</li>
+              <li>Estimate Approved</li>
+              <li>Repair Scheduled</li>
+              <li>Repairs Started</li>
+              <li>Estimate Completion Date Change</li>
+              <li>Repairs Completed</li>
+            </ul>
+          </div>
+          <div class="events-col adj">
+            <div class="events-col-label">Adjuster-only events <span class="event-count">(3)</span></div>
+            <ul>
+              <li>More Information Needed</li>
+              <li>Internal User Comment</li>
+              <li>Total Loss Recommended</li>
+            </ul>
+          </div>
+        </div>
+        <div class="partner-note">Two use cases in one feed — Field Appraisal and Direct Repair. Confirm with the carrier which they need before demoing.</div>
+      </div>
+    </section>
+
+    <!-- CCC -->
+    <section class="partner-tips" data-partner="ccc">
+      <div class="partner-header">
+        <div>
+          <div class="partner-name">CCC</div>
+          <div class="partner-use-case">Policyholder Self Service — Vehicle Estimation</div>
+        </div>
+        <span class="partner-lob">Auto</span>
+      </div>
+      <div class="partner-tagline">Policyholders use photos/videos with CCC Quick Estimate for self-service vehicle estimation</div>
+      <div class="partner-body">
+        <div class="events-grid">
+          <div class="events-col ph">
+            <div class="events-col-label">Policyholder events <span class="event-count">(7)</span></div>
+            <ul>
+              <li>Quick Estimate link issued</li>
+              <li>Quick Estimate link reminder</li>
+              <li>Quick Estimate link completed</li>
+              <li>Quick Estimate Additional Task: Waiting on Images</li>
+              <li>Quick Estimate Additional Task: Returned Images</li>
+              <li>Quick Estimate Available</li>
+              <li>Quick Estimate Reviewed by Consumer</li>
+            </ul>
+          </div>
+          <div class="events-col adj">
+            <div class="events-col-label">Adjuster-only events <span class="event-count">(1)</span></div>
+            <ul>
+              <li>Quick Estimate assignment reassigned</li>
+            </ul>
+          </div>
+        </div>
+        <div class="partner-note">Carrier still enables CCC directly with their rep and shares a feed number first — confirm that step is done before demoing this one.</div>
+      </div>
+    </section>
+
+    <!-- Enterprise -->
+    <section class="partner-tips" data-partner="enterprise">
+      <div class="partner-header">
+        <div>
+          <div class="partner-name">Enterprise</div>
+        </div>
+        <span class="partner-lob">Auto</span>
+      </div>
+      <div class="partner-body">
+        <div class="simple-event">
+          <strong>Example event:</strong> Rental Confirmation<br>
+          <strong>Tokens:</strong> <span class="token">&lt;Confirmation Number&gt;</span>, <span class="token">&lt;Rental Phone Number&gt;</span>
+        </div>
+        <div class="partner-note">Simple confirmation message — a good low-stakes second example.</div>
+      </div>
+    </section>
+
+    <!-- PLNAR -->
+    <section class="partner-tips" data-partner="plnar">
+      <div class="partner-header">
+        <div>
+          <div class="partner-name">PLNAR</div>
+          <div class="partner-use-case">Policyholder Structural Estimation Self Service</div>
+        </div>
+        <span class="partner-lob">Property</span>
+      </div>
+      <div class="partner-tagline">Policyholders capture images of interior loss to generate a complete set of data and fully measurable, interactive 3D models and 2D plans</div>
+      <div class="partner-body">
+        <div class="events-grid">
+          <div class="events-col ph">
+            <div class="events-col-label">Policyholder events <span class="event-count">(5)</span></div>
+            <ul>
+              <li>Project Invite Sent</li>
+              <li>24 Hour - Project Reminder</li>
+              <li>48 Hour - Project Reminder</li>
+              <li>72 Hour - Project Reminder</li>
+              <li>Project Submitted by Policyholder — Processing Underway</li>
+            </ul>
+          </div>
+          <div class="events-col adj">
+            <div class="events-col-label">Adjuster-only events <span class="event-count">(1)</span></div>
+            <ul>
+              <li>Project Processing Complete — Ready for Review</li>
+            </ul>
+          </div>
+        </div>
+        <div class="partner-note">A 5-message reminder cadence on the policyholder side; only completion alerts the adjuster.</div>
+      </div>
+    </section>
+
+    <!-- Hover -->
+    <section class="partner-tips" data-partner="hover">
+      <div class="partner-header">
+        <div>
+          <div class="partner-name">Hover</div>
+          <div class="partner-use-case">Policyholder Structural Estimation Self Service</div>
+        </div>
+        <span class="partner-lob">Property</span>
+      </div>
+      <div class="partner-tagline">Policyholders capture images of interior or exterior loss to generate accurate measurements of their home</div>
+      <div class="partner-body">
+        <div class="events-grid">
+          <div class="events-col ph">
+            <div class="events-col-label">Policyholder events <span class="event-count">(4)</span></div>
+            <ul>
+              <li>Hover Invite Sent</li>
+              <li>Reminder to Complete Damage Documentation</li>
+              <li>Policyholder Completed Damage Documentation</li>
+              <li>Hover Data Available for Review</li>
+            </ul>
+          </div>
+          <div class="events-col adj">
+            <div class="events-col-label">Adjuster-only events <span class="event-count">(3)</span></div>
+            <ul>
+              <li>Hover Job Issue</li>
+              <li>Hover Individual Model Issue</li>
+              <li>Hover Capture Request Deleted</li>
+            </ul>
+          </div>
+        </div>
+        <div class="partner-note">Event names are confirmed — exact token/message copy wasn't in this summary, so confirm live before demoing.</div>
+      </div>
+    </section>
+
+    <!-- One Inc -->
+    <section class="partner-tips" data-partner="oneinc">
+      <div class="partner-header">
+        <div>
+          <div class="partner-name">One Inc</div>
+        </div>
+        <span class="partner-lob">Workers' Comp</span>
+      </div>
+      <div class="partner-body">
+        <div class="simple-event">
+          <strong>Example event:</strong> Payment Issued<br>
+          <strong>Tokens:</strong> <span class="token">&lt;Payment Amount&gt;</span>
+        </div>
+        <div class="partner-note">This partner turned off policyholder texting after integrating — expect adjuster-only alerts here.</div>
+      </div>
+    </section>
+
+  </div><!-- /tips-container -->
+
+  <!-- Shared content (always visible) -->
+  <div class="shared-content">
+
+    <div class="shared-section">
+      <div class="shared-section-header">Every event, the same 3 moves</div>
+      <div class="shared-section-body">
+        <div class="framework-strip">
+          <div class="fw-card">
+            <div class="fw-num">1</div>
+            <div class="fw-title">Check the message</div>
+            <div class="fw-sub">Sync if needed, keep the tokens, read the wording</div>
+          </div>
+          <div class="fw-card">
+            <div class="fw-num">2</div>
+            <div class="fw-title">Choose who's notified</div>
+            <div class="fw-sub">Adjuster alert, policyholder text — or both</div>
+          </div>
+          <div class="fw-card">
+            <div class="fw-num">3</div>
+            <div class="fw-title">Test, then enable</div>
+            <div class="fw-sub">Internal test first, always</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="shared-section">
+      <div class="shared-section-header">Do's and don'ts</div>
+      <div class="shared-section-body">
+        <div class="do-dont">
+          <div class="dd-card do">
+            <h3>Do</h3>
+            <ul>
+              <li>Test every event before you turn it on</li>
+              <li>Start from the recommended wording, then adjust</li>
+              <li>Keep a note of any wording you change and why</li>
+            </ul>
+          </div>
+          <div class="dd-card dont">
+            <h3>Don't</h3>
+            <ul>
+              <li>Remove a token — the message will send without the real data</li>
+              <li>Schedule policyholder texts inside a blackout window</li>
+              <li>Assume a sync changes wording you've already customized — it never does</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="shared-section">
+      <div class="shared-section-header">Common questions</div>
+      <div class="shared-section-body">
+        <div class="faq">
+          <div class="faq-item"><p class="faq-q">What does "Update available" mean?</p><p class="faq-a">A partner added or changed something — there's a new event or option waiting for you to look at. Nothing has changed for your policyholders yet.</p></div>
+          <div class="faq-item"><p class="faq-q">Why is a new event disabled when it first shows up?</p><p class="faq-a">So nothing goes out until you've decided it should. Every event stays off until you turn it on.</p></div>
+          <div class="faq-item"><p class="faq-q">Will syncing overwrite wording I've already customized?</p><p class="faq-a">No. Anything you've edited stays exactly as you left it — a sync only brings in what's new.</p></div>
+          <div class="faq-item"><p class="faq-q">Can I turn an event off after I've enabled it?</p><p class="faq-a">Yes, anytime, with no downstream effect on the others.</p></div>
+          <div class="faq-item"><p class="faq-q">Something doesn't look right — who do I contact?</p><p class="faq-a">Reach out to your Hi Marley contact for help.</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="page-footer">
+    Unite Admin Enablement &middot; Hi Marley
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var PARTNERS = [
+    { id: 'agero', lob: 'auto' },
+    { id: 'copart', lob: 'auto' },
+    { id: 'sedgwick', lob: 'auto' },
+    { id: 'ccc', lob: 'auto' },
+    { id: 'enterprise', lob: 'auto' },
+    { id: 'plnar', lob: 'property' },
+    { id: 'hover', lob: 'property' },
+    { id: 'oneinc', lob: 'wc' }
+  ];
+
+  var sections = document.querySelectorAll('.partner-tips');
+  var partnerMap = {};
+  sections.forEach(function (s) {
+    partnerMap[s.getAttribute('data-partner')] = s;
+  });
+
+  var lobContainers = {
+    auto: document.getElementById('lob-auto'),
+    property: document.getElementById('lob-property'),
+    wc: document.getElementById('lob-wc')
+  };
+
+  var placeholder = document.getElementById('placeholder');
+  var statusEl = document.getElementById('status');
+  var selected = new Set();
+
+  function getPartnerLabel(id) {
+    var section = partnerMap[id];
+    if (!section) return id;
+    var nameEl = section.querySelector('.partner-name');
+    return nameEl ? nameEl.textContent : id;
+  }
+
+  function buildToggles() {
+    PARTNERS.forEach(function (p) {
+      var label = document.createElement('label');
+      label.className = 'partner-toggle';
+      var input = document.createElement('input');
+      input.type = 'checkbox';
+      input.value = p.id;
+      input.setAttribute('aria-label', getPartnerLabel(p.id));
+      label.appendChild(input);
+      label.appendChild(document.createTextNode(' ' + getPartnerLabel(p.id)));
+      lobContainers[p.lob].appendChild(label);
+    });
+  }
+
+  function readURL() {
+    var params = new URLSearchParams(window.location.search);
+    var raw = params.get('partners');
+    if (!raw) return;
+    raw.split(',').forEach(function (id) {
+      id = id.trim().toLowerCase();
+      if (partnerMap[id]) selected.add(id);
+    });
+  }
+
+  function writeURL() {
+    var arr = PARTNERS.filter(function (p) { return selected.has(p.id); }).map(function (p) { return p.id; });
+    var params = new URLSearchParams(window.location.search);
+    if (arr.length) {
+      params.set('partners', arr.join(','));
+    } else {
+      params.delete('partners');
+    }
+    var qs = params.toString();
+    var url = window.location.pathname + (qs ? '?' + qs : '');
+    history.replaceState(null, '', url);
+  }
+
+  function render() {
+    var visibleCount = 0;
+    PARTNERS.forEach(function (p) {
+      var section = partnerMap[p.id];
+      if (!section) return;
+      var show = selected.has(p.id);
+      section.classList.toggle('visible', show);
+      if (show) visibleCount++;
+    });
+
+    placeholder.style.display = visibleCount > 0 ? 'none' : 'block';
+
+    if (visibleCount === 0) {
+      statusEl.textContent = 'No partners selected';
+    } else if (visibleCount === 1) {
+      statusEl.textContent = 'Showing tips for 1 partner';
+    } else {
+      statusEl.textContent = 'Showing tips for ' + visibleCount + ' partners';
+    }
+
+    document.querySelectorAll('.partner-toggle').forEach(function (toggle) {
+      var cb = toggle.querySelector('input');
+      cb.checked = selected.has(cb.value);
+      toggle.classList.toggle('checked', cb.checked);
+    });
+
+    writeURL();
+  }
+
+  function handleToggle(e) {
+    var cb = e.target;
+    if (cb.tagName !== 'INPUT' || cb.type !== 'checkbox') return;
+    if (cb.checked) {
+      selected.add(cb.value);
+    } else {
+      selected.delete(cb.value);
+    }
+    render();
+  }
+
+  document.getElementById('btn-select-all').addEventListener('click', function () {
+    PARTNERS.forEach(function (p) { selected.add(p.id); });
+    render();
+  });
+
+  document.getElementById('btn-clear').addEventListener('click', function () {
+    selected.clear();
+    render();
+  });
+
+  document.querySelector('.partner-selector').addEventListener('change', handleToggle);
+
+  buildToggles();
+  readURL();
+  render();
+})();
+</script>
+</body>
+</html>

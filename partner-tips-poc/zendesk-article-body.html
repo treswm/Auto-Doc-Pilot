@@ -1,0 +1,200 @@
+<!-- ============================================================
+     PARTNER TIPS — ARTICLE BODY HTML
+     Paste this into the Zendesk article's Source Code view (<>).
+     The theme JS will inject checkboxes above and toggle visibility.
+     If JS fails, all sections remain visible (no-JS fallback).
+     ============================================================ -->
+
+<!-- Placeholder for JS-injected checkbox bar (JS creates this if missing) -->
+<div id="partner-selector"></div>
+
+<!-- Status line (JS updates this) -->
+<p id="partner-status"></p>
+
+<hr />
+
+<!-- ===== SHARED CONTENT (always visible) ===== -->
+
+<h2>Every event, the same 3 moves</h2>
+<ol>
+<li><strong>Check the message</strong> — Sync if needed, keep the tokens, read the wording</li>
+<li><strong>Choose who's notified</strong> — Adjuster alert, policyholder text, or both</li>
+<li><strong>Test, then enable</strong> — Internal test first, always</li>
+</ol>
+
+<h2>Do's and don'ts</h2>
+<table>
+<thead>
+<tr><th>Do</th><th>Don't</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<ul>
+<li>Test every event before you turn it on</li>
+<li>Start from the recommended wording, then adjust</li>
+<li>Keep a note of any wording you change and why</li>
+</ul>
+</td>
+<td>
+<ul>
+<li>Remove a token — the message will send without the real data</li>
+<li>Schedule policyholder texts inside a blackout window</li>
+<li>Assume a sync changes wording you've already customized — it never does</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Common questions</h2>
+<p><strong>Q: What does "Update available" mean?</strong><br />A partner added or changed something — there's a new event or option waiting for you to look at. Nothing has changed for your policyholders yet.</p>
+<p><strong>Q: Why is a new event disabled when it first shows up?</strong><br />So nothing goes out until you've decided it should. Every event stays off until you turn it on.</p>
+<p><strong>Q: Will syncing overwrite wording I've already customized?</strong><br />No. Anything you've edited stays exactly as you left it — a sync only brings in what's new.</p>
+<p><strong>Q: Can I turn an event off after I've enabled it?</strong><br />Yes, anytime, with no downstream effect on the others.</p>
+<p><strong>Q: Something doesn't look right — who do I contact?</strong><br />Reach out to your Hi Marley contact for help.</p>
+
+<hr />
+
+<h2>Partner notes</h2>
+<p><em>Select partners above to see their specific setup details and events.</em></p>
+
+<!-- ===== PARTNER SECTIONS (toggled by JS) ===== -->
+
+<!-- Agero -->
+<div class="partner-tips" data-partner="agero" data-partner-name="Agero" data-lob="Auto">
+<h3>Agero — Secondary Tow</h3>
+<p><em>Roadside assistance and accident management at scale</em></p>
+<h4>Policyholder events (4)</h4>
+<ul>
+<li>Vehicle Release Required</li>
+<li>Missing Car Keys</li>
+<li>Advising Case Cancellation</li>
+<li>Delivery Confirmation</li>
+</ul>
+<h4>Adjuster-only events (9)</h4>
+<ul>
+<li>Case Created in Agero</li>
+<li>Vehicle Release Required — Review Details</li>
+<li>Missing Damage Information</li>
+<li>Missing VIN/License Plate</li>
+<li>Advise Body Shop Refused Vehicle</li>
+<li>Need Tow-To Destination</li>
+<li>Approval of Charges Needed</li>
+<li>Long Distance Tow</li>
+<li>SLM Specialty Tow</li>
+</ul>
+<p><strong>Note:</strong> 13 events across both categories are already mapped — the safest default for the first live demo.</p>
+</div>
+
+<!-- Copart -->
+<div class="partner-tips" data-partner="copart" data-partner-name="Copart" data-lob="Auto">
+<h3>Copart</h3>
+<p><strong>Example event:</strong> Personal Items Reminder<br />
+<strong>Tokens:</strong> <code>&lt;Salvage Yard Location&gt;</code></p>
+<p><strong>Note:</strong> Total-loss / salvage reminder messaging. <em>(Confirm details)</em></p>
+</div>
+
+<!-- Sedgwick -->
+<div class="partner-tips" data-partner="sedgwick" data-partner-name="Sedgwick" data-lob="Auto">
+<h3>Sedgwick — Field Appraisal + Direct Repair</h3>
+<p><em>Two workflows: independent adjusters appraising on-location, and status updates as a vehicle moves through direct repair</em></p>
+<h4>Policyholder events (9)</h4>
+<ul>
+<li>Appraisal — Dispatch to Appraisal</li>
+<li>Appraisal — Claim Completed</li>
+<li>Appraisal — Supplement Opened</li>
+<li>Appraisal — Client Revision Opened</li>
+<li>Estimate Approved</li>
+<li>Repair Scheduled</li>
+<li>Repairs Started</li>
+<li>Estimate Completion Date Change</li>
+<li>Repairs Completed</li>
+</ul>
+<h4>Adjuster-only events (3)</h4>
+<ul>
+<li>More Information Needed</li>
+<li>Internal User Comment</li>
+<li>Total Loss Recommended</li>
+</ul>
+<p><strong>Note:</strong> Two use cases in one feed — Field Appraisal and Direct Repair. Confirm with the carrier which they need before demoing.</p>
+</div>
+
+<!-- CCC -->
+<div class="partner-tips" data-partner="ccc" data-partner-name="CCC" data-lob="Auto">
+<h3>CCC — Policyholder Self Service — Vehicle Estimation</h3>
+<p><em>Policyholders use photos/videos with CCC Quick Estimate for self-service vehicle estimation</em></p>
+<h4>Policyholder events (7)</h4>
+<ul>
+<li>Quick Estimate link issued</li>
+<li>Quick Estimate link reminder</li>
+<li>Quick Estimate link completed</li>
+<li>Quick Estimate Additional Task: Waiting on Images</li>
+<li>Quick Estimate Additional Task: Returned Images</li>
+<li>Quick Estimate Available</li>
+<li>Quick Estimate Reviewed by Consumer</li>
+</ul>
+<h4>Adjuster-only events (1)</h4>
+<ul>
+<li>Quick Estimate assignment reassigned</li>
+</ul>
+<p><strong>Note:</strong> Carrier still enables CCC directly with their rep and shares a feed number first — confirm that step is done before demoing this one.</p>
+</div>
+
+<!-- Enterprise -->
+<div class="partner-tips" data-partner="enterprise" data-partner-name="Enterprise" data-lob="Auto">
+<h3>Enterprise</h3>
+<p><strong>Example event:</strong> Rental Confirmation<br />
+<strong>Tokens:</strong> <code>&lt;Confirmation Number&gt;</code>, <code>&lt;Rental Phone Number&gt;</code></p>
+<p><strong>Note:</strong> Simple confirmation message — a good low-stakes second example.</p>
+</div>
+
+<!-- PLNAR -->
+<div class="partner-tips" data-partner="plnar" data-partner-name="PLNAR" data-lob="Property">
+<h3>PLNAR — Policyholder Structural Estimation Self Service</h3>
+<p><em>Policyholders capture images of interior loss to generate a complete set of data and fully measurable, interactive 3D models and 2D plans</em></p>
+<h4>Policyholder events (5)</h4>
+<ul>
+<li>Project Invite Sent</li>
+<li>24 Hour - Project Reminder</li>
+<li>48 Hour - Project Reminder</li>
+<li>72 Hour - Project Reminder</li>
+<li>Project Submitted by Policyholder — Processing Underway</li>
+</ul>
+<h4>Adjuster-only events (1)</h4>
+<ul>
+<li>Project Processing Complete — Ready for Review</li>
+</ul>
+<p><strong>Note:</strong> A 5-message reminder cadence on the policyholder side; only completion alerts the adjuster.</p>
+</div>
+
+<!-- Hover -->
+<div class="partner-tips" data-partner="hover" data-partner-name="Hover" data-lob="Property">
+<h3>Hover — Policyholder Structural Estimation Self Service</h3>
+<p><em>Policyholders capture images of interior or exterior loss to generate accurate measurements of their home</em></p>
+<h4>Policyholder events (4)</h4>
+<ul>
+<li>Hover Invite Sent</li>
+<li>Reminder to Complete Damage Documentation</li>
+<li>Policyholder Completed Damage Documentation</li>
+<li>Hover Data Available for Review</li>
+</ul>
+<h4>Adjuster-only events (3)</h4>
+<ul>
+<li>Hover Job Issue</li>
+<li>Hover Individual Model Issue</li>
+<li>Hover Capture Request Deleted</li>
+</ul>
+<p><strong>Note:</strong> Event names are confirmed — exact token/message copy wasn't in this summary, so confirm live before demoing.</p>
+</div>
+
+<!-- One Inc -->
+<div class="partner-tips" data-partner="oneinc" data-partner-name="One Inc" data-lob="Workers' Comp">
+<h3>One Inc</h3>
+<p><strong>Example event:</strong> Payment Issued<br />
+<strong>Tokens:</strong> <code>&lt;Payment Amount&gt;</code></p>
+<p><strong>Note:</strong> This partner turned off policyholder texting after integrating — expect adjuster-only alerts here.</p>
+</div>
+
+<hr />
+<p><em>Stuck on something? That's exactly what the check-in is for — note it and keep going. Nothing here is a one-shot; you can always come back and adjust an event after it's live.</em></p>
