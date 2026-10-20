@@ -15,6 +15,7 @@ function ReleasesTab({ user }) {
   const [totalArticlesFound, setTotalArticlesFound] = useState(0)
   const [flaggingLoading, setFlaggingLoading] = useState(false)
   const [articleStatuses, setArticleStatuses] = useState({})
+  const [selectedUpdateIds, setSelectedUpdateIds] = useState(() => new Set())
   const [previousReleases, setPreviousReleases] = useState([])
   const [selectedReleaseHistory, setSelectedReleaseHistory] = useState(null)
   const [articleReasons, setArticleReasons] = useState({})
@@ -47,6 +48,7 @@ function ReleasesTab({ user }) {
   const [articleDrafts, setArticleDrafts] = useState({})
   const [articleDraftLoading, setArticleDraftLoading] = useState({})
   const [newArticleSectionId, setNewArticleSectionId] = useState('')
+  const [newArticleSectionIds, setNewArticleSectionIds] = useState({})
   const [newArticleDrafts, setNewArticleDrafts] = useState({})
   const [newArticleDraftLoading, setNewArticleDraftLoading] = useState({})
   const [bulkDraftLoading, setBulkDraftLoading] = useState(false)
@@ -59,6 +61,27 @@ function ReleasesTab({ user }) {
       .then(data => { if (data.success && Array.isArray(data.sections)) setZendeskSections(data.sections) })
       .catch(() => {})
   }, [createNewArticles.length, zendeskSections.length])
+
+  // The recommendation includes a "Category > Section" placement. Match its
+  // final section name to Zendesk's live section list and preselect it. The
+  // reviewer can always choose a different destination before creating a draft.
+  useEffect(() => {
+    if (!zendeskSections.length || !createNewArticles.length) return
+    const normalize = value => String(value || '').replace(/[^a-z0-9]+/gi, ' ').trim().toLowerCase()
+    const recommended = {}
+    createNewArticles.forEach(rec => {
+      const parts = String(rec.suggestedPlacement || '').split('>')
+      const targetName = normalize(parts[parts.length - 1])
+      const match = targetName && zendeskSections.find(section => normalize(section.name) === targetName)
+      if (match) recommended[rec.title] = String(match.id)
+    })
+    if (Object.keys(recommended).length) {
+      setNewArticleSectionIds(prev => ({ ...recommended, ...prev }))
+      if (!newArticleSectionId && createNewArticles.length === 1) {
+        setNewArticleSectionId(Object.values(recommended)[0])
+      }
+    }
+  }, [createNewArticles, zendeskSections, newArticleSectionId])
 
   const handleBuildScreenshotDoc = async () => {
     setDocLoading(true)
@@ -154,7 +177,12 @@ function ReleasesTab({ user }) {
   }
 
   const handleCreateAllDrafts = async () => {
-    const updateCandidates = flaggedArticles.filter(article => article.proposedCopy?.length > 0 && !articleDrafts[article.id])
+    const updateCandidates = flaggedArticles.filter(article => (
+      article.proposedCopy?.length > 0
+      && !articleDrafts[article.id]
+      && !['updated', 'no_update'].includes(articleStatuses[article.id])
+      && selectedUpdateIds.has(article.id)
+    ))
     const canIncludeNew = createNewArticles.length > 0 && createNewArticles.length < 10
     if (canIncludeNew && !newArticleSectionId) {
       window.alert('Choose a Zendesk section for the new article drafts first.')
@@ -167,7 +195,7 @@ function ReleasesTab({ user }) {
       window.alert(access?.error || 'Could not verify Zendesk write access. Re-authorize the Zendesk connection before updating articles.')
       return
     }
-    const scope = `${updateCandidates.length} live article update${updateCandidates.length === 1 ? '' : 's'}${newCount ? ` and ${newCount} new article draft${newCount === 1 ? '' : 's'}` : ''}`
+    const scope = `${updateCandidates.length} selected live article update${updateCandidates.length === 1 ? '' : 's'}${newCount ? ` and ${newCount} new article draft${newCount === 1 ? '' : 's'}` : ''}`
     if (!window.confirm(`Apply ${scope}?\n\nExisting articles will be changed immediately. New articles, if any, remain unpublished drafts.`)) return
 
     setBulkDraftLoading(true)
@@ -209,8 +237,14 @@ function ReleasesTab({ user }) {
       window.alert('New-article drafting is limited to scans with fewer than 10 new article recommendations.')
       return
     }
-    if (!newArticleSectionId) {
-      window.alert('Choose a Zendesk section for new article drafts first.')
+    const sectionId = newArticleSectionIds[rec.title] || newArticleSectionId
+    if (!sectionId) {
+      window.alert('Choose a Zendesk section for this new article draft first.')
+      return
+    }
+    const access = await fetch('/api/release-notes/zendesk-write-status', { credentials: 'include' }).then(res => res.json()).catch(() => null)
+    if (!access?.canWrite) {
+      window.alert(access?.error || 'Could not verify Zendesk write access. Re-authorize the Zendesk connection before creating drafts.')
       return
     }
     if (!window.confirm(`Create an unpublished Zendesk draft for "${rec.title}"?`)) return
@@ -218,7 +252,7 @@ function ReleasesTab({ user }) {
     try {
       const res = await fetch('/api/release-notes/create-new-article-draft', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
-        body: JSON.stringify({ sectionId: newArticleSectionId, title: rec.title, reason: rec.reason, suggestedPlacement: rec.suggestedPlacement, relatedFeatures: rec.relatedFeatures || [] }),
+        body: JSON.stringify({ sectionId, title: rec.title, reason: rec.reason, suggestedPlacement: rec.suggestedPlacement, relatedFeatures: rec.relatedFeatures || [] }),
       })
       const data = await res.json()
       if (!data.success) throw new Error(data.error || 'Failed to create Zendesk draft')
@@ -711,6 +745,22 @@ function ReleasesTab({ user }) {
       ...prev,
       [articleId]: status
     }))
+    if (status === 'updated' || status === 'no_update') {
+      setSelectedUpdateIds(prev => {
+        const next = new Set(prev)
+        next.delete(articleId)
+        return next
+      })
+    }
+  }
+
+  const toggleArticleSelection = (articleId) => {
+    setSelectedUpdateIds(prev => {
+      const next = new Set(prev)
+      if (next.has(articleId)) next.delete(articleId)
+      else next.add(articleId)
+      return next
+    })
   }
 
   const updateArticleStatus = async (articleId, status) => {
@@ -1113,10 +1163,10 @@ function ReleasesTab({ user }) {
             <button
               className="btn btn-success"
               onClick={handleCreateAllDrafts}
-              disabled={bulkDraftLoading || (!flaggedArticles.some(article => article.proposedCopy?.length > 0 && !articleDrafts[article.id]) && !(createNewArticles.length > 0 && createNewArticles.length < 10))}
-              title="Creates unpublished Zendesk drafts only"
+              disabled={bulkDraftLoading || (!flaggedArticles.some(article => article.proposedCopy?.length > 0 && selectedUpdateIds.has(article.id) && !articleDrafts[article.id] && !['updated', 'no_update'].includes(articleStatuses[article.id])) && !(createNewArticles.length > 0 && createNewArticles.length < 10))}
+              title="Applies only explicitly selected, unreviewed recommendations"
             >
-              {bulkDraftLoading ? 'Applying updates…' : '⚡ Apply all updates now'}
+              {bulkDraftLoading ? 'Applying updates…' : `⚡ Apply selected updates now${selectedUpdateIds.size ? ` (${selectedUpdateIds.size})` : ''}`}
             </button>
           </div>
           {createNewArticles.length > 0 && (
@@ -1185,6 +1235,22 @@ function ReleasesTab({ user }) {
                       <strong>Why this article is needed:</strong>
                       <p>{rec.reason}</p>
                     </div>
+
+                    {createNewArticles.length < 10 && !isAdded && !isDismissed && (
+                      <div className="create-new-section-picker">
+                        <label htmlFor={`new-article-section-${idx}`}><strong>Zendesk draft section:</strong></label>
+                        <select
+                          id={`new-article-section-${idx}`}
+                          value={newArticleSectionIds[rec.title] || newArticleSectionId}
+                          onChange={event => setNewArticleSectionIds(prev => ({ ...prev, [rec.title]: event.target.value }))}
+                          disabled={newArticleDraftLoading[rec.title]}
+                        >
+                          <option value="">Choose a Zendesk section…</option>
+                          {zendeskSections.map(section => <option key={section.id} value={section.id}>{section.name}</option>)}
+                        </select>
+                        <small>Preselected from the recommendation when possible. You can move the draft in Zendesk later.</small>
+                      </div>
+                    )}
 
                     {isAdded ? (
                       /* ── Added state: green badge + undo + optional feedback ── */
@@ -1352,6 +1418,16 @@ function ReleasesTab({ user }) {
                 onClick={() => setSelectedArticle(article)}
               >
                 <div className="article-header">
+                  {article.proposedCopy?.length > 0 && !articleStatuses[article.id] && !articleDrafts[article.id] && (
+                    <label className="bulk-select-control" onClick={event => event.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedUpdateIds.has(article.id)}
+                        onChange={() => toggleArticleSelection(article.id)}
+                      />
+                      Include in selected live updates
+                    </label>
+                  )}
                   <h4>{article.title}</h4>
                   <span className="article-id">ID: {article.id}</span>
                   <span className="status-badge flagged">Flagged for Review</span>
@@ -1475,6 +1551,13 @@ function ReleasesTab({ user }) {
                             </div>
                             {entry.proposedText && (
                               <div className="proposed-text-wrapper">
+                                {(entry.sourceQuote || entry.releaseEvidence) && (
+                                  <details className="proposed-evidence">
+                                    <summary>View evidence for this edit</summary>
+                                    {entry.sourceQuote && <p><strong>Current article:</strong> “{entry.sourceQuote}”</p>}
+                                    {entry.releaseEvidence && <p><strong>Release notes:</strong> “{entry.releaseEvidence}”</p>}
+                                  </details>
+                                )}
                                 <div
                                   className="proposed-text proposed-text-html"
                                   dangerouslySetInnerHTML={{ __html: textToZendeskHtml(entry.proposedText) }}

@@ -1717,6 +1717,39 @@
   text-align: left;
 }
 
+.proposed-evidence {
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-left: 3px solid #8b5cf6;
+  background: #faf5ff;
+  color: #4c1d95;
+  font-size: 0.9rem;
+}
+
+.proposed-evidence summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.proposed-evidence p {
+  margin: 0.45rem 0 0;
+}
+
+.create-new-section-picker {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.85rem 0;
+  max-width: 32rem;
+}
+
+.create-new-section-picker select {
+  min-height: 2.25rem;
+}
+
+.create-new-section-picker small {
+  color: #5b6475;
+}
+
 .proposed-copy-actions {
   display: flex;
   gap: 6px;
