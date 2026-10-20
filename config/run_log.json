@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-10-07T01:32:46.427Z",
+  "timestamp": "2026-10-19T14:12:16.329Z",
   "releaseVersion": "2.90",
   "releaseTitle": "Release 2.90",
   "featuresDetected": [
@@ -8,83 +8,160 @@
     "Expanded French-Canadian Support",
     "Share Xactimate Estimates Right from Hi Marley",
     "Control Which Case Types Each User Can Access",
+    "Cleaner, More Consistent Workflow Management for Partner Integrations",
+    "Filter Total Loss Assist Insights by Group",
+    "Outreach Replies Arrive with Full Context",
+    "Claims Questions Handled Wherever Policyholders Reach Out",
+    "Quiet Hours Based on the Policyholder's Own Time Zone",
+    "Service Messaging Refinements",
     "Enhanced MyOrg Insights",
     "Stream Media and Transcripts Directly from the Public API",
-    "Refreshed Sign-In Page"
+    "Refreshed Sign-In Page",
+    "CSV Files No Longer Accepted as Inbound Media"
   ],
   "searchQueriesUsed": [
     "claims queues",
-    "deactivate user",
-    "french canadian",
-    "xactimate",
+    "language settings",
+    "auto replies",
+    "opt-in keyword",
+    "media API",
     "allowed case types",
-    "myorg insights",
-    "public API",
-    "sign-in page"
+    "quiet hours",
+    "MyOrg Insights"
   ],
-  "articlesAnalyzed": 125,
+  "articlesAnalyzed": 141,
   "articlesFailedAnalysis": 0,
-  "releaseNotesSkipped": 75,
-  "alreadyCoveredFiltered": 106,
+  "releaseNotesSkipped": 79,
+  "alreadyCoveredFiltered": 119,
   "articlesToUpdate": [
     {
-      "id": 53557618485523,
-      "title": "Quiet Hours",
+      "id": 25732492045203,
+      "title": "Inbox",
       "confidence": 0.9,
       "action": "update_existing",
-      "reason": "The release notes indicate that Quiet Hours will now be based on the policyholder's own time zone if their zip or postal code is available, which affects how the timezone is selected and the behavior of messages affected by Quiet Hours.",
-      "sectionToUpdate": "How the timezone is selected, Messages affected by Quiet Hours",
+      "reason": "The article describes Unaddressed and Unread cases, which are mutually exclusive notification modes. The release notes introduce Claims Queues, which may affect how cases are managed and prioritized in the inbox.",
+      "sectionToUpdate": "Overview, When Unaddressed Triggers, When Unaddressed Clears",
+      "proposedEditCount": 3,
+      "screenshotsFlagged": 3
+    },
+    {
+      "id": 15431418808595,
+      "title": "Integrating Line of Business & Brands",
+      "confidence": 0.9,
+      "action": "update_existing",
+      "reason": "The release notes indicate new Public API endpoints for streaming media and transcripts directly, which may affect the API example and update instructions for cases in this article.",
+      "sectionToUpdate": "Case Creation via API Example, Updating Brand/Line of Business on Existing Cases",
       "proposedEditCount": 2,
       "screenshotsFlagged": 1
+    },
+    {
+      "id": 11217177144467,
+      "title": "Resend Welcome Message",
+      "confidence": 0.9,
+      "action": "update_existing",
+      "reason": "The release notes mention new Public API endpoints that return inbound media and case transcript PDFs directly in the response. This affects the response payload structure in the Message API Actions article, which needs to reflect these new endpoints and their response fields.",
+      "sectionToUpdate": "API Response, Response Fields Breakdown",
+      "proposedEditCount": 2,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 360026613773,
+      "title": "Case Creation",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The article needs to be updated to include the new option to assign cases to a queue during creation, which is now generally available with the Claims Queues feature.",
+      "sectionToUpdate": "How to Create a Case in Hi Marley",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 1
+    },
+    {
+      "id": 13657099258259,
+      "title": "Common API Structures",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release notes mention new Public API endpoints for streaming media and transcripts directly, affecting the API response payloads. The article's 'Case Response Payload' and 'Case JSON Transcript Payload' sections need to include these new fields to accurately reflect the updated API capabilities.",
+      "sectionToUpdate": "Case Response Payload, Case JSON Transcript Payload",
+      "proposedEditCount": 2,
+      "screenshotsFlagged": 0
     },
     {
       "id": 360062596733,
       "title": "Users (Settings)",
       "confidence": 0.85,
       "action": "update_existing",
-      "reason": "The release notes introduce a new step for case reassignment when deactivating a user, which is not currently documented in the article. The 'Deactivate a User' section needs updating to reflect this new workflow.",
+      "reason": "The release notes introduce a new step for case reassignment when deactivating a user. The current article section on deactivating a user does not mention this new case reassignment step, which is crucial to ensure no cases are left without an owner.",
       "sectionToUpdate": "Deactivate a User",
       "proposedEditCount": 1,
       "screenshotsFlagged": 1
     },
     {
-      "id": 34179419104787,
-      "title": "Update Contact",
+      "id": 34176666638867,
+      "title": "Send Outbound Media",
       "confidence": 0.85,
       "action": "update_existing",
-      "reason": "The release notes indicate that new Public API endpoints allow streaming media and transcripts directly, which likely affects the Contact API Actions by adding new fields or endpoints related to media handling. The current article does not include any mention of media or transcript fields in the request or response payloads.",
-      "sectionToUpdate": "API Request, Request Field Breakdown, Response Payload Example, Response Fields Breakdown",
-      "proposedEditCount": 2,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 34178536763923,
-      "title": "Create Contact",
-      "confidence": 0.85,
-      "action": "update_existing",
-      "reason": "The release notes mention new Public API endpoints for streaming media and transcripts, which suggests changes to the API that should be reflected in the Contact API Actions article. The current article does not include these new endpoints, which are relevant to the integration domain.",
+      "reason": "The release notes mention new Public API endpoints for streaming media and transcripts directly, which affects the API request and payload structure documented in this article.",
       "sectionToUpdate": "API Request, Request Field Breakdown",
       "proposedEditCount": 2,
       "screenshotsFlagged": 0
     },
     {
-      "id": 6378816301075,
-      "title": "Case Creation API",
+      "id": 11649555376275,
+      "title": "Push Media",
       "confidence": 0.85,
       "action": "update_existing",
-      "reason": "The release notes indicate new Public API endpoints that return media and transcripts directly in the response, replacing the need for a temporary storage link. The article's Request and Response Fields Breakdown sections need to include these new endpoints and their behaviors.",
-      "sectionToUpdate": "Request Fields Breakdown, Response Fields Breakdown",
+      "reason": "The release notes indicate new Public API endpoints for streaming media and transcripts directly, which affects how media is retrieved and possibly pushed. The current article does not reflect these changes, particularly in the API Request and Request Path Breakdown sections.",
+      "sectionToUpdate": "API Request, Request Path Breakdown, Request Query Breakdown",
+      "proposedEditCount": 3,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 28487542098835,
+      "title": "Hi Marley Case Transcript & Media Options",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The article needs to update the API and webhook sections to include the new endpoints for streaming media and transcripts directly from the Public API, as well as the changes in webhook payloads for media links.",
+      "sectionToUpdate": "Download Transcript API, POST Transcript to HTTP Address on Hi Marley Case Close Event Webhook",
       "proposedEditCount": 2,
       "screenshotsFlagged": 0
     },
     {
-      "id": 43263201099923,
-      "title": "Invite Participant",
+      "id": 4405648246035,
+      "title": "SFTP Integration Overview",
       "confidence": 0.85,
       "action": "update_existing",
-      "reason": "The release notes mention new Public API endpoints that return inbound media and case transcript PDFs directly in the response, which implies a change in the API behavior that could affect the Multi Party Texting API Actions documentation.",
-      "sectionToUpdate": "API Request, Request Field Breakdown, Response Fields Breakdown",
+      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts, which affects how media files and transcripts are uploaded and accessed via the Hi Marley SFTP integration. The article needs to reflect the new API capabilities for direct media and transcript retrieval.",
+      "sectionToUpdate": "Overview, Implementation Process, Available Upload Cadences",
+      "proposedEditCount": 3,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 25701051296787,
+      "title": "Event ID 8: Email Transcripts/Media on Case Closure",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects the way media files are handled upon case closure. This article should mention the new API capability to ensure users are aware of the updated method for accessing media files.",
+      "sectionToUpdate": "Overview, Implementation Process",
       "proposedEditCount": 2,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 9172162874899,
+      "title": "Send Message",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects the API response payload. The 'Response Fields Breakdown' section needs to be updated to include these new fields.",
+      "sectionToUpdate": "Response Fields Breakdown",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 6652576348947,
+      "title": "Assign Case",
+      "confidence": 0.85,
+      "action": "update_existing",
+      "reason": "The release introduces a new Public API endpoint that allows streaming media and transcripts directly, which affects the API documentation. The existing article does not mention this new functionality, which should be documented.",
+      "sectionToUpdate": "Case Reassignment API Flow, Important Note, Quiet Hours",
+      "proposedEditCount": 1,
       "screenshotsFlagged": 0
     },
     {
@@ -92,135 +169,102 @@
       "title": "Integrating Group Management",
       "confidence": 0.85,
       "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which should be documented in the API Overview and System of Record Integration sections to ensure users are aware of these new capabilities.",
+      "reason": "The release introduces new Public API endpoints for streaming media and transcripts directly, which should be documented in the 'API Overview' and 'System of Record Integration' sections to reflect the new capabilities.",
       "sectionToUpdate": "API Overview, System of Record Integration",
       "proposedEditCount": 2,
       "screenshotsFlagged": 0
     },
     {
+      "id": 46617049708307,
+      "title": "Streamlining Property Claims: How Hi Marley’s Workflow Assist™ Integration with VeriskTM XactAnalysis® Changes Everything",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes introduce the ability to share Xactimate estimates directly from Hi Marley, which is a new capability relevant to the Workflow Assist integration with Verisk XactAnalysis. This change should be documented in the article to reflect the enhanced functionality.",
+      "sectionToUpdate": "From Chaos to Clarity: How It Works",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 41697527177747,
+      "title": "Workflow Assist™ with XactAnalysis®",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes introduce a new feature allowing adjusters to share Xactimate estimates directly from Hi Marley, which should be documented in the 'Logging Texts in XactAnalysis' section to reflect this capability.",
+      "sectionToUpdate": "Logging Texts in XactAnalysis",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 33732839924499,
+      "title": "Hi Marley Overview for IT Teams",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes introduce new Public API endpoints that return inbound media and case transcript PDFs directly in the response. This affects the 'Case Transcripts' section, which currently does not mention this capability.",
+      "sectionToUpdate": "Case Transcripts",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 47639019436435,
+      "title": "Media Restrictions (Settings)",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes specify that CSV files are no longer accepted as inbound media, which affects the 'Text and vCard' section that currently lists CSV as a controllable file type.",
+      "sectionToUpdate": "Text and vCard",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 33624270058899,
+      "title": "Event ID 27: Opt-In",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes mention that language detection for French affirmative replies like 'OUI' automatically updates the policyholder's language preference to French. This affects the 'languagePreference' field in the webhook payload for Event ID 27: Opt-In, which should be updated to reflect this behavior.",
+      "sectionToUpdate": "Opt-In",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
+      "id": 20033765020819,
+      "title": "Subscribe HTTP Webhook",
+      "confidence": 0.8,
+      "action": "update_existing",
+      "reason": "The release notes indicate new Public API endpoints for streaming media and transcripts directly, which affects the webhook payloads. The article's webhook events table needs to reflect these new endpoints.",
+      "sectionToUpdate": "Hi Marley Webhook Events Table",
+      "proposedEditCount": 1,
+      "screenshotsFlagged": 0
+    },
+    {
       "id": 360054591054,
       "title": "API Overview",
-      "confidence": 0.85,
-      "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects the API Overview article by requiring updates to the API Endpoint Specific Articles and Transcript Actions sections to include these new capabilities.",
-      "sectionToUpdate": "API Endpoint Specific Articles, Transcript Actions",
-      "proposedEditCount": 2,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 33225152012435,
-      "title": "Hi Marley Public API - Postman Collection",
-      "confidence": 0.85,
-      "action": "update_existing",
-      "reason": "The release notes mention new Public API endpoints that return inbound media and case transcript PDFs directly in the response. This change needs to be reflected in the article to ensure users are aware of these new capabilities when using the API through Postman.",
-      "sectionToUpdate": "Introduction, Using our Public API on Postman",
-      "proposedEditCount": 2,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 10370871898259,
-      "title": "Close Case API",
       "confidence": 0.8,
       "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints that return media and transcripts directly in the response, which affects the API response structure described in the article.",
-      "sectionToUpdate": "API Response",
+      "reason": "The release introduces new API endpoints for streaming media and transcripts directly from the Public API. The article needs to include these new endpoints as they are relevant to API users.",
+      "sectionToUpdate": "API Endpoint Specific Articles",
       "proposedEditCount": 1,
       "screenshotsFlagged": 0
     },
     {
-      "id": 11972448584723,
-      "title": "Get User by ID",
+      "id": 1500010676202,
+      "title": "Case Visibility",
       "confidence": 0.8,
       "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints that return inbound media and case transcript PDFs directly in the response. This change affects the API response payloads, which should be documented in the 'Response Fields Breakdown' section.",
-      "sectionToUpdate": "Response Fields Breakdown",
-      "proposedEditCount": 1,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 11971233360787,
-      "title": "Get User by Email",
-      "confidence": 0.8,
-      "action": "update_existing",
-      "reason": "The release notes indicate that new Public API endpoints can return media and transcripts directly in the response, which implies additional fields may be present in the API response payload. The current article does not include these new fields.",
-      "sectionToUpdate": "Response Fields Breakdown",
-      "proposedEditCount": 1,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 55002731891859,
-      "title": "Hi Marley Whitelist Information: Canada",
-      "confidence": 0.8,
-      "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects the API Base URLs/Domains section by adding new endpoints.",
-      "sectionToUpdate": "APIs",
-      "proposedEditCount": 1,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 34179779310611,
-      "title": "Query Contacts",
-      "confidence": 0.8,
-      "action": "update_existing",
-      "reason": "The release notes indicate that new Public API endpoints return inbound media and case transcript PDFs directly in the response. This change affects the API documentation by introducing new fields related to media and transcript handling, which are not currently documented in the 'Response Fields Breakdown' section.",
-      "sectionToUpdate": "Response Fields Breakdown",
-      "proposedEditCount": 1,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 34177934405139,
-      "title": "Get Contact",
-      "confidence": 0.8,
-      "action": "update_existing",
-      "reason": "The release notes mention new Public API endpoints for streaming media and transcripts, which implies potential changes to the API documentation. However, the 'Get Contact' article specifically needs updating to include any new fields added to the Contact data model, such as 'contactPrefix', which is not currently listed in the response fields.",
-      "sectionToUpdate": "Response Fields Breakdown",
-      "proposedEditCount": 1,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 15431418808595,
-      "title": "Integrating Line of Business & Brands",
-      "confidence": 0.8,
-      "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects the API example section by adding new functionality that should be documented.",
-      "sectionToUpdate": "Case Creation via API Example",
-      "proposedEditCount": 1,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 28487542098835,
-      "title": "Hi Marley Case Transcript & Media Options",
-      "confidence": 0.8,
-      "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints that allow direct streaming of media and transcript PDFs, which changes the current workflow described in the article.",
-      "sectionToUpdate": "Download Transcript API",
-      "proposedEditCount": 1,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 13657099258259,
-      "title": "Common API Structures",
-      "confidence": 0.8,
-      "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which affects the 'Common API Structures' article by adding new response capabilities.",
-      "sectionToUpdate": "Stream Media and Transcripts Directly from the Public API",
-      "proposedEditCount": 1,
-      "screenshotsFlagged": 0
-    },
-    {
-      "id": 50182249464723,
-      "title": "Query All Operators",
-      "confidence": 0.8,
-      "action": "update_existing",
-      "reason": "The release notes introduce new Public API endpoints for streaming media and transcripts directly, which may affect the API response structure. However, the 'Query All Operators' article does not document these new endpoints or their payload changes. Therefore, no specific text in this article needs to change, but the 'Response Fields Breakdown' should be checked for completeness against new API capabilities.",
-      "sectionToUpdate": "Response Fields Breakdown",
+      "reason": "The release notes mention new Public API endpoints that return inbound media and case transcript PDFs directly in the response. This affects the API's ability to handle case visibility and media streaming, which is relevant to the section discussing API support for Case Visibility.",
+      "sectionToUpdate": "How does Case Visibility work with the API?",
       "proposedEditCount": 1,
       "screenshotsFlagged": 0
     }
   ],
   "newArticlesToCreate": [],
   "unflaggedFeatures": [
-    "Share Xactimate Estimates Right from Hi Marley"
+    "Reassign Cases When Deactivating a User",
+    "Share Xactimate Estimates Right from Hi Marley",
+    "Cleaner, More Consistent Workflow Management for Partner Integrations",
+    "Filter Total Loss Assist Insights by Group",
+    "Outreach Replies Arrive with Full Context",
+    "Claims Questions Handled Wherever Policyholders Reach Out",
+    "Refreshed Sign-In Page",
+    "CSV Files No Longer Accepted as Inbound Media"
   ],
   "warnings": []
 }
